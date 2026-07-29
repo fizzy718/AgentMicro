@@ -11,6 +11,8 @@
 - Codex Desktop 与 CLI 任务发现。
 - Codex Micro 的 Idle、Unread chat、Thinking、Needs approval or answer、Error 五态，
   以及证据不足时内部保留、对外显示为 Idle 白色的 Unknown 回退。
+- 浏览器输入、登录、确认与授权等明确用户接管请求保持橙色，直到用户继续任务。
+- Desktop 完成任务与 Codex 本地未读线程集合同步；CLI 使用 AgentMicro 本地已读记录。
 - 工作中任务优先、组内按最近状态变化排序的 1–20 个任务，以及任务标题、项目、右侧
   单 turn 秒级时长、快速模式闪电和左侧未读状态块；菜单栏图标固定跟踪前 6 个。
 - 点击返回任务。
@@ -37,7 +39,7 @@
 | M2：菜单产品化 | 已完成 | V1 菜单结构、名称与数字数量设置、23 种语言与系统语言、最近完成任务、开机启动、Sparkle 运行时和 `.app` 打包 | 菜单模型、本地化、设置和打包测试通过，显示默认值有自动化测试 |
 | M3：真实场景验证 | 已完成 | Desktop/CLI 多任务验证、性能和误报修正 | 真实并发任务独立展示，状态与动作及时更新，聚焦路径和性能验证通过 |
 
-M1 已替换 M0 的 `active/idle` 展示，M2 将状态能力包装成可直接启动的菜单栏产品，M3 完成了真实 Desktop/CLI 并发任务验收。当前菜单直接采用 Codex Micro 五态，任务列表按“工作中优先、组内按最近状态变化排序”显示用户设定的 1–20 个任务，数量可直接输入或步进调节，菜单栏图标固定跟踪前 6 个。菜单和设置默认跟随系统语言，并可覆盖为与 CodexBar 对齐的 23 种界面语言；更新运行时和 AgentMicro 独立的 universal 签名、公证、appcast、GitHub Release 脚本已经接入，正式发布仍取决于仓库地址、专属 Ed25519 密钥和 Developer ID/公证凭据。Desktop 主任务通过 rollout 生命周期独立展示，不借 app-server PID 伪造所有权；guardian/subagent 默认隐藏。同一目录并发多个 CLI 进程时，AgentMicro 保留各自 rollout 任务但不猜测 PID 对应关系，从而避免串线。当前 macOS UI 自动化接口仍不暴露隐藏菜单栏项，菜单内容由模型测试覆盖，返回路径由真实任务诊断入口验证。
+M1 已替换 M0 的 `active/idle` 展示，M2 将状态能力包装成可直接启动的菜单栏产品，M3 完成了真实 Desktop/CLI 并发任务验收。当前菜单直接采用 Codex Micro 五态，任务列表按“工作中优先、组内按最近状态变化排序”显示用户设定的 1–20 个任务，数量可直接输入或步进调节，菜单栏图标固定跟踪前 6 个。Desktop 完成任务的绿色状态与 Codex 本地未读线程集合同步，用户直接在 Codex App 查看后也会恢复白色；CLI 继续使用 AgentMicro 本地已读记录。菜单和设置默认跟随系统语言，并可覆盖为与 CodexBar 对齐的 23 种界面语言；更新运行时和 AgentMicro 独立的 universal 签名、公证、appcast、GitHub Release 脚本已经接入，正式发布仍取决于仓库地址、专属 Ed25519 密钥和 Developer ID/公证凭据。Desktop 主任务通过 rollout 生命周期独立展示，不借 app-server PID 伪造所有权；guardian/subagent 默认隐藏。同一目录并发多个 CLI 进程时，AgentMicro 保留各自 rollout 任务但不猜测 PID 对应关系，从而避免串线。当前 macOS UI 自动化接口仍不暴露隐藏菜单栏项，菜单内容由模型测试覆盖，返回路径由真实任务诊断入口验证。
 
 V1 功能范围至此冻结。发布工程代码已经完成，下一阶段先配置外部发布身份并完成
 0.1.0 → 0.1.1 的真实更新闭环；V1.1 的通知能力只有在状态语义满足其进入条件后才实施。

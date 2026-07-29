@@ -798,6 +798,84 @@
 - 首次签名 Release 仍需要 Developer ID、Apple 公证凭据和 AgentMicro Ed25519 私钥；
   公开源码仓库本身不包含这些秘密。
 
+### `fix`：同步 Codex Desktop 已查看状态并补充英文产品截图
+
+变化：
+
+- 新增只读解析器，仅消费 `.codex-global-state.json` 中
+  `electron-persisted-atom-state.unread-thread-ids-by-host-v1` 的线程 ID。
+- Desktop 完成任务以 Codex 本地未读集合为准：集合中保留绿色，不在集合中恢复白色；
+  Codex App 内直接查看和从 AgentMicro 返回都能得到同一结果。
+- 全局状态文件加入约 200ms 防抖的文件监听；原子替换、重命名或删除旧 inode 后会重新
+  建立监听，2–5 秒轮询继续作为兜底。
+- 字段缺失、JSON 解析失败时不把任务批量标为已读；刚完成且快照早于完成事件时保留
+  5 秒传播宽限。CLI 任务继续使用 AgentMicro 本地已读记录。
+- 对比 freemicro、abtop 与 opendeck：分别使用完成态 TTL、无已读模型、仅管理自建
+  `codex exec --json` 会话，均未提供可直接复用的 Desktop 已读同步。
+- 根英文与中文 README 增加英文产品截图和菜单阅读说明；布局参考 cc-switch 的清晰
+  产品首页层级，但未增加 AgentMicro 不具备的 Provider、跨平台或下载渠道。
+
+影响：
+
+- 用户直接在 Codex Desktop 查看“评估模板业务解耦方案”等已完成任务后，AgentMicro
+  不再长期保留错误的绿色。
+- README 可以直接解释运行任务置顶、左侧状态块、单 turn 时长和快速模式闪电。
+
+验证：
+
+- `AGENTMICRO_BUILD_ONLY=1 swift test --disable-automatic-resolution --filter AgentMicro`：
+  66 个 tests、7 个 suites 全部通过。
+- 使用真实 Codex 本地状态验证：目标 Desktop 线程不在 Codex 未读集合中，解析器会将
+  其显示态从 Unread chat 归约为 Idle。
+- `make agentmicro-start`：重新打包并启动本地英文开发版成功。
+
+限制：
+
+- Codex 未读集合是本地持久化字段而非公开 API；格式变化时 AgentMicro 会安全回退，
+  但在适配新版 Codex 前可能暂时只确认从 AgentMicro 发起的查看。
+- CLI 没有 Codex Desktop 的已读来源，仍只确认 AgentMicro 本地记录。
+- README 英文截图由用户提供的真实界面截图做文字本地化，未作为 UI 像素级测试基准。
+
+### `fix`：识别浏览器用户接管并保持橙色
+
+变化：
+
+- 状态归约器新增明确提问与用户操作请求识别。assistant 向用户提出直接问题，或要求
+  输入、填写、登录、确认、授权、验证、点击、选择、接管或提交时，任务进入
+  Needs approval or answer。
+- 用户接管状态不依赖尚未结束的工具调用；即使中间 turn 已写入 `task_complete`，仍保持
+  橙色，直到下一条用户消息开始新 turn。
+- 按句处理否定式提示，“请先不要操作或切换标签页”不会被误判为用户接管；英文
+  `please log in`、`confirm`、`authorize` 等直接请求使用相同语义。
+- 修复设置页任务数量字段重复换行，以及切换界面语言后更新不可用原因仍沿用启动语言的
+  问题；更新原因现在按当前语言动态生成。
+
+影响：
+
+- Agent 在浏览器里停下来等待用户输入资料、登录、确认授权等中间步骤时，菜单块会持续
+  使用 Codex Micro 橙色，不再继续显示 Thinking 蓝色或提前变成 Unread 绿色。
+- 普通浏览器自动化、“请不要操作”和“请稍等”提示仍保持 Thinking，不会因为出现
+  “操作”或“继续”等普通进度词闪橙。
+
+验证：
+
+- 新增中文浏览器接管、最终回答中的“请确认……吗”提问、无动作词的选择题、英文登录
+  确认、否定式提示、普通等待提示和无独立 PID 的 Desktop 完成 turn 测试，确认橙色
+  锁存与下一条用户消息解除。
+- `AGENTMICRO_BUILD_ONLY=1 swift test --disable-automatic-resolution
+  --filter CodexTaskStateEngineTests`：26 个 tests、1 个 suite 全部通过。
+- `AGENTMICRO_BUILD_ONLY=1 swift test --disable-automatic-resolution --filter AgentMicro`：
+  73 个 tests、7 个 suites 全部通过。
+- `make check`：1611 个 Swift 文件零违规，文档、语言、签名、更新和 CI 路径门禁通过。
+- `make agentmicro-start`：完成 debug 应用打包、ad-hoc 签名验证并启动最新本地版本。
+
+限制：
+
+- Codex rollout 仍没有语言无关的用户接管事件；当前仅消费本地 assistant 文本，优先
+  覆盖明确中英文动作请求。若 Codex 后续提供结构化 handoff 事件，应改为直接消费。
+- 完整 `make test` 已执行，但上游 `AdaptiveRefreshTimerTests` 中两个定时器用例连续两次
+  在 30 秒处收到 `CancellationError`；AgentMicro 自身 73 个测试不受影响。
+
 ## 后续记录模板
 
 ```markdown

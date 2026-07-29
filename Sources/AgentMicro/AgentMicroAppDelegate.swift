@@ -15,6 +15,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     private var tasks: [CodexTaskObservation] = []
     private var knownSessions: [AgentSession] = []
     private var viewedTurnTracker = AgentMicroViewedTurnTracker()
+    private let codexUnreadThreadStateReader = CodexUnreadThreadStateReader()
     private var hasCompletedInitialScan = false
     private var refreshTask: Task<Void, Never>?
     private var refreshRequestedWhileRunning = false
@@ -128,7 +129,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         let rows = AgentMicroMenuModel.rows(
             from: self.tasks,
             preferences: self.settings.preferences,
-            readSessionKeys: self.settings.readSessionKeys(for: self.tasks))
+            readSessionKeys: self.effectiveReadSessionKeys(for: self.tasks))
         let activeCount = rows.count(where: \.isActive)
         let shouldAnimate = activeCount > 0 &&
             !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
@@ -155,7 +156,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         let rows = AgentMicroMenuModel.rows(
             from: self.tasks,
             preferences: self.settings.preferences,
-            readSessionKeys: self.settings.readSessionKeys(for: self.tasks),
+            readSessionKeys: self.effectiveReadSessionKeys(for: self.tasks, now: now),
             now: now)
         let activeCount = rows.count(where: \.isActive)
         let headline = activeCount > 0
@@ -212,7 +213,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         let currentRows = rows ?? AgentMicroMenuModel.rows(
             from: self.tasks,
             preferences: self.settings.preferences,
-            readSessionKeys: self.settings.readSessionKeys(for: self.tasks))
+            readSessionKeys: self.effectiveReadSessionKeys(for: self.tasks))
         self.statusItem?.button?.image = AgentMicroStatusIcon.statusItemImage(
             states: currentRows.map(\.state),
             animationPhase: self.statusAnimationTimer == nil ? nil : self.statusAnimationPhase)
@@ -321,7 +322,7 @@ extension AgentMicroAppDelegate {
         let rows = AgentMicroMenuModel.rows(
             from: self.tasks,
             preferences: self.settings.preferences,
-            readSessionKeys: self.settings.readSessionKeys(for: self.tasks))
+            readSessionKeys: self.effectiveReadSessionKeys(for: self.tasks))
         let rowsBySessionKey = Dictionary(uniqueKeysWithValues: rows.map { ($0.sessionKey, $0) })
         for case let view as AgentMicroTaskMenuItemView in self.menu.items.compactMap(\.view) {
             guard let row = rowsBySessionKey[view.sessionKey] else { continue }
@@ -367,6 +368,17 @@ extension AgentMicroAppDelegate {
         } else {
             self.stopMenuDurationTimer()
         }
+    }
+
+    private func effectiveReadSessionKeys(
+        for tasks: [CodexTaskObservation],
+        now: Date = Date()) -> Set<String>
+    {
+        AgentMicroReadStateResolver.readSessionKeys(
+            for: tasks,
+            locallyReadSessionKeys: self.settings.readSessionKeys(for: tasks),
+            codexUnreadSnapshot: self.codexUnreadThreadStateReader.snapshot(),
+            now: now)
     }
 
     private func sessionFilesDidChange() {

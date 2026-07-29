@@ -130,6 +130,7 @@ struct CodexRolloutReducer {
     private var pollingTargets: [String: String] = [:]
     private var runningCallsByHandle: [String: String] = [:]
     private var observedComputerUseTargets: Set<String> = []
+    private var awaitsUserAction = false
     private var thinkingSince: Date?
     private var rateLimited = false
     private var lastEventAt: Date?
@@ -146,7 +147,8 @@ struct CodexRolloutReducer {
             isThinking: self.thinkingSince != nil,
             isRateLimited: self.rateLimited,
             hasPendingToolCall: !self.pendingCalls.isEmpty,
-            requiresInput: self.pendingCalls.values.contains(where: \.requiresInput),
+            requiresInput: self.awaitsUserAction
+                || self.pendingCalls.values.contains(where: \.requiresInput),
             currentAction: currentAction,
             lastEventAt: self.lastEventAt,
             isTurnActive: self.isTurnActive,
@@ -193,6 +195,7 @@ struct CodexRolloutReducer {
         case "user_message":
             self.beginTurn(at: eventDate)
         case "agent_message":
+            self.updateUserActionRequest(from: payload)
             if Self.isFinalAnswer(payload) {
                 self.completeTurn()
             } else {
@@ -201,6 +204,7 @@ struct CodexRolloutReducer {
         case "task_complete":
             self.completeTurn()
         case "turn_aborted":
+            self.awaitsUserAction = false
             self.completeTurn()
         case "thread_settings_applied":
             self.updateServiceTier(from: payload["thread_settings"])
@@ -215,6 +219,7 @@ struct CodexRolloutReducer {
 
     private mutating func beginTurn(at eventDate: Date?) {
         let date = eventDate ?? self.lastEventAt ?? Date()
+        self.awaitsUserAction = false
         if self.isTurnActive != true {
             self.turnStartedAt = date
         }
@@ -226,7 +231,7 @@ struct CodexRolloutReducer {
         if self.rateLimited {
             return .error
         }
-        if self.pendingCalls.values.contains(where: \.requiresInput) {
+        if self.awaitsUserAction || self.pendingCalls.values.contains(where: \.requiresInput) {
             return .requiresInput
         }
         if !self.pendingCalls.isEmpty || self.isTurnActive == true || self.thinkingSince != nil {
@@ -243,10 +248,11 @@ struct CodexRolloutReducer {
         case "function_call_output", "custom_tool_call_output":
             self.consumeToolOutput(payload: payload)
         case "message":
-            if Self.string(payload["role"]) == "assistant",
-               Self.isFinalAnswer(payload)
-            {
-                self.completeTurn()
+            if Self.string(payload["role"]) == "assistant" {
+                self.updateUserActionRequest(from: payload)
+                if Self.isFinalAnswer(payload) {
+                    self.completeTurn()
+                }
             }
         default:
             break
@@ -257,6 +263,19 @@ struct CodexRolloutReducer {
         self.isTurnActive = false
         self.thinkingSince = nil
         self.closeAllCalls()
+    }
+
+    private mutating func updateUserActionRequest(from payload: [String: Any]) {
+        let text = Self.flattenedOutputText(
+            payload["message"] ?? payload["content"],
+            characterLimit: 4096)
+        guard !text.isEmpty else { return }
+
+        if CodexUserActionRequestClassifier.requiresInput(text) {
+            self.awaitsUserAction = true
+        } else if Self.isFinalAnswer(payload) {
+            self.awaitsUserAction = false
+        }
     }
 
     private mutating func updateServiceTier(from rawValue: Any?) {

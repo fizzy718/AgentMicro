@@ -43,6 +43,10 @@
   CodexBar 的 appcast 或旧公钥。
 - V1 不保留完整 Provider UI。
 - 状态模型需要重新定义。
+- AgentMicro 额外只读消费 Codex Desktop 本地全局状态中的未读线程 ID 集合；这不是
+  CodexBar Provider 能力，也不被用于修改 Codex 状态。
+- CodexBar 没有浏览器用户接管状态；AgentMicro 额外归约 assistant 的明确用户操作
+  请求并锁存橙色，等待下一条用户消息解除。
 
 ## abtop
 
@@ -60,6 +64,7 @@
 
 - 状态来自本地启发式，不是 Codex Desktop 权威 API。
 - `Waiting` 不能可靠表示审批等待。
+- 不维护用户是否已在 Codex Desktop 查看完成结果的已读/未读模型。
 - 直接引入 Rust sidecar 会增加 V1 打包和签名复杂度。
 
 复用结论：
@@ -113,6 +118,20 @@
 - V2.5 使用额度和历史模型。
 - V3 参考 Agent/Hub/SSE 协议。
 - V1 不引入。
+
+## 状态同步参考项目
+
+本轮还核对了 freemicro 与 opendeck，它们只作为设计证据，不进入运行时依赖：
+
+- **freemicro**：没有“用户已查看线程”的信号，用默认 180 秒完成态 TTL 自动熄灭。
+  该做法会把超时近似包装成已读，AgentMicro 不采用。
+- **opendeck**：只跟踪自身通过 `codex exec --json` 创建的托管会话，完成时直接进入
+  `done`；它明确不观察现有 Codex Desktop 会话，因此没有 Desktop 已读同步方案。
+- **abtop**：关注 Working、Waiting、Done 等运行生命周期，不维护 Unread/Read。
+
+AgentMicro 采用 Codex Desktop 自己持久化的本地未读线程 ID 集合作为 Desktop 完成任务
+的权威来源，并在字段缺失、解析失败或完成事件刚落盘时安全回退。该字段不是公开 API，
+因此解析器必须保持窄范围、可失败且不得把缺失文件解释为空未读集合。
 
 ## 推荐组合
 

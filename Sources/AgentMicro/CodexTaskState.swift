@@ -97,7 +97,8 @@ enum CodexTaskStateResolver {
             let state: CodexTaskState = if let snapshot,
                                            snapshot.isTurnActive == true ||
                                            snapshot.hasPendingToolCall ||
-                                           snapshot.isThinking
+                                           snapshot.isThinking ||
+                                           snapshot.requiresInput
             {
                 self.liveState(
                     snapshot: snapshot,

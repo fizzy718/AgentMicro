@@ -13,7 +13,7 @@
 
 | ID | 状态 | 需求 | 进入条件 |
 |---|---|---|---|
-| AM-001 | research | 区分等待用户输入和等待审批 | 找到稳定、可验证的本地事件 |
+| AM-001 | research | 用语言无关事件精确区分等待用户输入和等待审批 | Codex 提供稳定、可验证的本地用户接管事件；当前明确中英文请求已用本地文本归约覆盖 |
 | AM-002 | research | 可靠识别任务失败和成功 | 不依赖自然语言关键词 |
 | AM-003 | candidate | 显示子 Agent 树和父子关系 | Codex rollout 关系稳定且 UI 不拥挤 |
 | AM-004 | candidate | 显示上下文窗口和压缩事件 | V1 状态稳定后进入 V2.5 |
@@ -22,7 +22,6 @@
 | AM-007 | research | 精确关联 Codex Desktop rollout、owner 与窗口 | 找到不按 app-server PID 合并任务、可由真实多任务场景验证的稳定证据 |
 | AM-008 | research | 正确解析包含空格的 `codex exec -C/--cd` 路径 | 能读取原始 argv，且不依赖 `ps` 的展示字符串 |
 | AM-009 | research | 同一目录并发 CLI 的精确 PID、线程和终端窗口关联 | 有稳定的一对一证据；在此之前只展示 rollout，不猜测所有权 |
-| AM-010 | blocked | 识别用户直接在 Codex App 中查看了哪个任务 | Codex 提供可靠的当前线程或已读只读事件；在此之前只确认从 AgentMicro 发起的查看 |
 
 ## 注意力与通知
 

@@ -66,6 +66,16 @@ struct AgentMicroLocalizationTests {
         #expect(!AgentMicroLocalization.isRightToLeft(languageIdentifier: "en"))
     }
 
+    @Test
+    func `updater unavailable reason localizes when the interface language changes`() {
+        #expect(
+            AgentMicroUpdaterUnavailableReason.feed.localizedDescription(localeIdentifier: "en") ==
+                "The update feed has not been configured yet.")
+        #expect(
+            AgentMicroUpdaterUnavailableReason.feed.localizedDescription(localeIdentifier: "zh-Hans") ==
+                "尚未配置软件更新源。")
+    }
+
     private static func catalogKeys(localeIdentifier: String) throws -> Set<String> {
         let resourceDirectory = try #require(
             AgentMicroLocalization.localizedResourceURL(for: localeIdentifier))

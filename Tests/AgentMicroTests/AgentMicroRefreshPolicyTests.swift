@@ -121,6 +121,8 @@ struct AgentMicroRefreshPolicyTests {
         try fileManager.createDirectory(at: dayDirectory, withIntermediateDirectories: true)
         let rollout = dayDirectory.appendingPathComponent("rollout-current.jsonl")
         try Data().write(to: rollout)
+        let globalState = root.appendingPathComponent(".codex-global-state.json")
+        try Data("{}".utf8).write(to: globalState)
 
         let paths = CodexSessionWatchPaths.existingPaths(
             transcriptPaths: [rollout.path],
@@ -134,5 +136,6 @@ struct AgentMicroRefreshPolicyTests {
         #expect(paths.contains(root.appendingPathComponent("sessions").path))
         #expect(paths.contains(dayDirectory.path))
         #expect(paths.contains(rollout.path))
+        #expect(paths.contains(globalState.path))
     }
 }

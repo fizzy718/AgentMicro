@@ -10,8 +10,29 @@ protocol AgentMicroUpdaterProviding: AnyObject {
     var automaticallyChecksForUpdates: Bool { get set }
     var automaticallyDownloadsUpdates: Bool { get set }
     var isAvailable: Bool { get }
-    var unavailableReason: String? { get }
+    var unavailableReason: AgentMicroUpdaterUnavailableReason? { get }
     func checkForUpdates(_ sender: Any?)
+}
+
+enum AgentMicroUpdaterUnavailableReason: Sendable {
+    case build
+    case feed
+    case signature
+
+    func localizedDescription(localeIdentifier: String? = nil) -> String {
+        AgentMicroLocalization.text(self.localizationKey, localeIdentifier: localeIdentifier)
+    }
+
+    private var localizationKey: String {
+        switch self {
+        case .build:
+            "updates.unavailable.build"
+        case .feed:
+            "updates.unavailable.feed"
+        case .signature:
+            "updates.unavailable.signature"
+        }
+    }
 }
 
 @MainActor
@@ -19,9 +40,9 @@ final class AgentMicroDisabledUpdaterController: AgentMicroUpdaterProviding {
     var automaticallyChecksForUpdates = false
     var automaticallyDownloadsUpdates = false
     let isAvailable = false
-    let unavailableReason: String?
+    let unavailableReason: AgentMicroUpdaterUnavailableReason?
 
-    init(unavailableReason: String?) {
+    init(unavailableReason: AgentMicroUpdaterUnavailableReason?) {
         self.unavailableReason = unavailableReason
     }
 
@@ -33,7 +54,7 @@ final class AgentMicroDisabledUpdaterController: AgentMicroUpdaterProviding {
 final class AgentMicroSparkleUpdaterController: AgentMicroUpdaterProviding {
     private let controller: SPUStandardUpdaterController
     let isAvailable = true
-    let unavailableReason: String? = nil
+    let unavailableReason: AgentMicroUpdaterUnavailableReason? = nil
 
     init(automaticallyChecksForUpdates: Bool) {
         self.controller = SPUStandardUpdaterController(
@@ -67,23 +88,23 @@ enum AgentMicroUpdaterFactory {
         #if canImport(Sparkle) && ENABLE_AGENTMICRO_SPARKLE
         guard Bundle.main.bundleURL.pathExtension == "app" else {
             return AgentMicroDisabledUpdaterController(
-                unavailableReason: AgentMicroLocalization.text("updates.unavailable.build"))
+                unavailableReason: .build)
         }
         guard Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") is String,
               Bundle.main.object(forInfoDictionaryKey: "SUPublicEDKey") is String
         else {
             return AgentMicroDisabledUpdaterController(
-                unavailableReason: AgentMicroLocalization.text("updates.unavailable.feed"))
+                unavailableReason: .feed)
         }
         guard self.isDeveloperIDSigned(bundleURL: Bundle.main.bundleURL) else {
             return AgentMicroDisabledUpdaterController(
-                unavailableReason: AgentMicroLocalization.text("updates.unavailable.signature"))
+                unavailableReason: .signature)
         }
         return AgentMicroSparkleUpdaterController(
             automaticallyChecksForUpdates: automaticallyChecksForUpdates)
         #else
         return AgentMicroDisabledUpdaterController(
-            unavailableReason: AgentMicroLocalization.text("updates.unavailable.build"))
+            unavailableReason: .build)
         #endif
     }
 

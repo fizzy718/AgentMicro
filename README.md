@@ -1,6 +1,8 @@
+<div align="center">
+
 # AgentMicro
 
-> Live Codex task status, in your macOS menu bar.
+### Live Codex task status, in your macOS menu bar
 
 [![CI](https://github.com/fizzy718/AgentMicro/actions/workflows/ci.yml/badge.svg)](https://github.com/fizzy718/AgentMicro/actions/workflows/ci.yml)
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-0a0a0c?style=flat-square)](https://github.com/fizzy718/AgentMicro)
@@ -9,11 +11,26 @@
 
 [简体中文](README.zh-CN.md)
 
+</div>
+
 AgentMicro is a small, local-first macOS menu bar companion for people running several Codex tasks at once. It shows which tasks are working, waiting for you, finished with unread results, idle, or in error—and lets you return to a Codex Desktop task with one click.
 
 AgentMicro is an independent, community-maintained project built on the excellent [CodexBar](https://github.com/steipete/CodexBar) codebase. It is not affiliated with or endorsed by OpenAI or the CodexBar maintainers.
 
-## Why
+## Screenshot
+
+<p align="center">
+  <img src="docs/screenshots/agentmicro-menu.png" width="420" alt="AgentMicro menu showing live Codex tasks, status colors, projects, durations, and fast mode">
+</p>
+
+How to read the menu:
+
+- Running tasks stay at the top; the header shows the active count.
+- The rounded block on the left uses the five task-state colors described below.
+- The value on the right is the current turn duration, not the age of the task.
+- A lightning bolt means that Codex fast mode is enabled for that task.
+
+## Why AgentMicro?
 
 - **See the queue without opening Codex.** Running tasks stay at the top, followed by the most recently changed tasks.
 - **Understand state at a glance.** The six-tile menu bar icon mirrors the first six tasks and animates while work is in progress.
@@ -29,7 +46,7 @@ AgentMicro uses five visible states:
 | ⬜ | Idle | The task exists but has no current activity. |
 | 🟩 | Unread | A new result is ready and has not been viewed. |
 | 🟦 | Thinking | Codex is actively processing the task. |
-| 🟧 | Needs input | Codex needs approval or an answer from you. |
+| 🟧 | Needs input | Codex asks you to approve, answer, or complete an interactive step such as browser input. |
 | 🟥 | Error | The current turn failed or hit a blocking error. |
 
 Insufficient evidence is represented internally as `unknown`, but displayed as idle rather than introducing a misleading sixth color.
@@ -38,6 +55,8 @@ Insufficient evidence is represented internally as `unknown`, but displayed as i
 
 - Observes local Codex Desktop and Codex CLI tasks.
 - Updates from filesystem events with a short fallback polling interval.
+- Synchronizes completed Desktop-task unread state with Codex's local unread-thread state.
+- Keeps explicit user handoffs orange until the user resumes the task.
 - Sorts working tasks first, then by the most recent state change.
 - Shows project name, task title, and the current turn duration down to the second.
 - Shows a lightning badge when the task uses Codex fast mode.
@@ -95,7 +114,7 @@ The repository still contains provider implementations and tests inherited from
 the CodexBar baseline. They are not connected to the AgentMicro menu or exposed
 as AgentMicro features; V1 is intentionally Codex-only.
 
-Codex does not currently expose a stable public event API for observing every Desktop task transition. AgentMicro therefore derives state from bounded local metadata and rollout events. The project prefers an honest idle state over an unsupported guess, but brief differences from the Codex UI may still occur.
+Codex does not currently expose a stable public event API for observing every Desktop task transition. AgentMicro therefore derives lifecycle state from bounded local metadata and rollout events, and synchronizes completed Desktop-task unread state from Codex's local unread-thread state. CLI read state still uses AgentMicro's local record. The project prefers an honest idle state over an unsupported guess, but brief differences from the Codex UI may still occur while local files settle.
 
 ## Development
 

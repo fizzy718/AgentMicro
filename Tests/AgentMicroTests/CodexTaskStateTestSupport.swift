@@ -48,7 +48,11 @@ enum CodexTaskStateTestSupport {
         ])
     }
 
-    static func assistantResponse(phase: String, timestamp: String) -> String {
+    static func assistantResponse(
+        phase: String,
+        text: String = "Done",
+        timestamp: String) -> String
+    {
         self.json([
             "type": "response_item",
             "timestamp": timestamp,
@@ -56,7 +60,7 @@ enum CodexTaskStateTestSupport {
                 "type": "message",
                 "role": "assistant",
                 "phase": phase,
-                "content": [["type": "output_text", "text": "Done"]],
+                "content": [["type": "output_text", "text": text]],
             ],
         ])
     }
@@ -165,12 +169,13 @@ enum CodexTaskStateTestSupport {
         pid: Int32? = nil,
         activity: Date = CodexTaskStateTestSupport.fixtureNow,
         runStartedAt: Date? = nil,
-        id: String? = nil) -> CodexTaskObservation
+        id: String? = nil,
+        source: AgentSession.Source = .cli) -> CodexTaskObservation
     {
         let session = AgentSession(
             id: id ?? "policy-\(state.rawValue)-\(pid ?? 0)",
             provider: .codex,
-            source: .cli,
+            source: source,
             state: pid == nil ? .idle : .active,
             pid: pid,
             cwd: "/tmp/AgentMicro",

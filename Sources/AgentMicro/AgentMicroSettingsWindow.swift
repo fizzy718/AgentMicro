@@ -72,13 +72,17 @@ private struct AgentMicroSettingsView: View {
                 LabeledContent(AgentMicroLocalization.text("settings.tasksShown")) {
                     HStack(spacing: 10) {
                         TextField(
-                            AgentMicroLocalization.text("settings.tasksShown"),
                             value: self.$settings.taskDisplayLimit,
                             format: .number)
-                            .textFieldStyle(.roundedBorder)
-                            .multilineTextAlignment(.trailing)
-                            .monospacedDigit()
-                            .frame(width: 52)
+                        {
+                            EmptyView()
+                        }
+                        .textFieldStyle(.roundedBorder)
+                        .multilineTextAlignment(.trailing)
+                        .monospacedDigit()
+                        .frame(width: 52)
+                        .accessibilityLabel(
+                            AgentMicroLocalization.text("settings.tasksShown"))
                         Stepper(
                             "",
                             value: self.$settings.taskDisplayLimit,
@@ -106,7 +110,7 @@ private struct AgentMicroSettingsView: View {
                     }
                 } else {
                     Text(
-                        self.updater.unavailableReason ??
+                        self.updater.unavailableReason?.localizedDescription() ??
                             AgentMicroLocalization.text("updates.unavailable.build"))
                         .foregroundStyle(.secondary)
                 }

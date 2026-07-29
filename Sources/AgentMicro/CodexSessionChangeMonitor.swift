@@ -3,11 +3,8 @@ import Dispatch
 import Foundation
 
 enum CodexSessionWatchPaths {
-    static func existingPaths(
-        transcriptPaths: [String],
-        now: Date = Date(),
-        environment: [String: String] = ProcessInfo.processInfo.environment,
-        fileManager: FileManager = .default) -> Set<String>
+    static func globalStateFileURL(
+        environment: [String: String] = ProcessInfo.processInfo.environment) -> URL
     {
         let homeDirectory = URL(
             fileURLWithPath: environment["HOME"] ?? NSHomeDirectory(),
@@ -16,10 +13,22 @@ enum CodexSessionWatchPaths {
             fileURLWithPath: environment["CODEX_HOME"] ??
                 homeDirectory.appendingPathComponent(".codex", isDirectory: true).path,
             isDirectory: true)
+        return codexHomeDirectory.appendingPathComponent(".codex-global-state.json")
+    }
+
+    static func existingPaths(
+        transcriptPaths: [String],
+        now: Date = Date(),
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        fileManager: FileManager = .default) -> Set<String>
+    {
+        let globalStateFile = self.globalStateFileURL(environment: environment)
+        let codexHomeDirectory = globalStateFile.deletingLastPathComponent()
         let sessionsDirectory = codexHomeDirectory.appendingPathComponent("sessions", isDirectory: true)
 
         var candidates = Set(transcriptPaths)
         candidates.insert(sessionsDirectory.path)
+        candidates.insert(globalStateFile.path)
 
         let calendar = Calendar(identifier: .gregorian)
         let days = [now, calendar.date(byAdding: .day, value: -1, to: now)].compactMap(\.self)
@@ -64,7 +73,7 @@ final class CodexSessionChangeMonitor {
                 queue: .main)
             source.setEventHandler { [weak self] in
                 Task { @MainActor [weak self] in
-                    self?.scheduleNotification()
+                    self?.sourceDidChange(at: path)
                 }
             }
             source.setCancelHandler {
@@ -89,6 +98,18 @@ final class CodexSessionChangeMonitor {
             self.pendingNotification = nil
             self.onChange()
         }
+    }
+
+    private func sourceDidChange(at path: String) {
+        if let source = self.sources[path],
+           source.data.contains(.delete) ||
+           source.data.contains(.rename) ||
+           source.data.contains(.revoke)
+        {
+            source.cancel()
+            self.sources.removeValue(forKey: path)
+        }
+        self.scheduleNotification()
     }
 
     private func stopSources() {

@@ -64,7 +64,7 @@ V1 直接使用 Codex Micro 官网展示的五种状态与颜色，不再把 Thi
 | 状态 | 颜色 | 判断依据 | 用户文案 |
 |---|---|---|---|
 | `idle` | `#FFFFFF` | 活跃任务当前没有未结束的模型或工具事件 | Idle |
-| `unread` | `#9BF396` | rollout 明确完成，且仍处于最近任务保留窗口 | Unread chat |
+| `unread` | `#9BF396` | rollout 明确完成；Desktop 线程仍在 Codex 本地未读集合中，或 CLI 尚无 AgentMicro 本地已读记录 | Unread chat |
 | `thinking` | `#9CD5FE` | 用户请求尚未结束，或存在未结束的工具调用/子进程 | Thinking |
 | `requiresInput` | `#FFD0B8` | 本地事件明确要求用户批准或回答 | Needs approval or answer |
 | `error` | `#FF7373` | 本地事件明确报告错误；额度窗口达到 100% 也属于错误 | Error |
@@ -72,10 +72,16 @@ V1 直接使用 Codex Micro 官网展示的五种状态与颜色，不再把 Thi
 内部 `unknown` 表示已找到最近会话、但暂时不能可靠确认进程或事件归属；它对外复用
 Idle 的 `#FFFFFF`。菜单栏 Logo 中没有任务占用的槽位仍使用淡灰占位，淡灰不是任务状态。
 
-`requiresInput` 在 rollout 中存在尚未返回结果的 `request_user_input` 时出现。Codex
-宿主不会把 Computer Use 的跨应用授权弹窗单独写进 rollout，因此同一任务第一次访问
-某个 Computer Use 目标应用、调用仍未返回时，也保守显示为 `requiresInput`；同一目标
-后续调用仍按 `thinking` 显示，避免普通自动化步骤持续闪橙。`sandbox_permissions =
+`requiresInput` 在 rollout 中存在尚未返回结果的 `request_user_input` 时出现；assistant
+向用户提出带问号的直接问题，或明确要求输入、填写、登录、确认、授权、验证、点击、
+选择、接管或提交时，同样锁存为 `requiresInput`，直到下一条用户消息开始新 turn。
+即使当前 turn 已写入
+`task_complete`，用户接管锁也继续保持，避免浏览器输入等中间步骤被错误显示为蓝色或
+绿色。否定式提示（例如“请先不要操作”）不触发橙色。
+
+Codex 宿主不会把 Computer Use 的跨应用授权弹窗单独写进 rollout，因此同一任务第一次
+访问某个 Computer Use 目标应用、调用仍未返回时，也保守显示为 `requiresInput`；同一
+目标后续调用仍按 `thinking` 显示，避免普通自动化步骤持续闪橙。`sandbox_permissions =
 require_escalated` 可能由 Codex 自动审批 guardian 处理，不能据此推断用户需要批准。
 普通静默或进程存活也不会被解释为“需要用户处理”。绿色表示完成结果尚未查看。
 
@@ -88,6 +94,7 @@ require_escalated` 可能由 Codex 自动审批 guardian 处理，不能据此�
   之间始终保持 `thinking`；单个工具返回或 `phase: commentary` 的中间 assistant 消息
   不能让仍在运行的任务短暂闪回白色。
 - 未配对的工具调用也形成 `thinking`；当前动作只参与本地诊断，不进入任务菜单。
+- assistant 明确把操作权交给用户后形成 `requiresInput`，由下一条用户消息解除。
 - 工具输出到达后必须结束对应工作状态。
 - 长时间运行工具要结合子进程存活情况，避免仅凭文件静默误判为 `idle`。
 - 找不到可靠 owner 的最近 Desktop rollout 使用 `unknown`，不能伪造 PID 归属。
@@ -147,8 +154,12 @@ Quit AgentMicro
 每行左侧只显示一个无边框圆角矩形，并直接使用任务状态色；任务处于 `thinking`
 时圆角矩形以 0.85 秒周期呼吸，系统启用“减少动态效果”时保持静止。右侧不再显示
 未读绿点；未读只由左侧状态圆角矩形使用 Unread chat 的官方绿色表达。
-从 AgentMicro 点击任务返回对应会话后，方块恢复 Idle 白色。已读活动
-时间保存在本机；同一会话再次完成新的 turn 时可以重新变绿。
+Desktop 已完成任务以 Codex 自己维护的本地未读线程集合为准：用户从 AgentMicro
+或直接从 Codex App 打开对应会话后，方块恢复 Idle 白色；Codex 仍标记未读时保持绿色。
+该集合缺失、格式变化或刚完成事件尚在落盘时，AgentMicro 不把“线程 ID 暂时缺席”
+直接解释为已读，而是回退到本地已读记录并保留最多 5 秒的写入宽限。CLI 没有相同的
+Desktop 已读来源，继续使用 AgentMicro 本地已读活动；同一会话再次完成新的 turn 时
+可以重新变绿。
 若用户在任务仍为 Thinking 时点击进入，而 `task_complete` 随后才写入 rollout，
 AgentMicro 只对这一个已查看的 turn 保留 5 秒短暂标记；该 turn 在窗口内完成时直接
 记为已查看。标记不能跨到下一 turn，也不能吞掉 5 秒之后的新完成事件。
@@ -291,7 +302,8 @@ SessionWindowFocuser
 - 有新会话事件时，状态在 3 秒内更新。
 - 多个 Desktop 与 CLI 任务不重复、不串线；所有权不明确时必须保守降级。
 - 工具输出结束后不继续显示 `executing`。
-- 任务结束后显示绿色未读态；点击查看后恢复白色，最迟在 24 小时保留窗口结束后移除。
+- 任务结束后显示绿色未读态；Desktop 任务无论从 AgentMicro 还是 Codex App 查看，
+  都同步恢复白色，最迟在 24 小时保留窗口结束后移除。
 - 菜单使用缓存即时打开，不等待扫描完成。
 - CLI 任务点击后能唤起对应终端或明确降级。
 - 断网时除软件更新外的所有 V1 功能正常；更新失败不能阻塞任务观察。

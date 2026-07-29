@@ -449,6 +449,102 @@ struct CodexTaskStateEngineTests {
     }
 
     @Test
+    func `browser handoff stays orange until the user resumes the task`() throws {
+        var reducer = CodexRolloutReducer()
+        reducer.consume(line: CodexTaskStateTestSupport.event(
+            type: "user_message",
+            timestamp: "2026-07-28T12:00:01Z"))
+        reducer.consume(line: CodexTaskStateTestSupport.assistantResponse(
+            phase: "commentary",
+            text: "浏览器已经打开。请在那里输入资料并确认提交。",
+            timestamp: "2026-07-28T12:00:02Z"))
+
+        #expect(reducer.snapshot.requiresInput)
+
+        reducer.consume(line: CodexTaskStateTestSupport.event(
+            type: "task_complete",
+            timestamp: "2026-07-28T12:00:03Z"))
+        #expect(reducer.snapshot.requiresInput)
+        let completedSession = try CodexTaskStateTestSupport.session(
+            transcriptURL: CodexTaskStateTestSupport.fixtureURL(named: "waiting"),
+            pid: nil,
+            activity: CodexTaskStateTestSupport.fixtureNow)
+        let completedObservation = CodexTaskStateResolver.observation(
+            session: completedSession,
+            snapshot: reducer.snapshot,
+            now: CodexTaskStateTestSupport.fixtureNow)
+        #expect(completedObservation?.state == .requiresInput)
+
+        reducer.consume(line: CodexTaskStateTestSupport.event(
+            type: "user_message",
+            timestamp: "2026-07-28T12:00:04Z"))
+        #expect(!reducer.snapshot.requiresInput)
+        #expect(reducer.snapshot.isTurnActive == true)
+    }
+
+    @Test
+    func `English user action requests also use the input state`() {
+        var reducer = CodexRolloutReducer()
+        reducer.consume(line: CodexTaskStateTestSupport.assistantResponse(
+            phase: "commentary",
+            text: "Please log in in the browser, then confirm the authorization.",
+            timestamp: "2026-07-28T12:00:01Z"))
+
+        #expect(reducer.snapshot.requiresInput)
+    }
+
+    @Test
+    func `final answer questions remain orange after task completion`() {
+        var reducer = CodexRolloutReducer()
+        reducer.consume(line: CodexTaskStateTestSupport.event(
+            type: "agent_message",
+            timestamp: "2026-07-28T12:00:01Z",
+            extraPayload: [
+                "phase": "final_answer",
+                "message": "请确认这组公开身份，并允许我上传草稿创建商店条目吗？",
+            ]))
+        reducer.consume(line: CodexTaskStateTestSupport.event(
+            type: "task_complete",
+            timestamp: "2026-07-28T12:00:02Z"))
+
+        #expect(reducer.snapshot.requiresInput)
+        #expect(reducer.snapshot.isTurnActive == false)
+    }
+
+    @Test
+    func `choice questions without action verbs also require an answer`() {
+        var reducer = CodexRolloutReducer()
+        reducer.consume(line: CodexTaskStateTestSupport.assistantResponse(
+            phase: "final_answer",
+            text: "方案都可行。你希望采用哪一种？",
+            timestamp: "2026-07-28T12:00:01Z"))
+
+        #expect(reducer.snapshot.requiresInput)
+    }
+
+    @Test
+    func `negative browser guidance does not request user input`() {
+        var reducer = CodexRolloutReducer()
+        reducer.consume(line: CodexTaskStateTestSupport.assistantResponse(
+            phase: "commentary",
+            text: "请先不要操作或切换 Chrome 标签页，我正在填写字段。",
+            timestamp: "2026-07-28T12:00:01Z"))
+
+        #expect(!reducer.snapshot.requiresInput)
+    }
+
+    @Test
+    func `waiting guidance is not treated as a user handoff`() {
+        var reducer = CodexRolloutReducer()
+        reducer.consume(line: CodexTaskStateTestSupport.assistantResponse(
+            phase: "commentary",
+            text: "我会继续处理，请稍等。",
+            timestamp: "2026-07-28T12:00:01Z"))
+
+        #expect(!reducer.snapshot.requiresInput)
+    }
+
+    @Test
     func `new token count clears a previous saturated rate limit`() {
         var reducer = CodexRolloutReducer()
         reducer.consume(
