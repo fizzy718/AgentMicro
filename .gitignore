@@ -1,0 +1,13 @@
+.DS_Store
+.build/
+.swiftpm/
+DerivedData/
+
+CodexBar.app/
+AgentMicro.app/
+*.dSYM/
+
+.mac-release.env
+*.p12
+*.mobileprovision
+sparkle-private-key*
