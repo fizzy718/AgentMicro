@@ -26,6 +26,31 @@ V1 是本地、只读、Codex-only 的任务观察器。它回答四个问题：
 
 V1 不是 Token 用量监控器、Provider 切换器或任务控制器。
 
+## 当前实现进度
+
+截至 2026-07-28，M0 垂直切片已经完成：
+
+- 独立的 `AgentMicro` SwiftPM 可执行入口。
+- 原生 macOS 菜单栏图标和即时展开菜单。
+- 复用 `LocalAgentSessionScanner` 发现本机 Codex Desktop、CLI 和可识别的 IDE 会话。
+- 仅展示 Codex，会话按 active 优先、最近活动时间倒序。
+- 默认使用项目名，避免直接暴露可能敏感的任务标题。
+- 点击任务时复用 `SessionWindowFocuser` 尝试回到对应窗口。
+- 有进程时每 5 秒、无进程时每 15 秒刷新；打开菜单时立即异步刷新。
+
+M0 仍使用上游 `active/idle` 状态。这只是可运行骨架，不代表 V1 状态语义已经完成。下一步是 M1：增量读取 Codex rollout，并实现 Thinking、Executing、Waiting、Rate limited、Unknown、Done 的状态归约。
+
+## 开发验证
+
+为避免 AgentMicro 的开发循环解析上游 CodexBar 使用的 Sparkle 二进制制品，使用独立构建模式：
+
+```bash
+AGENTMICRO_BUILD_ONLY=1 swift run --disable-automatic-resolution AgentMicro
+AGENTMICRO_BUILD_ONLY=1 swift test --disable-automatic-resolution --filter AgentMicro
+```
+
+`--disable-automatic-resolution` 用于保持上游 `Package.resolved` 不变。
+
 ## 维护约定
 
 每次工作结束前，按实际变化更新相应文档：

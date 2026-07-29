@@ -2,11 +2,17 @@
 
 ## Project Structure & Modules
 - `Sources/CodexBar`: Swift 6 menu bar app (usage/credits probes, icon renderer, settings). Keep changes small and reuse existing helpers.
+- `Sources/AgentMicro`: AgentMicro's focused menu bar executable. Keep the V1 surface Codex-only and read-only.
 - `Tests/CodexBarTests`: XCTest coverage for usage parsing, status probes, icon patterns; mirror new logic with focused tests.
+- `Tests/AgentMicroTests`: focused AgentMicro model and state-reducer tests. Prefer these seams over live AppKit tests.
+- `docs/agentmicro`: AgentMicro product definition, V1 specification, roadmap, implementation log, and backlog.
 - `Scripts`: build/package helpers (`package_app.sh`, `sign-and-notarize.sh`, `make_appcast.sh`, `build_icon.sh`, `compile_and_run.sh`). Release wrappers call `Scripts/mac-release`, which resolves `MAC_RELEASE_TOOL` or the shared `agent-scripts` checkout.
 - `docs`: release notes and process (`docs/RELEASING.md`, screenshots). Root-level zips/appcast are generated artifacts—avoid editing except during releases.
 
 ## Build, Test, Run
+- AgentMicro dev run: `AGENTMICRO_BUILD_ONLY=1 swift run --disable-automatic-resolution AgentMicro`.
+- AgentMicro focused tests: `AGENTMICRO_BUILD_ONLY=1 swift test --disable-automatic-resolution --filter AgentMicro`.
+- `AGENTMICRO_BUILD_ONLY=1` excludes the upstream CodexBar app targets and Sparkle artifact from the build graph; pair it with `--disable-automatic-resolution` so the upstream `Package.resolved` remains unchanged.
 - Dev loop: `./Scripts/compile_and_run.sh` kills old instances, builds, packages, relaunches `CodexBar.app`, and confirms it stays running; add `--test` for the sharded full suite.
 - Quick build/test: `swift build` (debug) or `swift build -c release`; `make test` for the sharded full suite.
 - Package locally: `./Scripts/package_app.sh` to refresh `CodexBar.app`, then restart with `pkill -x CodexBar || pkill -f CodexBar.app || true; cd /Users/steipete/Projects/codexbar && open -n /Users/steipete/Projects/codexbar/CodexBar.app`.
@@ -18,6 +24,7 @@
 
 ## Testing Guidelines
 - Add/extend XCTest cases under `Tests/CodexBarTests/*Tests.swift` (`FeatureNameTests` with `test_caseDescription` methods).
+- Add AgentMicro-specific coverage under `Tests/AgentMicroTests`.
 - Swift Testing: prefer backticked sentence names; no camelCase.
 - Model names in tests/code: released models or clearly fictitious names only; never expose unreleased names.
 - Always run `make test` before handoff; add focused `swift test --filter ...` runs for parser/provider fixes when possible.

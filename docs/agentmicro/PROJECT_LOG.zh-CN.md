@@ -91,6 +91,38 @@
 
 - 后续产品与实现变化必须有对应文档沉淀。
 
+### `implementation`：完成 M0 菜单栏垂直切片
+
+变化：
+
+- 新增独立 `AgentMicro` SwiftPM 可执行入口和 AppKit 菜单栏生命周期。
+- 复用 `LocalAgentSessionScanner` 发现本机任务，只保留 Codex 会话。
+- 菜单显示 active/idle、来源、项目和最后活动时间，支持点击任务返回对应应用或窗口。
+- 默认以项目名作为标题，避免直接展示可能敏感的线程标题。
+- 有进程时每 5 秒、无进程时每 15 秒轮询；菜单打开时额外触发异步刷新。
+- 新增独立 `AgentMicroTests`，覆盖过滤、排序、隐私标题回退和活动时间格式。
+- 增加 `AGENTMICRO_BUILD_ONLY=1` 开发模式，隔离上游 CodexBar 的 Sparkle 二进制制品。
+
+影响：
+
+- AgentMicro 已具有从扫描到菜单展示再到任务跳转的可运行端到端骨架。
+- 正常 CodexBar 构建保持原有产品、目标和依赖；独立模式只用于 AgentMicro 开发循环。
+- AgentMicro 仍链接完整 `CodexBarCore`，后续可在状态引擎稳定后拆出更小的任务观察核心。
+
+验证：
+
+- `AGENTMICRO_BUILD_ONLY=1 swift test --disable-automatic-resolution --filter AgentMicroMenuModelTests`
+- 4 个 Swift Testing 用例通过。
+- SwiftFormat 对 4 个 AgentMicro Swift 文件检查通过；SwiftLint strict 为 0 violations。
+- `AGENTMICRO_BUILD_ONLY=1 swift run --disable-automatic-resolution AgentMicro` 编译成功，进程持续运行后手动结束。
+
+限制：
+
+- M0 只有上游 `active/idle`，尚未实现 V1 六态和当前动作。
+- M0 使用 5 秒活跃轮询，尚未达到 V1 的约 2 秒目标。
+- 本次烟测确认进程生命周期，没有完成菜单逐项视觉与窗口定位验证。
+- 上游快照缺少 `.github/workflows/ci.yml`，因此完整 `make check` 在 CI 路径门禁脚本处提前中止；已单独完成 AgentMicro 文件的格式、静态检查和聚焦测试。
+
 ## 后续记录模板
 
 ```markdown

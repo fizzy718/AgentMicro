@@ -1,0 +1,155 @@
+import AppKit
+import CodexBarCore
+import Foundation
+
+@MainActor
+final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+    private let scanner = LocalAgentSessionScanner()
+    private let menu = NSMenu()
+    private var statusItem: NSStatusItem?
+    private var sessions: [AgentSession] = []
+    private var hasCompletedInitialScan = false
+    private var refreshTask: Task<Void, Never>?
+    private var pollingTask: Task<Void, Never>?
+
+    func applicationDidFinishLaunching(_: Notification) {
+        self.configureStatusItem()
+        self.rebuildMenu()
+        self.startPolling()
+    }
+
+    func applicationWillTerminate(_: Notification) {
+        self.refreshTask?.cancel()
+        self.pollingTask?.cancel()
+    }
+
+    func menuWillOpen(_: NSMenu) {
+        self.refresh()
+    }
+
+    private func configureStatusItem() {
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        if let button = item.button {
+            let image = NSImage(
+                systemSymbolName: "waveform.path.ecg",
+                accessibilityDescription: "AgentMicro",
+            )
+            image?.isTemplate = true
+            button.image = image
+            button.imagePosition = .imageLeft
+            button.toolTip = "AgentMicro"
+            button.setAccessibilityLabel("AgentMicro Codex tasks")
+        }
+        self.menu.delegate = self
+        item.menu = self.menu
+        self.statusItem = item
+        self.updateStatusItem()
+    }
+
+    private func startPolling() {
+        guard self.pollingTask == nil else { return }
+        self.pollingTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                self.refresh()
+                let interval: Duration = self.sessions.contains { $0.pid != nil } ? .seconds(5) : .seconds(15)
+                try? await Task.sleep(for: interval)
+            }
+        }
+    }
+
+    private func refresh() {
+        guard self.refreshTask == nil else { return }
+        let scanner = self.scanner
+        self.refreshTask = Task { @MainActor [weak self] in
+            let scannedSessions = await scanner.scan()
+            guard !Task.isCancelled, let self else { return }
+            self.sessions = scannedSessions.filter { $0.provider == .codex }
+            self.hasCompletedInitialScan = true
+            self.refreshTask = nil
+            self.updateStatusItem()
+            self.rebuildMenu()
+        }
+    }
+
+    private func updateStatusItem() {
+        let activeCount = self.sessions.count { $0.state == .active }
+        self.statusItem?.button?.title = activeCount > 0 ? " \(activeCount)" : ""
+        self.statusItem?.button?.toolTip = activeCount > 0
+            ? "AgentMicro — \(activeCount) active Codex task\(activeCount == 1 ? "" : "s")"
+            : "AgentMicro — no active Codex tasks"
+    }
+
+    private func rebuildMenu(now: Date = Date()) {
+        self.menu.removeAllItems()
+
+        let rows = AgentMicroMenuModel.rows(from: self.sessions, now: now)
+        let activeCount = rows.count(where: \.isActive)
+        let headline = activeCount > 0
+            ? "AgentMicro — \(activeCount) active"
+            : "AgentMicro"
+        let headlineItem = NSMenuItem(title: headline, action: nil, keyEquivalent: "")
+        headlineItem.isEnabled = false
+        self.menu.addItem(headlineItem)
+        self.menu.addItem(.separator())
+
+        if rows.isEmpty {
+            let title = self.hasCompletedInitialScan ? "No Codex tasks found" : "Scanning for Codex tasks…"
+            let emptyItem = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+            emptyItem.isEnabled = false
+            self.menu.addItem(emptyItem)
+        } else {
+            for row in rows {
+                let symbol = row.isActive ? "●" : "○"
+                let item = NSMenuItem(
+                    title: "\(symbol) \(row.title)",
+                    action: #selector(self.focusSession(_:)),
+                    keyEquivalent: "",
+                )
+                if #available(macOS 14.4, *) {
+                    item.subtitle = row.subtitle
+                } else {
+                    item.title += " — \(row.subtitle)"
+                }
+                item.representedObject = row.sessionKey
+                item.target = self
+                self.menu.addItem(item)
+            }
+        }
+
+        self.menu.addItem(.separator())
+        let refreshItem = NSMenuItem(
+            title: "Refresh",
+            action: #selector(self.refreshFromMenu),
+            keyEquivalent: "r",
+        )
+        refreshItem.target = self
+        self.menu.addItem(refreshItem)
+
+        let quitItem = NSMenuItem(
+            title: "Quit AgentMicro",
+            action: #selector(self.quit),
+            keyEquivalent: "q",
+        )
+        quitItem.target = self
+        self.menu.addItem(quitItem)
+    }
+
+    @objc
+    private func focusSession(_ sender: NSMenuItem) {
+        guard let key = sender.representedObject as? String,
+              let session = self.sessions.first(where: { AgentMicroMenuModel.sessionKey(for: $0) == key })
+        else { return }
+        _ = SessionWindowFocuser.focus(session)
+    }
+
+    @objc
+    private func refreshFromMenu() {
+        self.refresh()
+    }
+
+    @objc
+    private func quit() {
+        NSApplication.shared.terminate(nil)
+    }
+}

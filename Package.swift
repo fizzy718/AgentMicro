@@ -2,6 +2,8 @@
 import Foundation
 import PackageDescription
 
+let agentMicroBuildOnly =
+    ProcessInfo.processInfo.environment["AGENTMICRO_BUILD_ONLY"] == "1"
 let sweetCookieKitPath = "../SweetCookieKit"
 let useLocalSweetCookieKit =
     ProcessInfo.processInfo.environment["CODEXBAR_USE_LOCAL_SWEETCOOKIEKIT"] == "1"
@@ -33,25 +35,40 @@ let package = Package(
         ]
 
         #if os(macOS)
-        products.append(contentsOf: [
-            .executable(name: "CodexBar", targets: ["CodexBar"]),
-            .executable(name: "CodexBarClaudeWatchdog", targets: ["CodexBarClaudeWatchdog"]),
-            .executable(name: "CodexBarWidget", targets: ["CodexBarWidget"]),
-            .executable(name: "CodexBarClaudeWebProbe", targets: ["CodexBarClaudeWebProbe"]),
-        ])
+        products.append(.executable(name: "AgentMicro", targets: ["AgentMicro"]))
+        if !agentMicroBuildOnly {
+            products.append(contentsOf: [
+                .executable(name: "CodexBar", targets: ["CodexBar"]),
+                .executable(name: "CodexBarClaudeWatchdog", targets: ["CodexBarClaudeWatchdog"]),
+                .executable(name: "CodexBarWidget", targets: ["CodexBarWidget"]),
+                .executable(name: "CodexBarClaudeWebProbe", targets: ["CodexBarClaudeWebProbe"]),
+            ])
+        }
         #endif
 
         return products
     }(),
-    dependencies: [
-        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.3"),
-        .package(url: "https://github.com/steipete/Commander", from: "0.2.1"),
-        .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
-        .package(url: "https://github.com/apple/swift-log", from: "1.13.2"),
-        .package(url: "https://github.com/sindresorhus/KeyboardShortcuts", from: "2.4.0"),
-        .package(url: "https://github.com/zats/Vortex", revision: "ef5392088d4aeb255c4eee83157dbdafcd31bf07"),
-        sweetCookieKitDependency,
-    ],
+    dependencies: {
+        if agentMicroBuildOnly {
+            return [
+                .package(url: "https://github.com/steipete/Commander", from: "0.2.1"),
+                .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
+                .package(url: "https://github.com/apple/swift-log", from: "1.13.2"),
+                sweetCookieKitDependency,
+            ]
+        }
+        return [
+            .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.3"),
+            .package(url: "https://github.com/steipete/Commander", from: "0.2.1"),
+            .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
+            .package(url: "https://github.com/apple/swift-log", from: "1.13.2"),
+            .package(url: "https://github.com/sindresorhus/KeyboardShortcuts", from: "2.4.0"),
+            .package(
+                url: "https://github.com/zats/Vortex",
+                revision: "ef5392088d4aeb255c4eee83157dbdafcd31bf07"),
+            sweetCookieKitDependency,
+        ]
+    }(),
     targets: {
         var targets: [Target] = [
             // Both glibc and static-musl CLI builds use this target; the module map supplies sqlite3 linkage.
@@ -144,58 +161,81 @@ let package = Package(
         #if os(macOS)
         targets.append(contentsOf: [
             .executableTarget(
-                name: "CodexBarClaudeWatchdog",
-                dependencies: [],
-                path: "Sources/CodexBarClaudeWatchdog",
-                swiftSettings: [
-                    .enableUpcomingFeature("StrictConcurrency"),
-                ]),
-            .executableTarget(
-                name: "CodexBar",
-                dependencies: [
-                    .product(name: "Sparkle", package: "Sparkle"),
-                    .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
-                    .product(name: "Vortex", package: "Vortex"),
-                    "AdaptiveRefreshCore",
-                    "CodexBarCore",
-                ],
-                path: "Sources/CodexBar",
-                resources: [
-                    .process("Resources"),
-                ],
-                swiftSettings: [
-                    // Opt into Swift 6 strict concurrency (approachable migration path).
-                    .enableUpcomingFeature("StrictConcurrency"),
-                    .define("ENABLE_SPARKLE"),
-                ]),
-            .executableTarget(
-                name: "CodexBarWidget",
+                name: "AgentMicro",
                 dependencies: ["CodexBarCore"],
-                path: "Sources/CodexBarWidget",
+                path: "Sources/AgentMicro",
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
                 ]),
-            .executableTarget(
-                name: "CodexBarClaudeWebProbe",
-                dependencies: ["CodexBarCore"],
-                path: "Sources/CodexBarClaudeWebProbe",
+            .testTarget(
+                name: "AgentMicroTests",
+                dependencies: ["AgentMicro", "CodexBarCore"],
+                path: "Tests/AgentMicroTests",
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
+                    .enableExperimentalFeature("SwiftTesting"),
                 ]),
         ])
 
-        targets.append(.testTarget(
-            name: "CodexBarTests",
-            dependencies: ["CodexBar", "CodexBarCore", "CodexBarCLI", "CodexBarWidget"],
-            path: "Tests",
-            exclude: ["AdaptiveReplayCLITests", "AdaptiveReplayKitTests"],
-            resources: [
-                .copy("CodexBarTests/Fixtures"),
-            ],
-            swiftSettings: [
-                .enableUpcomingFeature("StrictConcurrency"),
-                .enableExperimentalFeature("SwiftTesting"),
-            ]))
+        if !agentMicroBuildOnly {
+            targets.append(contentsOf: [
+                .executableTarget(
+                    name: "CodexBarClaudeWatchdog",
+                    dependencies: [],
+                    path: "Sources/CodexBarClaudeWatchdog",
+                    swiftSettings: [
+                        .enableUpcomingFeature("StrictConcurrency"),
+                    ]),
+                .executableTarget(
+                    name: "CodexBar",
+                    dependencies: [
+                        .product(name: "Sparkle", package: "Sparkle"),
+                        .product(name: "KeyboardShortcuts", package: "KeyboardShortcuts"),
+                        .product(name: "Vortex", package: "Vortex"),
+                        "AdaptiveRefreshCore",
+                        "CodexBarCore",
+                    ],
+                    path: "Sources/CodexBar",
+                    resources: [
+                        .process("Resources"),
+                    ],
+                    swiftSettings: [
+                        // Opt into Swift 6 strict concurrency (approachable migration path).
+                        .enableUpcomingFeature("StrictConcurrency"),
+                        .define("ENABLE_SPARKLE"),
+                    ]),
+                .executableTarget(
+                    name: "CodexBarWidget",
+                    dependencies: ["CodexBarCore"],
+                    path: "Sources/CodexBarWidget",
+                    swiftSettings: [
+                        .enableUpcomingFeature("StrictConcurrency"),
+                    ]),
+                .executableTarget(
+                    name: "CodexBarClaudeWebProbe",
+                    dependencies: ["CodexBarCore"],
+                    path: "Sources/CodexBarClaudeWebProbe",
+                    swiftSettings: [
+                        .enableUpcomingFeature("StrictConcurrency"),
+                    ]),
+                .testTarget(
+                    name: "CodexBarTests",
+                    dependencies: ["CodexBar", "CodexBarCore", "CodexBarCLI", "CodexBarWidget"],
+                    path: "Tests",
+                    exclude: [
+                        "AdaptiveReplayCLITests",
+                        "AdaptiveReplayKitTests",
+                        "AgentMicroTests",
+                    ],
+                    resources: [
+                        .copy("CodexBarTests/Fixtures"),
+                    ],
+                    swiftSettings: [
+                        .enableUpcomingFeature("StrictConcurrency"),
+                        .enableExperimentalFeature("SwiftTesting"),
+                    ]),
+            ])
+        }
         #endif
 
         return targets
