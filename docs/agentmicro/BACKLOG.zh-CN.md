@@ -20,6 +20,8 @@
 | AM-005 | candidate | 显示 CPU、内存和子进程 | 证明对任务决策有持续价值 |
 | AM-006 | candidate | 监听 Agent 启动的本地端口 | 有明确清理和安全边界 |
 | AM-007 | research | 精确关联 Codex Desktop rollout、owner 与窗口 | 找到不按 app-server PID 合并任务、可由真实多任务场景验证的稳定证据 |
+| AM-008 | research | 正确解析包含空格的 `codex exec -C/--cd` 路径 | 能读取原始 argv，且不依赖 `ps` 的展示字符串 |
+| AM-009 | research | 同一目录并发 CLI 的精确 PID、线程和终端窗口关联 | 有稳定的一对一证据；在此之前只展示 rollout，不猜测所有权 |
 
 ## 注意力与通知
 

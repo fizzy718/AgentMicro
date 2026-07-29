@@ -62,10 +62,10 @@ focusTarget
 |---|---|---|
 | `thinking` | 用户请求之后尚未出现对应模型回复，且任务仍活跃 | Thinking |
 | `executing` | 存在未结束的工具调用或可确认的活跃子进程 | Executing |
-| `waiting` | 任务进程仍存在，但没有待完成的模型或工具事件 | Waiting |
+| `waiting` | rollout 明确处于活跃 turn，但没有待完成的模型或工具事件；或任务进程仍存在且当前无工作事件 | Waiting |
 | `rateLimited` | 会话中存在明确的限流事件 | Rate limited |
 | `unknown` | 找到最近会话，但不能可靠确认进程或事件归属 | Unknown |
-| `done` | 已确认原任务进程结束，且仍处于最近任务保留窗口 | Done |
+| `done` | rollout 明确完成，或已确认原任务进程结束，且仍处于最近任务保留窗口 | Done |
 
 ### V1 不提供的状态
 
@@ -85,6 +85,9 @@ focusTarget
 - 长时间运行工具要结合子进程存活情况，避免仅凭文件静默误判为 `waiting`。
 - 找不到可靠 owner 的最近 Desktop rollout 使用 `unknown`，不能伪造 PID 归属。
 - Codex Desktop 的 app-server 可能同时持有多个 rollout，不能按 app-server PID 合并成一个任务。
+- `task_started` / `user_message` 与 `task_complete` / `turn_aborted` 构成 file-only Desktop 任务的明确 turn 生命周期。
+- guardian 和 subagent rollout 默认不作为 V1 顶层任务展示。
+- 同一工作目录存在多个 Codex CLI 进程时，不按时间顺序猜测 PID 与 rollout；保留独立 rollout 任务并将精确返回能力降级。
 
 ## 标题解析顺序
 
@@ -168,7 +171,7 @@ Quit
 
 - 菜单始终先使用缓存状态立即打开。
 - 打开菜单时触发一次异步刷新。
-- 有活跃 Codex 进程时，目标刷新间隔约 2 秒。
+- Codex Desktop 正在运行、任务处于工作状态或任务有独立进程时，目标刷新间隔约 2 秒。
 - 无活跃任务时，降低到 15–30 秒。
 - rollout 采用增量读取，保存文件 offset，并处理半行、截断和轮转。
 - 进程、`lsof` 和目录扫描分频执行，避免每 2 秒完成一次全量扫描。
@@ -223,7 +226,7 @@ SessionWindowFocuser
 
 - 新任务启动后 3 秒内出现在菜单。
 - 有新会话事件时，状态在 3 秒内更新。
-- 多个 Desktop 与 CLI 任务不重复、不串线。
+- 多个 Desktop 与 CLI 任务不重复、不串线；所有权不明确时必须保守降级。
 - 工具输出结束后不继续显示 `executing`。
 - 任务进程退出后显示 `done`，5 分钟后移除。
 - 菜单使用缓存即时打开，不等待扫描完成。

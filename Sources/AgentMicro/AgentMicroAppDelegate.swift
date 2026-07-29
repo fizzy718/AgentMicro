@@ -4,7 +4,7 @@ import Foundation
 
 @MainActor
 final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
-    private let scanner = LocalAgentSessionScanner()
+    private let scanner = LocalAgentSessionScanner(config: AgentMicroSessionPolicy.scannerConfiguration)
     private let taskStateEngine = CodexTaskStateEngine()
     private let settings = AgentMicroSettings()
     private let menu = NSMenu()
@@ -62,7 +62,12 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
             while !Task.isCancelled {
                 guard let self else { return }
                 self.refresh()
-                let interval: Duration = self.tasks.contains { $0.session.pid != nil } ? .seconds(2) : .seconds(15)
+                let interval = AgentMicroRefreshPolicy.interval(
+                    tasks: self.tasks,
+                    isDesktopAppRunning: !NSRunningApplication.runningApplications(
+                        withBundleIdentifier: "com.openai.codex"
+                    ).isEmpty
+                )
                 try? await Task.sleep(for: interval)
             }
         }
@@ -171,7 +176,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         guard let key = sender.representedObject as? String,
               let session = self.tasks.first(where: { $0.sessionKey == key })?.session
         else { return }
-        _ = SessionWindowFocuser.focus(session)
+        _ = SessionWindowFocuser.focus(session, promptForAccessibility: false)
     }
 
     @objc

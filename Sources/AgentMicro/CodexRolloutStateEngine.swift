@@ -112,6 +112,7 @@ struct CodexRolloutReducer {
     private var rateLimited = false
     private var lastEventAt: Date?
     private var parsedEventCount = 0
+    private var isTurnActive: Bool?
 
     var snapshot: CodexRolloutSnapshot {
         let currentAction = self.pendingCallOrder.reversed().compactMap { self.pendingCalls[$0]?.action }.first
@@ -121,7 +122,8 @@ struct CodexRolloutReducer {
             isRateLimited: self.rateLimited,
             hasPendingToolCall: !self.pendingCalls.isEmpty,
             currentAction: currentAction,
-            lastEventAt: self.lastEventAt
+            lastEventAt: self.lastEventAt,
+            isTurnActive: self.isTurnActive
         )
     }
 
@@ -155,15 +157,19 @@ struct CodexRolloutReducer {
         guard let eventType = payload["type"] as? String else { return }
         switch eventType {
         case "task_started":
-            self.thinkingSince = nil
+            self.isTurnActive = true
+            self.thinkingSince = eventDate ?? self.lastEventAt ?? Date()
         case "user_message":
+            self.isTurnActive = true
             self.thinkingSince = eventDate ?? self.lastEventAt ?? Date()
         case "agent_message":
             self.thinkingSince = nil
         case "task_complete":
+            self.isTurnActive = false
             self.thinkingSince = nil
             self.closeAllCalls()
         case "turn_aborted":
+            self.isTurnActive = false
             self.thinkingSince = nil
             self.closeAllCalls()
         case "token_count":

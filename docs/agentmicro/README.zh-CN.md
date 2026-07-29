@@ -28,7 +28,7 @@ V1 不是 Token 用量监控器、Provider 切换器或任务控制器。
 
 ## 当前实现进度
 
-截至 2026-07-28，M2 菜单产品化已经完成：
+截至 2026-07-28，M3 真实场景验证已经完成：
 
 - 独立的 `AgentMicro` SwiftPM 可执行入口。
 - 原生 macOS 菜单栏图标和即时展开菜单。
@@ -39,12 +39,15 @@ V1 不是 Token 用量监控器、Provider 切换器或任务控制器。
 - 仅展示 Codex，会话按 V1 状态优先级和最近活动时间排序。
 - 默认使用项目名，避免直接暴露可能敏感的任务标题。
 - 点击任务时复用 `SessionWindowFocuser` 尝试回到对应窗口。
-- 有进程时每 2 秒、无进程时每 15 秒刷新；打开菜单时立即异步刷新。
+- Codex Desktop 运行、任务工作中或任务有独立进程时每 2 秒刷新，其余时间每 15 秒刷新；打开菜单时立即异步刷新。
 - 设置页支持开机启动、三种任务名称模式和最近完成任务开关。
 - 隐私默认值为“仅项目名”，最近完成任务默认显示并固定保留 5 分钟。
 - 提供本地签名的 `AgentMicro.app` 打包、启动和停止命令。
+- 使用 rollout 生命周期识别没有独立 PID 的 Desktop 任务，不再把活跃主任务长期显示为 `Unknown`。
+- 默认排除 guardian/subagent rollout；同一目录并发多个 CLI 时停止猜测 PID 所有权，避免任务串线。
+- 支持识别 Codex Desktop 和 ChatGPT 应用内置 CLI，以及 `codex exec -C/--cd` 指定的工作目录。
 
-下一步是 M3：在真实 Codex Desktop/CLI 多任务场景中验证状态时效、任务归属和点击返回，并修正性能或误报。没有可靠 owner 的近期 Desktop rollout 目前保持 `Unknown`，不会通过 app-server PID 猜测归属。
+M3 已用真实 Codex Desktop 主任务与只读 Codex CLI 任务同时运行验证：两个任务独立出现、CLI 当前工具动作和结束状态正确、单次观察约 0.39 秒，配合 2 秒轮询满足 3 秒目标。下一步不自动扩大 V1 范围；优先处理发布工程，或从路线图选择 V1.1。
 
 ## 开发验证
 
@@ -66,6 +69,15 @@ make agentmicro-stop
 ```
 
 本地开发包使用 ad-hoc 签名，输出为项目根目录的 `AgentMicro.app`。面向外部用户分发所需的 Developer ID 签名、公证和更新机制属于后续发布工程。
+
+只输出一次隐私安全的任务诊断快照，或验证某个任务的返回路径：
+
+```bash
+AgentMicro.app/Contents/MacOS/AgentMicro --diagnose-once
+AgentMicro.app/Contents/MacOS/AgentMicro --diagnose-focus <session-id>
+```
+
+诊断只包含任务 ID、项目名、来源、状态、当前动作、PID、活动时间和 rollout 文件名，不输出 Prompt、命令结果或文件内容。
 
 ## 维护约定
 

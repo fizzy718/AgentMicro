@@ -187,6 +187,41 @@
 - 本地应用使用 ad-hoc 签名，不适合作为面向外部用户的正式分发包。
 - 上游快照仍缺少 `.github/workflows/ci.yml`，完整 `make check` 的既有阻塞未消除。
 
+### `implementation`：完成 M3 真实 Desktop/CLI 场景验证
+
+变化：
+
+- rollout reducer 新增明确 turn 生命周期：`task_started` / `user_message` 标记活跃，`task_complete` / `turn_aborted` 标记结束；没有独立 PID 的 Desktop 主任务可以显示 Thinking、Executing、Waiting 或 Done。
+- 识别 guardian/subagent 元数据并在 AgentMicro V1 中排除，避免子任务的新文件覆盖主任务。
+- 支持 ChatGPT.app 与 Codex.app 内置的 Codex CLI，且显式 `exec` 来源优先于 Desktop originator。
+- 解析 `codex exec -C/--cd` 的显式工作目录并用它覆盖 launcher CWD，消除 rollout 与 PID 任务重复。
+- 同一目录并发多个 CLI 时启用严格所有权策略：不按时间猜测 PID 与 rollout，只保留各自 file-only rollout 任务。
+- 刷新策略调整为 Desktop 应用运行、任务工作中或任务有 PID 时 2 秒，其余 15 秒。
+- 聚焦操作不主动触发 Accessibility 权限提示；已有权限时精确定位，否则降级为激活应用。
+- 新增 `--diagnose-once` 与 `--diagnose-focus <id>` 开发验收入口，输出隐私安全的状态快照并复用菜单点击聚焦路径。
+
+影响：
+
+- Codex Desktop 主任务不再因缺少独立任务 PID 长期显示 `Unknown`。
+- Desktop 主任务、真实 CLI 任务和历史结束任务可同时独立展示，不被 guardian rollout 或 launcher CWD 串线。
+- 所有权证据不足时返回能力会诚实降级，不会为了可点击而关联到错误终端。
+
+验证：
+
+- 真实 Codex Desktop 主任务与只读 Codex CLI 任务同时运行；CLI 显示独立 Session ID、PID、`Executing` 和 `exec_command · sleep 12`，结束后转为 `Done` 且无重复 PID 记录。
+- Desktop 当前主任务显示正确 rollout、Desktop 来源和执行态，guardian rollout 未进入顶层任务。
+- 完成态单次 `--diagnose-once` 扫描约 388 毫秒，结合 2 秒轮询满足 3 秒状态时效目标。
+- `--diagnose-focus <desktop-session-id>` 返回 `focused`，且使用与菜单点击相同的无提示聚焦路径。
+- AgentMicro 聚焦测试 28 个 tests 全部通过；进程和 rollout 关联聚焦测试 19 个 tests、2 个 suites 全部通过。
+- `make test`：729 个 selections、61 个 groups 首轮全部通过，0 失败、0 重试、0 超时。
+
+限制：
+
+- 当前 UI 自动化无法读取系统菜单栏状态项，且出于 Computer Use 安全边界不能检查 Codex/ChatGPT 窗口；没有使用坐标猜测。设置窗口已在 M2 视觉验收，M3 菜单行为由菜单模型测试、真实诊断快照和聚焦结果交叉验证。
+- `ps` 的命令展示字符串不能可靠保留带空格 `-C/--cd` 路径的 argv 边界，已记录为 AM-008。
+- 同一目录并发多个 CLI 时当前不提供精确终端窗口返回，已记录为 AM-009。
+- 本地应用仍使用 ad-hoc 签名，正式发布需要 Developer ID、公证和发布渠道。
+
 ## 后续记录模板
 
 ```markdown

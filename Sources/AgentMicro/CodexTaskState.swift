@@ -81,6 +81,7 @@ struct CodexRolloutSnapshot: Equatable, Sendable {
     let hasPendingToolCall: Bool
     let currentAction: String?
     let lastEventAt: Date?
+    let isTurnActive: Bool?
 }
 
 enum CodexTaskStateResolver {
@@ -101,11 +102,24 @@ enum CodexTaskStateResolver {
 
         guard session.pid != nil else {
             guard activityAge.map({ $0 <= completedRetention }) ?? false else { return nil }
-            let state: CodexTaskState = activityAge.map { $0 <= unknownWindow } == true ? .unknown : .done
+            let state: CodexTaskState = if let snapshot,
+                                           snapshot.isTurnActive == true ||
+                                           snapshot.hasPendingToolCall ||
+                                           snapshot.isThinking {
+                self.liveState(
+                    snapshot: snapshot,
+                    activityAge: activityAge,
+                    thinkingFreshness: thinkingFreshness
+                )
+            } else if snapshot?.isTurnActive == false {
+                .done
+            } else {
+                activityAge.map { $0 <= unknownWindow } == true ? .unknown : .done
+            }
             return CodexTaskObservation(
                 session: session,
                 state: state,
-                currentAction: state == .unknown ? snapshot?.currentAction : nil,
+                currentAction: state == .executing || state == .unknown ? snapshot?.currentAction : nil,
                 lastEventAt: activity
             )
         }
@@ -119,15 +133,11 @@ enum CodexTaskStateResolver {
             )
         }
 
-        let state: CodexTaskState = if snapshot.hasPendingToolCall {
-            .executing
-        } else if snapshot.isThinking, activityAge.map({ $0 <= thinkingFreshness }) ?? false {
-            .thinking
-        } else if snapshot.isRateLimited {
-            .rateLimited
-        } else {
-            .waiting
-        }
+        let state = self.liveState(
+            snapshot: snapshot,
+            activityAge: activityAge,
+            thinkingFreshness: thinkingFreshness
+        )
 
         return CodexTaskObservation(
             session: session,
@@ -135,5 +145,22 @@ enum CodexTaskStateResolver {
             currentAction: state == .executing ? snapshot.currentAction : nil,
             lastEventAt: activity
         )
+    }
+
+    private static func liveState(
+        snapshot: CodexRolloutSnapshot,
+        activityAge: TimeInterval?,
+        thinkingFreshness: TimeInterval
+    ) -> CodexTaskState {
+        if snapshot.hasPendingToolCall {
+            return .executing
+        }
+        if snapshot.isThinking, activityAge.map({ $0 <= thinkingFreshness }) ?? false {
+            return .thinking
+        }
+        if snapshot.isRateLimited {
+            return .rateLimited
+        }
+        return .waiting
     }
 }

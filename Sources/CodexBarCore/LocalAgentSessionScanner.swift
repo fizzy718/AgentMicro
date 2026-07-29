@@ -84,10 +84,22 @@ public struct LocalAgentSessionScanner: Sendable {
             includeFileOnlySessions: includeFileOnlySessions)
         else { return [] }
         let codexAppServerPresent = AgentPSOutputParser.hasCodexAppServer(in: allProcesses)
-        let cwdByPID = if let cwdProvider = self.cwdProvider {
+        var cwdByPID = if let cwdProvider = self.cwdProvider {
             await cwdProvider(processes.map(\ .pid), environment)
         } else {
             await self.cwdByPID(processes.map(\ .pid), environment: environment)
+        }
+        for process in processes where AgentPSOutputParser.provider(for: process) == .codex {
+            guard let configuredCWD = AgentPSOutputParser.codexWorkingDirectoryArgument(process.command) else {
+                continue
+            }
+            if configuredCWD.hasPrefix("/") {
+                cwdByPID[process.pid] = URL(fileURLWithPath: configuredCWD).standardizedFileURL.path
+            } else if let processCWD = cwdByPID[process.pid] {
+                cwdByPID[process.pid] = URL(fileURLWithPath: processCWD, isDirectory: true)
+                    .appendingPathComponent(configuredCWD)
+                    .standardizedFileURL.path
+            }
         }
         let codexCWDs = processes.compactMap { process -> String? in
             guard AgentPSOutputParser.provider(for: process) == .codex else { return nil }
@@ -228,6 +240,9 @@ public struct LocalAgentSessionScanner: Sendable {
                     transcriptPath: transcript?.url.path,
                     host: context.host))
             case .codex:
+                guard !self.config.requireUnambiguousCodexProcessOwnership ||
+                    codexDescriptiveNamePIDs.contains(process.pid)
+                else { continue }
                 let rollout = rollouts.first { candidate in
                     !matchedRolloutPaths.contains(candidate.url.path) &&
                         AgentSessionCorrelation.codexWorkingDirectoriesMatch(candidate.metadata.cwd, cwd)
@@ -362,6 +377,7 @@ public struct LocalAgentSessionScanner: Sendable {
         for candidate in candidates.prefix(max(0, self.config.maxCodexRolloutCount)) {
             guard directoryBudget.hasTimeRemaining() else { break }
             guard let metadata = CodexRolloutFirstLineParser.read(from: candidate.url) else { continue }
+            guard self.config.includeCodexSubagents || !metadata.isSubagent else { continue }
             rollouts.append(Rollout(url: candidate.url, modifiedAt: candidate.modifiedAt, metadata: metadata))
             if let index = remainingCWDs.firstIndex(where: {
                 AgentSessionCorrelation.codexWorkingDirectoriesMatch(metadata.cwd, $0)

@@ -62,6 +62,17 @@ struct CodexSessionRolloutTests {
     }
 
     @Test
+    func `explicit exec source wins over bundled Desktop originator`() {
+        let metadata = CodexRolloutMetadata(
+            sessionID: "cli",
+            cwd: "/private/tmp/m3",
+            originator: "Codex Desktop",
+            source: "exec")
+
+        #expect(metadata.sessionSource == .cli)
+    }
+
+    @Test
     func `codex cwd matching rejects missing paths`() {
         #expect(AgentSessionCorrelation.codexWorkingDirectoriesMatch("/repo/alpha", "/repo/./alpha"))
         #expect(!AgentSessionCorrelation.codexWorkingDirectoriesMatch(nil, nil))
@@ -136,9 +147,112 @@ struct CodexSessionRolloutTests {
         let guardian = try #require(CodexRolloutFirstLineParser.parse(guardianLine))
 
         #expect(subagent.agentPath == "/root/neon_patch_review2")
+        #expect(subagent.isSubagent)
         #expect(subagent.descriptiveName(threadMetadata: nil) == "Neon patch review 2")
         #expect(guardian.isGuardian)
+        #expect(guardian.isSubagent)
         #expect(guardian.descriptiveName(threadMetadata: nil) == "Approval review")
+    }
+
+    @Test
+    func `scanner can exclude subagent rollouts without hiding their parent`() async throws {
+        let fileManager = FileManager.default
+        let root = fileManager.temporaryDirectory
+            .appendingPathComponent("CodexSessionRolloutTests-parent-\(UUID().uuidString)", isDirectory: true)
+        defer { try? fileManager.removeItem(at: root) }
+        let now = Date()
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy/MM/dd"
+        let codexHome = root.appendingPathComponent("codex-home", isDirectory: true)
+        let sessionDirectory = codexHome
+            .appendingPathComponent("sessions", isDirectory: true)
+            .appendingPathComponent(formatter.string(from: now), isDirectory: true)
+        try fileManager.createDirectory(at: sessionDirectory, withIntermediateDirectories: true)
+
+        let parentID = "019f-parent"
+        let parentURL = sessionDirectory.appendingPathComponent("rollout-parent.jsonl")
+        let guardianURL = sessionDirectory.appendingPathComponent("rollout-guardian.jsonl")
+        try """
+        {"type":"session_meta","payload":{"id":"\(parentID)","session_id":"\(parentID)","cwd":"/repo",\
+        "originator":"Codex Desktop","source":"vscode"}}
+        """.write(to: parentURL, atomically: true, encoding: .utf8)
+        try """
+        {"type":"session_meta","payload":{"id":"019f-guardian","session_id":"\(parentID)","cwd":"/repo",\
+        "originator":"Codex Desktop","source":{"subagent":{"other":"guardian"}},"parent_thread_id":"\(parentID)"}}
+        """.write(to: guardianURL, atomically: true, encoding: .utf8)
+        try fileManager.setAttributes(
+            [.modificationDate: now.addingTimeInterval(-1)],
+            ofItemAtPath: parentURL.path)
+        try fileManager.setAttributes(
+            [.modificationDate: now],
+            ofItemAtPath: guardianURL.path)
+
+        let scanner = LocalAgentSessionScanner(config: SessionScanConfig(
+            fileOnlyWindow: 60,
+            maxProcessCount: 0,
+            maxCodexRolloutCount: 8,
+            maxClaudeTranscriptCountPerProject: 0,
+            includeCodexSubagents: false))
+        let sessions = await scanner.scan(now: now, environment: [
+            "CODEX_HOME": codexHome.path,
+            "HOME": root.path,
+            "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+        ])
+
+        #expect(sessions.count == 1)
+        #expect(sessions.first?.id == parentID)
+        #expect(sessions.first?.transcriptPath.map {
+            URL(fileURLWithPath: $0).resolvingSymlinksInPath().path
+        } == parentURL.resolvingSymlinksInPath().path)
+    }
+
+    @Test
+    func `scanner correlates bundled CLI process through its explicit working directory`() async throws {
+        let fileManager = FileManager.default
+        let root = fileManager.temporaryDirectory
+            .appendingPathComponent("CodexSessionRolloutTests-cli-\(UUID().uuidString)", isDirectory: true)
+        defer { try? fileManager.removeItem(at: root) }
+        let now = Date()
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy/MM/dd"
+        let codexHome = root.appendingPathComponent("codex-home", isDirectory: true)
+        let sessionDirectory = codexHome
+            .appendingPathComponent("sessions", isDirectory: true)
+            .appendingPathComponent(formatter.string(from: now), isDirectory: true)
+        try fileManager.createDirectory(at: sessionDirectory, withIntermediateDirectories: true)
+        let target = root.appendingPathComponent("target", isDirectory: true)
+        try fileManager.createDirectory(at: target, withIntermediateDirectories: true)
+        let rolloutURL = sessionDirectory.appendingPathComponent("rollout-cli.jsonl")
+        try """
+        {"type":"session_meta","payload":{"id":"cli-session","session_id":"cli-session","cwd":"\(target.path)",\
+        "originator":"Codex Desktop","source":"exec"}}
+        """.write(to: rolloutURL, atomically: true, encoding: .utf8)
+        try fileManager.setAttributes([.modificationDate: now], ofItemAtPath: rolloutURL.path)
+
+        let scanner = LocalAgentSessionScanner(
+            config: SessionScanConfig(
+                fileOnlyWindow: 60,
+                maxCodexRolloutCount: 8,
+                maxClaudeTranscriptCountPerProject: 0,
+                includeCodexSubagents: false),
+            processOutputProvider: { _ in
+                "201 1 Tue Jul 28 09:03:00 2026 " +
+                    "/Applications/ChatGPT.app/Contents/Resources/codex exec -C \(target.path)"
+            },
+            cwdProvider: { _, _ in [201: "/launcher"] })
+        let sessions = await scanner.scan(now: now, environment: [
+            "CODEX_HOME": codexHome.path,
+            "HOME": root.path,
+            "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+        ])
+
+        #expect(sessions.count == 1)
+        #expect(sessions.first?.id == "cli-session")
+        #expect(sessions.first?.pid == 201)
+        #expect(sessions.first?.cwd == target.standardizedFileURL.path)
+        #expect(sessions.first?.source == .cli)
     }
 
     @Test
@@ -194,8 +308,7 @@ struct CodexSessionRolloutTests {
         for (index, name) in ["recent_activity", "older_activity"].enumerated() {
             let line =
                 "{\"type\":\"session_meta\",\"payload\":{\"id\":\"session-\(index)\",\"cwd\":\"/repo\"," +
-                "\"originator\":\"codex_cli\",\"source\":{\"subagent\":{\"thread_spawn\":{\"agent_path\":" +
-                "\"/root/\(name)\"}}}}}"
+                "\"originator\":\"codex_cli\",\"source\":\"exec\",\"agent_path\":\"/root/\(name)\"}}"
             let url = sessionDirectory.appendingPathComponent("rollout-ambiguous-\(index).jsonl")
             try line.write(to: url, atomically: true, encoding: .utf8)
             try fileManager.setAttributes(
@@ -223,6 +336,28 @@ struct CodexSessionRolloutTests {
         #expect(sessions.count == 2)
         #expect(sessions.allSatisfy { $0.projectName == "repo" })
         #expect(sessions.allSatisfy { $0.sessionName == nil })
+
+        let strictScanner = LocalAgentSessionScanner(
+            config: SessionScanConfig(requireUnambiguousCodexProcessOwnership: true),
+            processOutputProvider: { _ in
+                """
+                201 1 Mon Jul 6 09:03:00 2026 /usr/local/bin/codex exec
+                202 1 Tue Jul 7 09:03:00 2026 /usr/local/bin/codex exec
+                """
+            },
+            cwdProvider: { _, _ in [201: "/repo", 202: "/repo"] })
+        let strictSessions = await strictScanner.scan(
+            now: now,
+            environment: [
+                "CODEX_HOME": codexHome.path,
+                "HOME": root.path,
+                "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+            ],
+            includeFileOnlySessions: true)
+
+        #expect(strictSessions.count == 2)
+        #expect(strictSessions.allSatisfy { $0.pid == nil })
+        #expect(Set(strictSessions.map(\.id)) == ["session-0", "session-1"])
     }
 
     #if canImport(SQLite3) || canImport(CSQLite3)

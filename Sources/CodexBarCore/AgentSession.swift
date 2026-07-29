@@ -70,6 +70,8 @@ public struct SessionScanConfig: Equatable, Sendable {
     public var maxDirectoryDepth: Int
     public var directoryScanBudget: TimeInterval
     public var adaptiveDirectoryScanBudget: TimeInterval
+    public var includeCodexSubagents: Bool
+    public var requireUnambiguousCodexProcessOwnership: Bool
 
     public init(
         activeWindow: TimeInterval = 120,
@@ -80,7 +82,9 @@ public struct SessionScanConfig: Equatable, Sendable {
         maxDirectoryEntryCount: Int = 512,
         maxDirectoryDepth: Int = 1,
         directoryScanBudget: TimeInterval = 0.25,
-        adaptiveDirectoryScanBudget: TimeInterval = 0.15)
+        adaptiveDirectoryScanBudget: TimeInterval = 0.15,
+        includeCodexSubagents: Bool = true,
+        requireUnambiguousCodexProcessOwnership: Bool = false)
     {
         self.activeWindow = activeWindow
         self.fileOnlyWindow = fileOnlyWindow
@@ -91,6 +95,8 @@ public struct SessionScanConfig: Equatable, Sendable {
         self.maxDirectoryDepth = maxDirectoryDepth
         self.directoryScanBudget = directoryScanBudget
         self.adaptiveDirectoryScanBudget = adaptiveDirectoryScanBudget
+        self.includeCodexSubagents = includeCodexSubagents
+        self.requireUnambiguousCodexProcessOwnership = requireUnambiguousCodexProcessOwnership
     }
 
     public func state(lastActivityAt: Date?, now: Date, hasLiveProcess: Bool) -> AgentSession.State {
@@ -220,6 +226,7 @@ public enum AgentPSOutputParser {
                 let arguments = self.arguments(record.command)
                 return self.isCodexAgentExecutable(record.command) &&
                     !arguments.contains("app-server") &&
+                    arguments.first != "sandbox" &&
                     !arguments.contains("--help") &&
                     !arguments.contains("--version")
             }
@@ -264,6 +271,21 @@ public enum AgentPSOutputParser {
         }
     }
 
+    public static func codexWorkingDirectoryArgument(_ command: String) -> String? {
+        let arguments = self.arguments(command)
+        for (index, argument) in arguments.enumerated() {
+            if argument == "-C" || argument == "--cd" {
+                let nextIndex = arguments.index(after: index)
+                guard arguments.indices.contains(nextIndex) else { return nil }
+                return arguments[nextIndex]
+            }
+            if argument.hasPrefix("--cd=") {
+                return String(argument.dropFirst("--cd=".count))
+            }
+        }
+        return nil
+    }
+
     private static func arguments(_ command: String) -> [String] {
         command.split(whereSeparator: \ .isWhitespace).dropFirst().map(String.init)
     }
@@ -286,8 +308,14 @@ public enum AgentPSOutputParser {
     private static func isCodexAgentExecutable(_ command: String) -> Bool {
         let lowercased = command.lowercased()
         guard lowercased.contains(".app/") else { return true }
-        return lowercased.hasPrefix("/applications/codex.app/contents/resources/codex ") ||
-            lowercased.hasPrefix("/applications/codex.app/contents/resources/codex\t")
+        let suffixes = [
+            "/codex.app/contents/resources/codex",
+            "/chatgpt.app/contents/resources/codex",
+        ]
+        return suffixes.contains { suffix in
+            guard let range = lowercased.range(of: suffix) else { return false }
+            return range.upperBound == lowercased.endIndex || lowercased[range.upperBound].isWhitespace
+        }
     }
 
     private static func isClaudeAgentExecutable(_ command: String) -> Bool {
@@ -501,6 +529,7 @@ public struct CodexRolloutMetadata: Equatable, Sendable {
     public let source: String?
     public let agentPath: String?
     public let isGuardian: Bool
+    public let isSubagent: Bool
 
     public init(
         sessionID: String,
@@ -508,7 +537,8 @@ public struct CodexRolloutMetadata: Equatable, Sendable {
         originator: String?,
         source: String?,
         agentPath: String? = nil,
-        isGuardian: Bool = false)
+        isGuardian: Bool = false,
+        isSubagent: Bool = false)
     {
         self.sessionID = sessionID
         self.cwd = cwd
@@ -516,9 +546,14 @@ public struct CodexRolloutMetadata: Equatable, Sendable {
         self.source = source
         self.agentPath = agentPath
         self.isGuardian = isGuardian
+        self.isSubagent = isSubagent
     }
 
     public var sessionSource: AgentSession.Source {
+        let sourceValue = self.source?.lowercased() ?? ""
+        if sourceValue.contains("codex_exec") || sourceValue.contains("exec") || sourceValue.contains("cli") {
+            return .cli
+        }
         let value = [self.originator, self.source]
             .compactMap { $0?.lowercased() }
             .joined(separator: " ")
@@ -527,9 +562,6 @@ public struct CodexRolloutMetadata: Equatable, Sendable {
         }
         if value.contains("ide") || value.contains("vscode") || value.contains("cursor") || value.contains("zed") {
             return .ide
-        }
-        if value.contains("codex_exec") || value.contains("exec") || value.contains("cli") {
-            return .cli
         }
         return .unknown
     }
@@ -613,13 +645,17 @@ public enum CodexRolloutFirstLineParser {
         let sourceObject = payload["source"] as? [String: Any]
         let subagent = sourceObject?["subagent"] as? [String: Any]
         let threadSpawn = subagent?["thread_spawn"] as? [String: Any]
+        let source = payload["source"] as? String
         return CodexRolloutMetadata(
             sessionID: sessionID,
             cwd: payload["cwd"] as? String,
             originator: payload["originator"] as? String,
-            source: payload["source"] as? String,
+            source: source,
             agentPath: (payload["agent_path"] as? String) ?? (threadSpawn?["agent_path"] as? String),
-            isGuardian: (subagent?["other"] as? String)?.lowercased() == "guardian")
+            isGuardian: (subagent?["other"] as? String)?.lowercased() == "guardian",
+            isSubagent: subagent != nil ||
+                source?.lowercased() == "subagent" ||
+                payload["parent_thread_id"] != nil)
     }
 
     public static func read(from url: URL) -> CodexRolloutMetadata? {

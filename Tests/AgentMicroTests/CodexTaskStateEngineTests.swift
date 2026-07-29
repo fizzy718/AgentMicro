@@ -48,21 +48,23 @@ struct CodexTaskStateEngineTests {
     }
 
     @Test
-    func `file-only sessions move from unknown to done and expire`() async throws {
+    func `file-only sessions use rollout lifecycle then expire`() async throws {
         let url = try CodexTaskStateTestSupport.fixtureURL(named: "thinking")
         let engine = CodexTaskStateEngine()
 
         let unknownNow = CodexTaskStateTestSupport.fixtureNow
-        let unknown = try #require(await engine.observe(
+        let thinking = try #require(await engine.observe(
             sessions: [CodexTaskStateTestSupport.session(transcriptURL: url, pid: nil, activity: unknownNow)],
             now: unknownNow
         ).first)
-        #expect(unknown.state == .unknown)
+        #expect(thinking.state == .thinking)
 
+        let completedURL = try CodexTaskStateTestSupport.fixtureURL(named: "waiting")
         let doneNow = CodexTaskStateTestSupport.fixtureNow.addingTimeInterval(60)
         let done = try #require(await engine.observe(
             sessions: [CodexTaskStateTestSupport.session(
-                transcriptURL: url,
+                id: "completed",
+                transcriptURL: completedURL,
                 pid: nil,
                 activity: doneNow.addingTimeInterval(-60)
             )],

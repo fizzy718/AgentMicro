@@ -133,12 +133,13 @@ enum CodexTaskStateTestSupport {
     }
 
     static func session(
+        id: String? = nil,
         transcriptURL: URL,
         pid: Int32?,
         activity: Date
     ) -> AgentSession {
         AgentSession(
-            id: transcriptURL.deletingPathExtension().lastPathComponent,
+            id: id ?? transcriptURL.deletingPathExtension().lastPathComponent,
             provider: .codex,
             source: .cli,
             state: pid == nil ? .idle : .active,
@@ -149,6 +150,29 @@ enum CodexTaskStateTestSupport {
             lastActivityAt: activity,
             transcriptPath: transcriptURL.path,
             host: "local"
+        )
+    }
+
+    static func observation(state: CodexTaskState, pid: Int32?) -> CodexTaskObservation {
+        let activity = self.fixtureNow
+        let session = AgentSession(
+            id: "policy-\(state.rawValue)-\(pid ?? 0)",
+            provider: .codex,
+            source: .cli,
+            state: pid == nil ? .idle : .active,
+            pid: pid,
+            cwd: "/tmp/AgentMicro",
+            projectName: "AgentMicro",
+            startedAt: activity.addingTimeInterval(-60),
+            lastActivityAt: activity,
+            transcriptPath: nil,
+            host: "local"
+        )
+        return CodexTaskObservation(
+            session: session,
+            state: state,
+            currentAction: nil,
+            lastEventAt: activity
         )
     }
 

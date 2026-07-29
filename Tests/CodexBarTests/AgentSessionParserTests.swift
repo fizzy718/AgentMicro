@@ -19,6 +19,35 @@ struct AgentSessionParserTests {
     }
 
     @Test
+    func `ps parser excludes Codex sandbox helpers while keeping real CLI tasks`() {
+        let records = [
+            AgentProcessRecord(
+                pid: 201,
+                ppid: 1,
+                startedAt: nil,
+                command: "/Applications/ChatGPT.app/Contents/Resources/codex sandbox -c permissions=node_repl"),
+            AgentProcessRecord(
+                pid: 202,
+                ppid: 1,
+                startedAt: nil,
+                command: "/Applications/ChatGPT.app/Contents/Resources/codex exec --full-auto"),
+        ]
+
+        #expect(AgentPSOutputParser.agentProcesses(from: records).map(\.pid) == [202])
+    }
+
+    @Test
+    func `ps parser reads explicit Codex CLI working directories`() {
+        #expect(AgentPSOutputParser.codexWorkingDirectoryArgument(
+            "/Applications/ChatGPT.app/Contents/Resources/codex exec -C /private/tmp/m3"
+        ) == "/private/tmp/m3")
+        #expect(AgentPSOutputParser.codexWorkingDirectoryArgument(
+            "codex exec --cd=relative-project"
+        ) == "relative-project")
+        #expect(AgentPSOutputParser.codexWorkingDirectoryArgument("codex exec") == nil)
+    }
+
+    @Test
     func `lsof parser maps batched cwd records`() throws {
         let output = try Self.fixtureString("agent-sessions-lsof", extension: "txt")
         let paths = LSOFCWDOutputParser.parse(output)
