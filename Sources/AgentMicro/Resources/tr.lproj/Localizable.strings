@@ -3,6 +3,14 @@
 "accessibility.taskStatus" = "AgentMicro görev durumu";
 "language.system" = "Sistemi izle";
 "language.title" = "Dil";
+"guide.title" = "Kullanım Kılavuzu";
+"guide.subtitle" = "Her blok yakın tarihli bir Codex görevini temsil eder. Rengi, görevin ne yaptığını veya ilginizi gerektirip gerektirmediğini gösterir.";
+"guide.dontShowAgain" = "Bir sonraki açılışta bu kılavuzu gösterme";
+"guide.state.idle" = "Agent mevcut, ancak etkin bir işi yok.";
+"guide.state.unread" = "Yeni bir sonuç hazır ve henüz görüntülenmedi.";
+"guide.state.thinking" = "Codex görev üzerinde çalışıyor.";
+"guide.state.requiresInput" = "Codex onayınızı, yanıtınızı veya tarayıcıdaki bir işlemi bekliyor.";
+"guide.state.error" = "Görev bir hata nedeniyle durdu.";
 "menu.empty" = "Codex görevi bulunamadı";
 "menu.footer.quit" = "AgentMicro’dan Çık";
 "menu.footer.refresh" = "Yenile";

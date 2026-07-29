@@ -4,6 +4,14 @@
 
 "language.system" = "Seguir o sistema";
 "language.title" = "Idioma";
+"guide.title" = "Guia de uso";
+"guide.subtitle" = "Cada bloco representa uma tarefa recente do Codex. A cor mostra o que ela está fazendo ou se precisa da sua atenção.";
+"guide.dontShowAgain" = "Não mostrar este guia na próxima inicialização";
+"guide.state.idle" = "O agente existe, mas não há trabalho ativo.";
+"guide.state.unread" = "Há um novo resultado que ainda não foi visualizado.";
+"guide.state.thinking" = "O Codex está trabalhando ativamente.";
+"guide.state.requiresInput" = "O Codex aguarda sua aprovação, resposta ou ação no navegador.";
+"guide.state.error" = "A tarefa foi interrompida por um erro.";
 
 "menu.empty" = "Nenhuma tarefa do Codex encontrada";
 "menu.footer.quit" = "Encerrar AgentMicro";

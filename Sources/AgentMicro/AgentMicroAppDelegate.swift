@@ -25,6 +25,8 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     private var pollingTask: Task<Void, Never>?
     private var statusAnimationTimer: Timer?
     private var menuDurationTimer: Timer?
+    private var menuOutsideClickMonitor: Any?
+    private var applicationResignObserver: NSObjectProtocol?
     private var statusAnimationPhase = 0
     private var isMenuOpen = false
     private lazy var sessionChangeMonitor = CodexSessionChangeMonitor { [weak self] in
@@ -45,6 +47,9 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         self.startPolling()
         if CommandLine.arguments.contains("--show-settings") {
             self.showSettings()
+        } else if self.settings.shouldPresentGuideOnLaunch {
+            self.settings.markGuidePresented()
+            self.presentSettings(pane: .guide)
         }
     }
 
@@ -55,11 +60,13 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         self.pollingTask?.cancel()
         self.statusAnimationTimer?.invalidate()
         self.menuDurationTimer?.invalidate()
+        self.stopMenuDismissalMonitoring()
         self.sessionChangeMonitor.stop()
     }
 
     func menuWillOpen(_: NSMenu) {
         self.isMenuOpen = true
+        self.startMenuDismissalMonitoring()
         self.startMenuDurationTimerIfNeeded()
         self.reconcileKnownSessions()
         self.refresh()
@@ -68,6 +75,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
 
     func menuDidClose(_: NSMenu) {
         self.isMenuOpen = false
+        self.stopMenuDismissalMonitoring()
         self.stopMenuDurationTimer()
     }
 
@@ -82,6 +90,39 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         item.menu = self.menu
         self.statusItem = item
         self.updateStatusItem()
+    }
+
+    private func startMenuDismissalMonitoring() {
+        self.stopMenuDismissalMonitoring()
+        self.menuOutsideClickMonitor = NSEvent.addGlobalMonitorForEvents(
+            matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown])
+        { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.isMenuOpen else { return }
+                self.menu.cancelTracking()
+            }
+        }
+        self.applicationResignObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didResignActiveNotification,
+            object: NSApplication.shared,
+            queue: .main)
+        { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self, self.isMenuOpen else { return }
+                self.menu.cancelTracking()
+            }
+        }
+    }
+
+    private func stopMenuDismissalMonitoring() {
+        if let menuOutsideClickMonitor {
+            NSEvent.removeMonitor(menuOutsideClickMonitor)
+            self.menuOutsideClickMonitor = nil
+        }
+        if let applicationResignObserver {
+            NotificationCenter.default.removeObserver(applicationResignObserver)
+            self.applicationResignObserver = nil
+        }
     }
 
     private func startPolling() {
@@ -277,13 +318,17 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
 
     @objc
     private func showSettings() {
+        self.presentSettings()
+    }
+
+    private func presentSettings(pane: AgentMicroSettingsPane? = nil) {
         self.settings.refreshLaunchAtLoginStatus()
         if self.settingsWindowController == nil {
             self.settingsWindowController = AgentMicroSettingsWindowController(
                 settings: self.settings,
                 updater: self.updater)
         }
-        self.settingsWindowController?.present()
+        self.settingsWindowController?.present(pane: pane)
     }
 
     @objc

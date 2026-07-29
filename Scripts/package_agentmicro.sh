@@ -104,6 +104,9 @@ if [[ ! -d "$RESOURCE_BUNDLE" ]]; then
   exit 1
 fi
 cp -R "$RESOURCE_BUNDLE" "$APP_STAGE/Contents/Resources/"
+"$ROOT/Scripts/build_agentmicro_icon.sh" \
+  "$ROOT/AgentMicro.icon" \
+  "$APP_STAGE/Contents/Resources/AgentMicro.icns"
 SPARKLE_FRAMEWORK="$PREFERRED_BIN_DIR/Sparkle.framework"
 if [[ ! -d "$SPARKLE_FRAMEWORK" ]]; then
   echo "ERROR: Sparkle framework not found at $SPARKLE_FRAMEWORK" >&2
@@ -165,6 +168,8 @@ cat > "$APP_STAGE/Contents/Info.plist" <<PLIST
     </array>
     <key>CFBundleDisplayName</key><string>AgentMicro</string>
     <key>CFBundleExecutable</key><string>AgentMicro</string>
+    <key>CFBundleIconFile</key><string>AgentMicro</string>
+    <key>CFBundleIconName</key><string>AgentMicro</string>
     <key>CFBundleIdentifier</key><string>${BUNDLE_ID}</string>
     <key>CFBundleName</key><string>AgentMicro</string>
     <key>CFBundlePackageType</key><string>APPL</string>

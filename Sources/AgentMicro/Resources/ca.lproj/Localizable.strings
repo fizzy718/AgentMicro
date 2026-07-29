@@ -3,6 +3,14 @@
 "accessibility.taskStatus" = "Estat de les tasques d’AgentMicro";
 "language.system" = "Seguir el sistema";
 "language.title" = "Idioma";
+"guide.title" = "Guia d’ús";
+"guide.subtitle" = "Cada bloc representa una tasca recent de Codex. El color indica què està fent o si necessita la teva atenció.";
+"guide.dontShowAgain" = "No mostrar aquesta guia en la propera arrencada";
+"guide.state.idle" = "L’agent existeix, però no té cap feina activa.";
+"guide.state.unread" = "Hi ha un resultat nou que encara no s’ha consultat.";
+"guide.state.thinking" = "Codex està treballant activament.";
+"guide.state.requiresInput" = "Codex espera la teva aprovació, resposta o una acció al navegador.";
+"guide.state.error" = "La tasca s’ha aturat a causa d’un error.";
 "menu.empty" = "No s’han trobat tasques de Codex";
 "menu.footer.quit" = "Surt d’AgentMicro";
 "menu.footer.refresh" = "Actualitza";

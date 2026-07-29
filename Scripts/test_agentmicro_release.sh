@@ -6,13 +6,26 @@ PACKAGE="$ROOT/Scripts/package_agentmicro.sh"
 SIGN="$ROOT/Scripts/sign-and-notarize-agentmicro.sh"
 APPCAST="$ROOT/Scripts/make_agentmicro_appcast.sh"
 RELEASE="$ROOT/Scripts/release_agentmicro.sh"
+BUILD_ICON="$ROOT/Scripts/build_agentmicro_icon.sh"
 WORKFLOW="$ROOT/.github/workflows/release-agentmicro.yml"
 
-for script in "$PACKAGE" "$SIGN" "$APPCAST" "$RELEASE"; do
+for script in "$PACKAGE" "$SIGN" "$APPCAST" "$RELEASE" "$BUILD_ICON"; do
   bash -n "$script"
 done
 
 /usr/bin/grep -Fq 'ARCH_LIST=( ${ARCHES:-} )' "$PACKAGE"
+/usr/bin/grep -Fq 'AgentMicro.icon' "$PACKAGE"
+/usr/bin/grep -Fq 'CFBundleIconFile' "$PACKAGE"
+/usr/bin/grep -Fq 'CFBundleIconName' "$PACKAGE"
+/usr/bin/grep -Fq 'CodexBar_AgentMicro.bundle' "$PACKAGE"
+/usr/bin/grep -Fq 'actool' "$BUILD_ICON"
+/usr/bin/grep -Fq 'Assets.car' "$BUILD_ICON"
+/usr/bin/grep -Fq '#9CD5FE' "$ROOT/AgentMicro.icon/Assets/thinking-primary.svg"
+/usr/bin/grep -Fq '#9CD5FE' "$ROOT/AgentMicro.icon/Assets/thinking-secondary.svg"
+/usr/bin/grep -Fq '#9BF396' "$ROOT/AgentMicro.icon/Assets/unread.svg"
+/usr/bin/grep -Fq '#FFD0B8' "$ROOT/AgentMicro.icon/Assets/requires-input.svg"
+/usr/bin/grep -Fq '#FF7373' "$ROOT/AgentMicro.icon/Assets/error.svg"
+/usr/bin/grep -Fq '#FFFFFF' "$ROOT/AgentMicro.icon/Assets/idle.svg"
 /usr/bin/grep -Fq 'AGENTMICRO_SIGNING=identity' "$SIGN"
 /usr/bin/grep -Fq 'xcrun notarytool submit' "$SIGN"
 /usr/bin/grep -Fq 'agentmicro-appcast.xml' "$APPCAST"

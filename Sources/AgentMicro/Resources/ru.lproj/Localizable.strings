@@ -4,6 +4,14 @@
 
 "language.system" = "Как в системе";
 "language.title" = "Язык";
+"guide.title" = "Руководство";
+"guide.subtitle" = "Каждый блок представляет недавнюю задачу Codex. Цвет показывает, что она делает и требуется ли ваше внимание.";
+"guide.dontShowAgain" = "Не показывать это руководство при следующем запуске";
+"guide.state.idle" = "Агент существует, но активной работы нет.";
+"guide.state.unread" = "Готов новый результат, который ещё не просмотрен.";
+"guide.state.thinking" = "Codex активно выполняет задачу.";
+"guide.state.requiresInput" = "Codex ожидает вашего одобрения, ответа или действия в браузере.";
+"guide.state.error" = "Задача остановлена из-за ошибки.";
 
 "menu.empty" = "Задачи Codex не найдены";
 "menu.footer.quit" = "Выйти из AgentMicro";

@@ -19,24 +19,25 @@ enum AgentMicroStatusIcon {
     static let animationFramesPerSlot = 9
     static let animationFrameInterval: TimeInterval = 0.07
     static let animationFrameCount = Self.maximumTrackedTasks * Self.animationFramesPerSlot
+    static let blockSize = NSSize(width: 5.5, height: 4)
+    static let horizontalStep: CGFloat = 6.5
+    static let verticalStep: CGFloat = 5.5
 
     static func statusItemImage(
         states: [CodexTaskState],
         animationPhase: Int?) -> NSImage
     {
         let image = NSImage(size: NSSize(width: 19, height: 19), flipped: false) { bounds in
-            let blockSize = NSSize(width: 4.5, height: 6)
-            let horizontalStep: CGFloat = 6
-            let verticalStep: CGFloat = 7.5
-            let originX = bounds.minX + 1.25
-            let originY = bounds.maxY - 1.75 - blockSize.height
+            let gridWidth = Self.blockSize.width + Self.horizontalStep * 2
+            let originX = bounds.midX - gridWidth / 2
+            let originY = bounds.midY + (Self.verticalStep - Self.blockSize.height) / 2
 
             for (index, slot) in Self.slotLayout.enumerated() {
                 let rect = NSRect(
-                    x: originX + CGFloat(slot.column) * horizontalStep,
-                    y: originY - CGFloat(slot.row) * verticalStep,
-                    width: blockSize.width,
-                    height: blockSize.height)
+                    x: originX + CGFloat(slot.column) * Self.horizontalStep,
+                    y: originY - CGFloat(slot.row) * Self.verticalStep,
+                    width: Self.blockSize.width,
+                    height: Self.blockSize.height)
                 let state = states.indices.contains(index) ? states[index] : nil
                 Self.drawBlock(
                     in: rect,
@@ -65,7 +66,7 @@ enum AgentMicroStatusIcon {
         state: CodexTaskState?,
         opacity: CGFloat)
     {
-        let path = NSBezierPath(roundedRect: rect, xRadius: 1.35, yRadius: 1.35)
+        let path = NSBezierPath(roundedRect: rect, xRadius: 1.2, yRadius: 1.2)
         let color = Self.fillColor(for: state)
         color.withAlphaComponent(color.alphaComponent * opacity).setFill()
         path.fill()

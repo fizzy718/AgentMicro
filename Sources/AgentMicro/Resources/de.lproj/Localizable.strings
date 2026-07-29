@@ -4,6 +4,14 @@
 
 "language.system" = "Systemsprache";
 "language.title" = "Sprache";
+"guide.title" = "Bedienungsanleitung";
+"guide.subtitle" = "Jeder Block steht für eine aktuelle Codex-Aufgabe. Die Farbe zeigt, was sie tut oder ob deine Aufmerksamkeit erforderlich ist.";
+"guide.dontShowAgain" = "Diese Anleitung beim nächsten Start nicht anzeigen";
+"guide.state.idle" = "Der Agent ist vorhanden, hat aber keine aktive Aufgabe.";
+"guide.state.unread" = "Ein neues Ergebnis ist bereit und wurde noch nicht angesehen.";
+"guide.state.thinking" = "Codex arbeitet aktiv an der Aufgabe.";
+"guide.state.requiresInput" = "Codex wartet auf deine Genehmigung, Antwort oder Browseraktion.";
+"guide.state.error" = "Die Aufgabe wurde aufgrund eines Fehlers angehalten.";
 
 "menu.empty" = "Keine Codex-Aufgaben gefunden";
 "menu.footer.quit" = "AgentMicro beenden";

@@ -4,6 +4,14 @@
 
 "language.system" = "Follow System";
 "language.title" = "Language";
+"guide.title" = "Usage Guide";
+"guide.subtitle" = "Each block represents one recent Codex task. Its color shows what the task is doing or whether it needs your attention.";
+"guide.dontShowAgain" = "Don’t show this guide on next launch";
+"guide.state.idle" = "The agent exists, but has no active work.";
+"guide.state.unread" = "A new result is ready and has not been viewed.";
+"guide.state.thinking" = "Codex is actively working.";
+"guide.state.requiresInput" = "Codex is waiting for your approval, answer, or browser action.";
+"guide.state.error" = "The task stopped because of an error.";
 
 "menu.empty" = "No Codex tasks found";
 "menu.footer.quit" = "Quit AgentMicro";

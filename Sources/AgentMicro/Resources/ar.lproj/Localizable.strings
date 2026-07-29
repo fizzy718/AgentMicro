@@ -4,6 +4,14 @@
 
 "language.system" = "اتباع النظام";
 "language.title" = "اللغة";
+"guide.title" = "دليل الاستخدام";
+"guide.subtitle" = "تمثل كل كتلة مهمة حديثة في Codex. يوضح لونها ما تفعله المهمة أو ما إذا كانت تحتاج إلى انتباهك.";
+"guide.dontShowAgain" = "عدم إظهار هذا الدليل عند التشغيل التالي";
+"guide.state.idle" = "الوكيل موجود، ولكن لا يوجد عمل نشط حاليًا.";
+"guide.state.unread" = "توجد نتيجة جديدة لم تتم مشاهدتها بعد.";
+"guide.state.thinking" = "يعالج Codex المهمة حاليًا.";
+"guide.state.requiresInput" = "ينتظر Codex موافقتك أو إجابتك أو إجراءً في المتصفح.";
+"guide.state.error" = "توقفت المهمة بسبب خطأ.";
 
 "menu.empty" = "لم يتم العثور على مهام Codex";
 "menu.footer.quit" = "إنهاء AgentMicro";

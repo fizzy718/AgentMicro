@@ -279,6 +279,7 @@ struct AgentMicroMenuModelTests {
         #expect(rows.map(\.title) == (0..<8).map { "project-\($0)" })
         #expect(rows.map(\.slotIndex) == Array(0..<8))
         #expect(AgentMicroStatusIcon.maximumTrackedTasks == 6)
+        #expect(AgentMicroStatusIcon.blockSize.width > AgentMicroStatusIcon.blockSize.height)
     }
 
     @Test
@@ -308,6 +309,7 @@ struct AgentMicroMenuModelTests {
         #expect(SessionWindowFocuser.codexThreadURL(for: desktop)?.absoluteString ==
             "codex://threads/019f-thread")
         #expect(SessionWindowFocuser.codexThreadURL(for: cli) == nil)
+        #expect(SessionWindowFocuser.codexApplicationBundleIdentifier == "com.openai.codex")
     }
 
     @Test

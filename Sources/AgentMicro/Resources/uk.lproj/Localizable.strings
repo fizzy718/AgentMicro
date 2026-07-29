@@ -3,6 +3,14 @@
 "accessibility.taskStatus" = "Стан завдань AgentMicro";
 "language.system" = "Як у системі";
 "language.title" = "Мова";
+"guide.title" = "Посібник";
+"guide.subtitle" = "Кожен блок відповідає нещодавньому завданню Codex. Колір показує, що воно робить і чи потребує вашої уваги.";
+"guide.dontShowAgain" = "Не показувати цей посібник під час наступного запуску";
+"guide.state.idle" = "Агент існує, але не має активної роботи.";
+"guide.state.unread" = "Новий результат готовий, але його ще не переглянуто.";
+"guide.state.thinking" = "Codex активно виконує завдання.";
+"guide.state.requiresInput" = "Codex очікує вашого схвалення, відповіді або дії в браузері.";
+"guide.state.error" = "Завдання зупинено через помилку.";
 "menu.empty" = "Завдання Codex не знайдено";
 "menu.footer.quit" = "Вийти з AgentMicro";
 "menu.footer.refresh" = "Оновити";

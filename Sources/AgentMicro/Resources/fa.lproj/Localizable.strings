@@ -3,6 +3,14 @@
 "accessibility.taskStatus" = "وضعیت وظایف AgentMicro";
 "language.system" = "پیروی از سیستم";
 "language.title" = "زبان";
+"guide.title" = "راهنمای استفاده";
+"guide.subtitle" = "هر بلوک نمایندهٔ یکی از وظایف اخیر Codex است. رنگ آن نشان می‌دهد وظیفه چه می‌کند یا به توجه شما نیاز دارد.";
+"guide.dontShowAgain" = "این راهنما در اجرای بعدی نمایش داده نشود";
+"guide.state.idle" = "عامل وجود دارد، اما کار فعالی ندارد.";
+"guide.state.unread" = "نتیجهٔ جدیدی آماده است و هنوز دیده نشده است.";
+"guide.state.thinking" = "Codex در حال انجام وظیفه است.";
+"guide.state.requiresInput" = "Codex منتظر تأیید، پاسخ یا اقدام شما در مرورگر است.";
+"guide.state.error" = "وظیفه به‌دلیل خطا متوقف شد.";
 "menu.empty" = "هیچ وظیفه Codex پیدا نشد";
 "menu.footer.quit" = "خروج از AgentMicro";
 "menu.footer.refresh" = "تازه‌سازی";

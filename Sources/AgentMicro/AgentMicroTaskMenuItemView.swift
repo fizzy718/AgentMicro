@@ -205,7 +205,10 @@ final class AgentMicroTaskMenuItemView: NSView {
     override func mouseUp(with event: NSEvent) {
         guard self.bounds.contains(self.convert(event.locationInWindow, from: nil)) else { return }
         self.enclosingMenuItem?.menu?.cancelTracking()
-        self.onSelect()
+        let onSelect = self.onSelect
+        DispatchQueue.main.async {
+            onSelect()
+        }
     }
 
     private func setHovered(_ hovered: Bool) {

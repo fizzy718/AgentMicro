@@ -38,6 +38,32 @@ struct AgentMicroSettingsTests {
         #expect(settings.taskDisplayLimit == 6)
         #expect(settings.showRecentlyCompleted)
         #expect(!settings.launchAtLogin)
+        #expect(settings.shouldPresentGuideOnLaunch)
+        #expect(!settings.showGuideOnLaunch)
+        #expect(AgentMicroSettingsPane.allCases.first == .guide)
+    }
+
+    @Test
+    func `guide opens once by default and can be requested on every launch`() throws {
+        let (defaults, suiteName) = try Self.makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let first = AgentMicroSettings(
+            defaults: defaults,
+            launchAtLoginStatus: { false },
+            updateLaunchAtLogin: { _ in })
+
+        #expect(first.shouldPresentGuideOnLaunch)
+        first.markGuidePresented()
+        #expect(!first.shouldPresentGuideOnLaunch)
+
+        first.showGuideOnLaunch = true
+        let reloaded = AgentMicroSettings(
+            defaults: defaults,
+            launchAtLoginStatus: { false },
+            updateLaunchAtLogin: { _ in })
+        #expect(reloaded.shouldPresentGuideOnLaunch)
+        #expect(reloaded.hasPresentedGuide)
+        #expect(reloaded.showGuideOnLaunch)
     }
 
     @Test

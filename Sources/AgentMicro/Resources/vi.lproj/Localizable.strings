@@ -3,6 +3,14 @@
 "accessibility.taskStatus" = "Trạng thái tác vụ AgentMicro";
 "language.system" = "Theo hệ thống";
 "language.title" = "Ngôn ngữ";
+"guide.title" = "Hướng dẫn sử dụng";
+"guide.subtitle" = "Mỗi khối đại diện cho một tác vụ Codex gần đây. Màu sắc cho biết tác vụ đang làm gì hoặc có cần bạn chú ý hay không.";
+"guide.dontShowAgain" = "Không hiển thị hướng dẫn này ở lần khởi động tiếp theo";
+"guide.state.idle" = "Agent đang tồn tại nhưng hiện không có công việc hoạt động.";
+"guide.state.unread" = "Có kết quả mới và bạn chưa xem.";
+"guide.state.thinking" = "Codex đang xử lý tác vụ.";
+"guide.state.requiresInput" = "Codex đang chờ bạn phê duyệt, trả lời hoặc thao tác trong trình duyệt.";
+"guide.state.error" = "Tác vụ đã dừng do lỗi.";
 "menu.empty" = "Không tìm thấy tác vụ Codex";
 "menu.footer.quit" = "Thoát AgentMicro";
 "menu.footer.refresh" = "Làm mới";

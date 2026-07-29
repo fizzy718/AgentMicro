@@ -175,6 +175,8 @@ final class AgentMicroSettings {
     private enum Key {
         static let appLanguage = AgentMicroLocalization.appLanguageDefaultsKey
         static let autoUpdateEnabled = "agentMicro.autoUpdateEnabled"
+        static let hasPresentedGuide = "agentMicro.hasPresentedGuide"
+        static let showGuideOnLaunch = "agentMicro.showGuideOnLaunch"
         static let taskNameMode = "agentMicro.taskNameMode"
         static let showRecentlyCompleted = "agentMicro.showRecentlyCompleted"
         static let taskDisplayLimit = "agentMicro.taskDisplayLimit"
@@ -195,6 +197,13 @@ final class AgentMicroSettings {
     var autoUpdateEnabled: Bool {
         didSet {
             self.defaults.set(self.autoUpdateEnabled, forKey: Key.autoUpdateEnabled)
+            self.notifyChange()
+        }
+    }
+
+    var showGuideOnLaunch: Bool {
+        didSet {
+            self.defaults.set(self.showGuideOnLaunch, forKey: Key.showGuideOnLaunch)
             self.notifyChange()
         }
     }
@@ -229,6 +238,7 @@ final class AgentMicroSettings {
 
     private(set) var launchAtLogin: Bool
     private(set) var launchAtLoginError: String?
+    private(set) var hasPresentedGuide: Bool
 
     @ObservationIgnored
     var onChange: (() -> Void)?
@@ -258,6 +268,7 @@ final class AgentMicroSettings {
         self.appLanguage = defaults.string(forKey: Key.appLanguage)
             .flatMap(AgentMicroAppLanguage.init(rawValue:)) ?? .system
         self.autoUpdateEnabled = defaults.object(forKey: Key.autoUpdateEnabled) as? Bool ?? true
+        self.showGuideOnLaunch = defaults.object(forKey: Key.showGuideOnLaunch) as? Bool ?? false
         self.taskNameMode = defaults.string(forKey: Key.taskNameMode)
             .flatMap(AgentMicroTaskNameMode.init(rawValue:)) ?? .taskTitleAndProject
         self.showRecentlyCompleted = defaults.object(forKey: Key.showRecentlyCompleted) as? Bool ?? true
@@ -269,6 +280,11 @@ final class AgentMicroSettings {
         self.readSessionActivity = defaults.dictionary(forKey: Key.readSessionActivity)?
             .compactMapValues { ($0 as? NSNumber)?.doubleValue } ?? [:]
         self.launchAtLogin = launchAtLoginStatus()
+        self.hasPresentedGuide = defaults.bool(forKey: Key.hasPresentedGuide)
+    }
+
+    var shouldPresentGuideOnLaunch: Bool {
+        !self.hasPresentedGuide || self.showGuideOnLaunch
     }
 
     var preferences: AgentMicroPreferences {
@@ -295,6 +311,13 @@ final class AgentMicroSettings {
     func refreshLaunchAtLoginStatus() {
         self.launchAtLogin = self.launchAtLoginStatus()
         self.launchAtLoginError = nil
+    }
+
+    func markGuidePresented() {
+        guard !self.hasPresentedGuide else { return }
+        self.hasPresentedGuide = true
+        self.defaults.set(true, forKey: Key.hasPresentedGuide)
+        self.notifyChange()
     }
 
     func readSessionKeys(for tasks: [CodexTaskObservation]) -> Set<String> {

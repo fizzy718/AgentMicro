@@ -4,6 +4,14 @@
 
 "language.system" = "システムに従う";
 "language.title" = "言語";
+"guide.title" = "使い方ガイド";
+"guide.subtitle" = "各ブロックは最近の Codex タスクを表します。色でタスクの動作や、対応が必要かどうかが分かります。";
+"guide.dontShowAgain" = "次回起動時にこのガイドを表示しない";
+"guide.state.idle" = "Agent は存在しますが、実行中の作業はありません。";
+"guide.state.unread" = "新しい結果があり、まだ確認されていません。";
+"guide.state.thinking" = "Codex がタスクを処理しています。";
+"guide.state.requiresInput" = "Codex が承認、回答、またはブラウザ操作を待っています。";
+"guide.state.error" = "エラーによりタスクが停止しました。";
 
 "menu.empty" = "Codex タスクが見つかりません";
 "menu.footer.quit" = "AgentMicro を終了";

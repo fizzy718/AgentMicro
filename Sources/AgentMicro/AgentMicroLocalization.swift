@@ -2,6 +2,41 @@ import Foundation
 
 enum AgentMicroLocalization {
     static let appLanguageDefaultsKey = "agentMicro.appLanguage"
+    private static let resourceBundleName = "CodexBar_AgentMicro.bundle"
+    private static let resourceBundle: Bundle = {
+        var candidates: [URL] = [
+            Bundle.main.bundleURL.appendingPathComponent(Self.resourceBundleName),
+        ]
+        if let resourceURL = Bundle.main.resourceURL {
+            candidates.append(resourceURL.appendingPathComponent(Self.resourceBundleName))
+        }
+        if var directory = Bundle.main.executableURL?.deletingLastPathComponent() {
+            for _ in 0..<4 {
+                candidates.append(directory.appendingPathComponent(Self.resourceBundleName))
+                directory.deleteLastPathComponent()
+            }
+        }
+        let workingDirectory = URL(
+            fileURLWithPath: FileManager.default.currentDirectoryPath,
+            isDirectory: true)
+        for architecture in ["arm64-apple-macosx", "x86_64-apple-macosx"] {
+            for configuration in ["debug", "release"] {
+                candidates.append(
+                    workingDirectory
+                        .appendingPathComponent(".build")
+                        .appendingPathComponent(architecture)
+                        .appendingPathComponent(configuration)
+                        .appendingPathComponent(Self.resourceBundleName))
+            }
+        }
+        for candidate in candidates {
+            if let bundle = Bundle(url: candidate) {
+                return bundle
+            }
+        }
+        return Bundle.main
+    }()
+
     static let supportedLanguageIdentifiers = AgentMicroAppLanguage.allCases
         .filter { $0 != .system }
         .map(\.rawValue)
@@ -34,13 +69,13 @@ enum AgentMicroLocalization {
         let selected = self.resolvedAppLanguage()
         guard selected.isEmpty else { return selected }
         return Bundle.preferredLocalizations(
-            from: Bundle.module.localizations.filter { $0 != "Base" },
+            from: self.resourceBundle.localizations.filter { $0 != "Base" },
             forPreferences: Locale.preferredLanguages).first ?? "en"
     }
 
     static func localizedResourceURL(for localeIdentifier: String) -> URL? {
         for candidate in [localeIdentifier, localeIdentifier.lowercased()] {
-            if let url = Bundle.module.url(forResource: candidate, withExtension: "lproj") {
+            if let url = self.resourceBundle.url(forResource: candidate, withExtension: "lproj") {
                 return url
             }
         }
@@ -54,7 +89,7 @@ enum AgentMicroLocalization {
     private static func bundle(for localeIdentifier: String) -> Bundle {
         let resolvedIdentifier = if localeIdentifier.isEmpty {
             Bundle.preferredLocalizations(
-                from: Bundle.module.localizations.filter { $0 != "Base" },
+                from: self.resourceBundle.localizations.filter { $0 != "Base" },
                 forPreferences: Locale.preferredLanguages).first ?? "en"
         } else {
             localeIdentifier
@@ -64,10 +99,10 @@ enum AgentMicroLocalization {
         {
             return localizedBundle
         }
-        guard let englishPath = Bundle.module.path(forResource: "en", ofType: "lproj"),
+        guard let englishPath = self.resourceBundle.path(forResource: "en", ofType: "lproj"),
               let englishBundle = Bundle(path: englishPath)
         else {
-            return Bundle.module
+            return self.resourceBundle
         }
         return englishBundle
     }

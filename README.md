@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/agentmicro-logo.svg" width="128" height="128" alt="AgentMicro logo">
+
 # AgentMicro
 
 ### Live Codex task status, in your macOS menu bar
@@ -62,8 +64,10 @@ Insufficient evidence is represented internally as `unknown`, but displayed as i
 - Shows a lightning badge when the task uses Codex fast mode.
 - Displays 1–20 recent tasks, configurable in Settings.
 - Offers task-title, project-only, and combined display modes.
+- Uses paged settings with a first-launch guide to all five state colors.
 - Supports launch at login and recently completed task retention.
 - Follows the macOS language by default, with 23 selectable interface languages.
+- Uses an adaptive six-layer application icon with Default, Dark, Clear, and Tinted system appearances.
 - Supports an independent Sparkle update feed for signed releases.
 
 ## Install
@@ -136,9 +140,9 @@ make test
 ```
 
 Product decisions and implementation constraints are documented in the
-[AgentMicro product docs](docs/agentmicro/README.zh-CN.md). Release signing and
+[AgentMicro product docs](docs/agentmicro/README.md). Release signing and
 Sparkle setup are documented in the
-[AgentMicro release guide](docs/agentmicro/RELEASING.zh-CN.md).
+[AgentMicro release guide](docs/agentmicro/RELEASING.md).
 
 ## Contributing
 
@@ -148,7 +152,10 @@ Never attach real Codex prompts, source code, credentials, or unredacted rollout
 
 ## Community
 
-Join the AgentMicro WeChat group to discuss usage, state detection, translations, and development.
+Join the AgentMicro community to discuss usage, state detection, translations, and development:
+
+- [Telegram discussion group](https://t.me/+844ZOEqapkI5OTBh)
+- WeChat group: scan the QR code below.
 
 <p align="center">
   <img src="docs/community/agentmicro-wechat-group.jpg" width="360" alt="QR code for the AgentMicro WeChat community group">

@@ -3,6 +3,14 @@
 "accessibility.taskStatus" = "AgentMicro 任務狀態";
 "language.system" = "依照系統";
 "language.title" = "語言";
+"guide.title" = "使用指南";
+"guide.subtitle" = "選單列中的每個色塊代表一個最近的 Codex 任務。顏色表示任務正在進行的工作，或是否需要你的注意。";
+"guide.dontShowAgain" = "下次啟動時不再顯示此指南";
+"guide.state.idle" = "Agent 存在，但目前沒有進行中的工作。";
+"guide.state.unread" = "已有新結果，尚未查看。";
+"guide.state.thinking" = "Codex 正在處理任務。";
+"guide.state.requiresInput" = "Codex 正在等待你的批准、回答或瀏覽器操作。";
+"guide.state.error" = "任務因錯誤而停止。";
 "menu.empty" = "找不到 Codex 任務";
 "menu.footer.quit" = "結束 AgentMicro";
 "menu.footer.refresh" = "重新整理";

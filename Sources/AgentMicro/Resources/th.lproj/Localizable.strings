@@ -3,6 +3,14 @@
 "accessibility.taskStatus" = "สถานะงาน AgentMicro";
 "language.system" = "ตามระบบ";
 "language.title" = "ภาษา";
+"guide.title" = "คู่มือการใช้งาน";
+"guide.subtitle" = "แต่ละบล็อกแทนงาน Codex ล่าสุดหนึ่งงาน สีจะแสดงว่างานกำลังทำอะไรหรือต้องการให้คุณดำเนินการหรือไม่";
+"guide.dontShowAgain" = "ไม่แสดงคู่มือนี้ในการเปิดครั้งถัดไป";
+"guide.state.idle" = "มี Agent อยู่ แต่ขณะนี้ไม่มีงานที่กำลังทำ";
+"guide.state.unread" = "มีผลลัพธ์ใหม่และยังไม่ได้เปิดดู";
+"guide.state.thinking" = "Codex กำลังประมวลผลงาน";
+"guide.state.requiresInput" = "Codex กำลังรอการอนุมัติ คำตอบ หรือการดำเนินการในเบราว์เซอร์จากคุณ";
+"guide.state.error" = "งานหยุดเนื่องจากข้อผิดพลาด";
 "menu.empty" = "ไม่พบงาน Codex";
 "menu.footer.quit" = "ออกจาก AgentMicro";
 "menu.footer.refresh" = "รีเฟรช";

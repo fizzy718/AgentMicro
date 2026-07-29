@@ -3,6 +3,14 @@
 "accessibility.taskStatus" = "AgentMicro-taakstatus";
 "language.system" = "Systeem volgen";
 "language.title" = "Taal";
+"guide.title" = "Gebruikershandleiding";
+"guide.subtitle" = "Elk blok staat voor een recente Codex-taak. De kleur toont wat de taak doet en of je aandacht nodig is.";
+"guide.dontShowAgain" = "Deze handleiding niet tonen bij de volgende start";
+"guide.state.idle" = "De agent bestaat, maar heeft geen actieve taak.";
+"guide.state.unread" = "Er is een nieuw resultaat dat nog niet is bekeken.";
+"guide.state.thinking" = "Codex werkt actief aan de taak.";
+"guide.state.requiresInput" = "Codex wacht op je goedkeuring, antwoord of browseractie.";
+"guide.state.error" = "De taak is gestopt vanwege een fout.";
 "menu.empty" = "Geen Codex-taken gevonden";
 "menu.footer.quit" = "Stop AgentMicro";
 "menu.footer.refresh" = "Vernieuwen";

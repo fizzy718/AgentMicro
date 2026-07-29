@@ -3,6 +3,14 @@
 "accessibility.taskStatus" = "AgentMicro-uppgiftsstatus";
 "language.system" = "Följ systemet";
 "language.title" = "Språk";
+"guide.title" = "Användarguide";
+"guide.subtitle" = "Varje block representerar en nylig Codex-uppgift. Färgen visar vad uppgiften gör eller om den behöver din uppmärksamhet.";
+"guide.dontShowAgain" = "Visa inte den här guiden vid nästa start";
+"guide.state.idle" = "Agenten finns, men har inget aktivt arbete.";
+"guide.state.unread" = "Ett nytt resultat är klart och har inte visats ännu.";
+"guide.state.thinking" = "Codex arbetar aktivt med uppgiften.";
+"guide.state.requiresInput" = "Codex väntar på ditt godkännande, svar eller en åtgärd i webbläsaren.";
+"guide.state.error" = "Uppgiften stoppades på grund av ett fel.";
 "menu.empty" = "Inga Codex-uppgifter hittades";
 "menu.footer.quit" = "Avsluta AgentMicro";
 "menu.footer.refresh" = "Uppdatera";

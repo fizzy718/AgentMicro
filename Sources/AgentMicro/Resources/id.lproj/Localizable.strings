@@ -3,6 +3,14 @@
 "accessibility.taskStatus" = "Status tugas AgentMicro";
 "language.system" = "Ikuti sistem";
 "language.title" = "Bahasa";
+"guide.title" = "Panduan Penggunaan";
+"guide.subtitle" = "Setiap blok mewakili satu tugas Codex terbaru. Warnanya menunjukkan apa yang sedang dikerjakan atau apakah tugas memerlukan perhatian Anda.";
+"guide.dontShowAgain" = "Jangan tampilkan panduan ini saat peluncuran berikutnya";
+"guide.state.idle" = "Agent tersedia, tetapi tidak ada pekerjaan aktif.";
+"guide.state.unread" = "Hasil baru tersedia dan belum dilihat.";
+"guide.state.thinking" = "Codex sedang mengerjakan tugas.";
+"guide.state.requiresInput" = "Codex menunggu persetujuan, jawaban, atau tindakan Anda di browser.";
+"guide.state.error" = "Tugas berhenti karena kesalahan.";
 "menu.empty" = "Tugas Codex tidak ditemukan";
 "menu.footer.quit" = "Keluar dari AgentMicro";
 "menu.footer.refresh" = "Segarkan";

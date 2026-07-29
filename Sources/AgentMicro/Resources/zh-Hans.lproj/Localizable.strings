@@ -4,6 +4,14 @@
 
 "language.system" = "跟随系统";
 "language.title" = "语言";
+"guide.title" = "使用指南";
+"guide.subtitle" = "菜单栏里的每个色块代表一个最近的 Codex 任务。颜色表示任务当前在做什么，或是否需要你的关注。";
+"guide.dontShowAgain" = "下次启动不再显示此指南";
+"guide.state.idle" = "Agent 存在，但当前没有活动任务。";
+"guide.state.unread" = "已产生新结果，尚未查看。";
+"guide.state.thinking" = "Codex 正在处理任务。";
+"guide.state.requiresInput" = "Codex 正等待你的批准、回答或浏览器操作。";
+"guide.state.error" = "任务因错误而停止。";
 
 "menu.empty" = "未找到 Codex 任务";
 "menu.footer.quit" = "退出 AgentMicro";

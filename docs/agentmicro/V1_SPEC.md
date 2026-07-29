@@ -1,0 +1,192 @@
+# AgentMicro V1 Specification
+
+## Version Name
+
+Codex Task Pulse
+
+## Goal
+
+Give macOS users an honest, glanceable view of concurrent Codex task state and a fast path back to the correct Desktop conversation, without uploading task content or controlling Codex.
+
+## Supported Scope
+
+### Required
+
+- Codex Desktop sessions with local rollout data.
+- Codex CLI sessions discovered from known process and session locations.
+- Multiple concurrent tasks, including tasks in the same project.
+- macOS 14 or later on Apple Silicon and Intel.
+
+### Best Effort
+
+- IDE-launched Codex CLI processes.
+- CLI sessions with ambiguous PID ownership.
+- Local Codex metadata formats that are not documented public APIs.
+
+### Excluded
+
+- Claude, OpenCode, and other agents.
+- Token, spend, and account limits.
+- Task approval, answering, stopping, retrying, or resuming from AgentMicro.
+- Remote synchronization and transcript browsing.
+
+## Task Identity
+
+A visible task is an observed Codex session, identified by host and session ID. Desktop tasks may have no independent PID; rollout lifecycle is authoritative enough to keep them visible. AgentMicro does not assign a generic app-server PID to every Desktop task.
+
+Normal subagents are hidden. A guardian/subagent may only help recover a still-active parent rollout and is not shown as its own user task.
+
+When multiple CLI processes share a directory and ownership is ambiguous, AgentMicro keeps rollout tasks separate but does not guess which PID belongs to which task.
+
+## Visible State Model
+
+| State | Color | Meaning |
+| --- | --- | --- |
+| Idle | `#FFFFFF` | The task exists but has no active work. |
+| Unread | `#9BF396` | A new completed result has not been viewed. |
+| Thinking | `#9CD5FE` | The current turn is actively running. |
+| Needs input | `#FFD0B8` | Codex is blocked on approval, an answer, or an interactive browser action. |
+| Error | `#FF7373` | The current turn failed or reached a blocking error. |
+
+`unknown` is allowed internally when evidence is incomplete, but it uses the idle presentation instead of introducing a sixth color.
+
+## State Reduction
+
+- Explicit turn start, active reasoning, pending tool calls, and tool execution can keep a task thinking.
+- Tool output closes its matching tool call even when unrelated malformed lines appear.
+- A final answer ends the active turn immediately.
+- A rate-limit or execution failure enters error when it blocks the turn.
+- An explicit approval request, direct question, or required browser handoff enters needs-input.
+- Merely mentioning a browser or a possible action is not enough.
+- Needs-input remains latched until the user resumes the task.
+- A recent file modification timestamp alone is not proof of thinking.
+- Partial JSONL lines are held until complete; truncation resets the incremental cursor.
+- Initial scans of large rollouts start from a bounded complete-line tail and then continue incrementally.
+
+Completed Desktop unread state follows Codex’s locally persisted unread-thread set. If that source is missing or malformed, AgentMicro fails closed to local read records. Missing data must never be interpreted as an empty unread set.
+
+## Titles and Projects
+
+Display modes:
+
+1. Task title and project — default.
+2. Task title only.
+3. Project name only.
+
+Title resolution prefers explicit Codex metadata and safe fallbacks. The privacy-oriented project-only mode never reveals the task title.
+
+## Current Action
+
+Current action is an internal diagnostic aid derived from bounded rollout events. V1 does not show verbose reasoning or tool payloads in the menu.
+
+## Menu
+
+- Base width follows the compact CodexBar menu, approximately 310 points.
+- Header: `AgentMicro — N active` when at least one task is active; otherwise `AgentMicro`.
+- Working tasks appear first.
+- Within the same activity group, the most recently changed tasks appear first.
+- The menu displays the configured 1–20 most recent tasks; default is 6.
+- Each row shows:
+  - One rounded state block on the left.
+  - Task title.
+  - Project on the second line when the selected naming mode requires it.
+  - Current-turn duration on the right.
+  - A lightning badge after the duration when Codex fast mode is enabled.
+- There is no separate unread dot on the right.
+- Hover highlighting belongs to only one row and text must not become accidentally selected.
+- Clicking a Desktop row opens `codex://threads/<session-id>`, with window focus and app activation as fallback.
+- Footer actions: Refresh, Settings, optional Check for Updates, and Quit.
+
+The duration is the current turn’s execution time, not time since last activity. It updates every second while a working task is visible in an open menu. Stopped tasks keep a frozen duration.
+
+## Menu Bar Icon
+
+- Six borderless horizontal rounded rectangles in a 2×3 grid.
+- The six blocks mirror the same first six tasks shown by menu ordering, even if the menu limit is greater.
+- Empty slots use a neutral system color.
+- Each block uses the same state-color source as its menu row.
+- While at least one task is working, colors breathe one slot at a time around the existing loop.
+- The icon is static when nothing is working or Reduce Motion is enabled.
+- No numeric badge is attached to the icon.
+
+## Application Icon
+
+- Independent AgentMicro branding; no CodexBar brand asset is reused.
+- A light cool-gray background in the default appearance, with a system-rendered dark background in Dark Mode.
+- A 2×3 grid of horizontal rounded rectangles using only the five official state colors.
+- Each rectangle is an independent vector layer in the Icon Composer document.
+- Xcode's asset compiler produces an `Assets.car` containing Aqua, Dark Aqua, and tintable six-layer icon groups.
+- macOS derives Clear and Tinted appearances from the tintable group.
+- The package also includes an ICNS fallback for macOS 14+ compatibility.
+
+## Return to Task
+
+Desktop deep links are preferred because they identify the exact thread. If the deep link cannot be opened, AgentMicro attempts known window matching and application activation. CLI terminal routing remains best effort and must not select an unrelated session.
+
+## Refresh
+
+- Watch known Codex session directories, discovered rollout files, and Desktop unread state.
+- Debounce file changes by approximately 200 milliseconds.
+- Poll every 2 seconds while Codex Desktop is running, a task is working, or a task has an independent process.
+- Poll every 5 seconds otherwise.
+- Opening the menu, clicking a task, and known rollout changes trigger immediate reconciliation plus a bounded burst.
+- Menu duration updates use a separate 1-second text timer and do not rescan sessions.
+- Scans are coalesced; a change during a scan requests one follow-up scan.
+
+## Settings
+
+The settings window uses a native CodexBar-style sidebar in this fixed order:
+
+1. Guide.
+2. General.
+3. Task Display.
+4. Updates.
+
+### Guide
+
+The Guide explains the complete white, green, blue, orange, and red state semantics. It opens automatically on first launch. A bottom-right checkbox labeled “Don’t show this guide on next launch” is checked by default, so the Guide automatically appears only once. If the user clears it, the Guide opens on every later launch. The preference controls only automatic presentation; the Guide always remains in the sidebar.
+
+### General
+
+- Interface language: Follow System by default, or one of 23 languages aligned with CodexBar.
+- Launch AgentMicro at login.
+- Local-first privacy explanation.
+
+### Task Display
+
+- Naming mode.
+- Task count from 1 to 20, with direct numeric entry and stepper.
+- Show recently completed tasks; enabled by default with a fixed 24-hour retention.
+
+### Updates
+
+- Automatically check for updates; enabled by default.
+- The preference remains editable and persistent even in a development build where Sparkle is unavailable.
+- Show `version (build)`.
+- Manual Check for Updates is enabled only when a signed updater is available.
+- Explain whether feed, public key, or Developer ID signing is missing.
+
+Language overrides are stored only in AgentMicro defaults and never modify global `AppleLanguages`. Arabic and Persian use right-to-left layout. Every locale must contain the same key set as English.
+
+## Packaging and Updates
+
+- Produce a universal arm64/x86_64 app.
+- Place `CodexBar_AgentMicro.bundle` in `Contents/Resources` and resolve it without `Bundle.module` fatal traps.
+- Include the compiled Icon Composer `Assets.car`, `AgentMicro.icns` fallback, and `CFBundleIconName`.
+- Embed Sparkle only in packaged builds.
+- Use an AgentMicro-specific bundle ID, feed, Ed25519 key, Developer ID signature, and notarization.
+- Development builds remain ad-hoc signed and cannot perform online updates.
+
+## Acceptance Criteria
+
+- New local events normally appear within 3 seconds.
+- Two concurrent tasks remain separate and sort correctly.
+- A viewed Desktop completion changes from green to white promptly.
+- Questions, approvals, and explicit browser handoffs enter orange and clear only after user continuation.
+- Final answers stop blue state without waiting for process exit.
+- Working duration advances every second; stopped duration does not.
+- The first launch opens the localized Guide with all five colors and the default checked suppression option.
+- Every selectable language has a complete catalog.
+- The packaged app installs in `/Applications`, launches without a resource crash, shows the adaptive icon, and reports the correct version.
+- Signed releases pass code-signing, Gatekeeper, notarization, Sparkle signature, and cross-version update checks.
+- Offline operation remains functional except for update retrieval.

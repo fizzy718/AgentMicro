@@ -11,6 +11,8 @@ public enum SessionFocusResult: Equatable, Sendable {
 
 @MainActor
 public enum SessionWindowFocuser {
+    public static let codexApplicationBundleIdentifier = "com.openai.codex"
+
     private static let knownBundleIdentifiers: Set<String> = [
         "com.mitchellh.ghostty",
         "com.googlecode.iterm2",
@@ -28,7 +30,7 @@ public enum SessionWindowFocuser {
     @discardableResult
     public static func focus(_ session: AgentSession, promptForAccessibility: Bool = true) -> SessionFocusResult {
         if let url = self.codexThreadURL(for: session),
-           NSWorkspace.shared.open(url)
+           self.openCodexThreadURL(url)
         {
             return .focused
         }
@@ -61,6 +63,18 @@ public enum SessionWindowFocuser {
         return components.url
     }
 
+    private static func openCodexThreadURL(_ url: URL) -> Bool {
+        guard let handlerURL = NSWorkspace.shared.urlForApplication(toOpen: url),
+              Bundle(url: handlerURL)?.bundleIdentifier == self.codexApplicationBundleIdentifier
+        else { return false }
+
+        // Let Launch Services dispatch the custom scheme. Passing this URL to
+        // open(_:withApplicationAt:configuration:) gives the receiver document-open
+        // semantics and can make Codex process the same request as both a deep link
+        // and a local file.
+        return NSWorkspace.shared.open(url)
+    }
+
     private static func application(for session: AgentSession) -> NSRunningApplication? {
         if let pid = session.pid {
             var currentPID = pid
@@ -85,7 +99,7 @@ public enum SessionWindowFocuser {
 
         let bundleIdentifier: String? = switch (session.provider, session.source) {
         case (.claude, .desktopApp): "com.anthropic.claudefordesktop"
-        case (.codex, .desktopApp): "com.openai.codex"
+        case (.codex, .desktopApp): self.codexApplicationBundleIdentifier
         default: nil
         }
         guard let bundleIdentifier else { return nil }

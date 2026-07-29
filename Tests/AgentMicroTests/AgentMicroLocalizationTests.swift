@@ -9,6 +9,9 @@ struct AgentMicroLocalizationTests {
         #expect(
             AgentMicroLocalization.text("settings.taskDisplay", localeIdentifier: "en") ==
                 "Task display")
+        #expect(
+            AgentMicroLocalization.text("guide.title", localeIdentifier: "en") ==
+                "Usage Guide")
     }
 
     @Test
@@ -17,6 +20,9 @@ struct AgentMicroLocalizationTests {
         #expect(
             AgentMicroLocalization.text("settings.taskDisplay", localeIdentifier: "zh-Hans") ==
                 "任务显示")
+        #expect(
+            AgentMicroLocalization.text("guide.title", localeIdentifier: "zh-Hans") ==
+                "使用指南")
     }
 
     @Test

@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/agentmicro-logo.svg" width="128" height="128" alt="AgentMicro logo">
+
 # AgentMicro
 
 ### macOS 菜单栏里的 Codex 实时任务状态
@@ -64,6 +66,7 @@ AgentMicro 对外只使用五种状态：
 - 支持任务标题、仅项目名、任务标题与项目名三种显示方式。
 - 支持开机启动和最近完成任务保留。
 - 默认跟随 macOS 系统语言，并提供 23 种界面语言。
+- 应用图标采用六层矢量结构，支持系统 Default、Dark、Clear 和 Tinted 外观。
 - 正式签名版本支持独立的 Sparkle 在线更新源。
 
 ## 安装
@@ -133,8 +136,9 @@ make check
 make test
 ```
 
-产品决策和实现约束见 [AgentMicro 产品文档](docs/agentmicro/README.zh-CN.md)，签名与在线
-更新流程见 [AgentMicro 发布指南](docs/agentmicro/RELEASING.zh-CN.md)。
+产品决策和实现约束见英文 [AgentMicro 产品文档](docs/agentmicro/README.md)，签名与在线
+更新流程见英文 [AgentMicro 发布指南](docs/agentmicro/RELEASING.md)。项目只保留本页
+作为中文 README，内部产品与工程文档统一使用英文维护。
 
 ## 参与贡献
 
@@ -144,7 +148,10 @@ make test
 
 ## 交流群
 
-欢迎加入 AgentMicro 微信交流群，讨论使用体验、状态识别、翻译和开发。
+欢迎加入 AgentMicro 社区，讨论使用体验、状态识别、翻译和开发：
+
+- [Telegram 讨论群](https://t.me/+844ZOEqapkI5OTBh)
+- 微信群：扫描下方二维码。
 
 <p align="center">
   <img src="docs/community/agentmicro-wechat-group.jpg" width="360" alt="AgentMicro 微信交流群二维码">
