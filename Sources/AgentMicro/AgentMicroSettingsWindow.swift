@@ -1,6 +1,23 @@
 import AppKit
 import SwiftUI
 
+enum AgentMicroVersionDisplay {
+    static func value(shortVersion: String?, buildNumber: String?) -> String {
+        let version = shortVersion?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let build = buildNumber?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return switch (version?.isEmpty == false ? version : nil, build?.isEmpty == false ? build : nil) {
+        case let (.some(version), .some(build)):
+            "\(version) (\(build))"
+        case let (.some(version), .none):
+            version
+        case let (.none, .some(build)):
+            "(\(build))"
+        case (.none, .none):
+            "–"
+        }
+    }
+}
+
 @MainActor
 final class AgentMicroSettingsWindowController: NSWindowController, NSWindowDelegate {
     init(settings: AgentMicroSettings, updater: AgentMicroUpdaterProviding) {
@@ -37,7 +54,11 @@ private struct AgentMicroSettingsView: View {
     let updater: AgentMicroUpdaterProviding
 
     private var version: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–"
+        AgentMicroVersionDisplay.value(
+            shortVersion: Bundle.main.object(
+                forInfoDictionaryKey: "CFBundleShortVersionString") as? String,
+            buildNumber: Bundle.main.object(
+                forInfoDictionaryKey: "CFBundleVersion") as? String)
     }
 
     var body: some View {
@@ -97,21 +118,23 @@ private struct AgentMicroSettingsView: View {
             }
 
             Section(AgentMicroLocalization.text("updates.section")) {
-                if self.updater.isAvailable {
-                    Toggle(
-                        AgentMicroLocalization.text("updates.automatic"),
-                        isOn: self.$settings.autoUpdateEnabled)
-                    LabeledContent(
-                        AgentMicroLocalization.text("updates.version", arguments: self.version))
-                    {
-                        Button(AgentMicroLocalization.text("updates.check")) {
-                            self.updater.checkForUpdates(nil)
-                        }
+                Toggle(
+                    AgentMicroLocalization.text("updates.automatic"),
+                    isOn: self.$settings.autoUpdateEnabled)
+                    .disabled(!self.updater.isAvailable)
+                LabeledContent(
+                    AgentMicroLocalization.text("updates.version", arguments: self.version))
+                {
+                    Button(AgentMicroLocalization.text("updates.check")) {
+                        self.updater.checkForUpdates(nil)
                     }
-                } else {
+                    .disabled(!self.updater.isAvailable)
+                }
+                if !self.updater.isAvailable {
                     Text(
                         self.updater.unavailableReason?.localizedDescription() ??
                             AgentMicroLocalization.text("updates.unavailable.build"))
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }

@@ -142,6 +142,16 @@ make test
 
 请勿在公开 Issue 中附加真实 Codex Prompt、源代码、凭据或未经脱敏的 rollout 文件。
 
+## 交流群
+
+欢迎加入 AgentMicro 微信交流群，讨论使用体验、状态识别、翻译和开发。
+
+<p align="center">
+  <img src="docs/community/agentmicro-wechat-group.jpg" width="360" alt="AgentMicro 微信交流群二维码">
+</p>
+
+本邀请二维码有效期至 2026 年 8 月 5 日。微信群邀请二维码会定期更新，到期后仓库会替换图片。
+
 ## 上游与致谢
 
 AgentMicro 衍生自 Peter Steinberger 创建的 [steipete/CodexBar](https://github.com/steipete/CodexBar)。CodexBar 使用 MIT License。AgentMicro 复用了其中一部分 macOS 应用底座、本地会话发现、国际化约定和 Sparkle 更新架构，并在此基础上开发独立的 Codex 任务观察产品。

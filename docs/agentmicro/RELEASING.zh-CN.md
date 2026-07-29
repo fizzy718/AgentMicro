@@ -70,6 +70,39 @@ AGENTMICRO_BUILD_NUMBER=1
 `agentmicro-appcast.xml`，然后推送到 `AGENTMICRO_FEED_BRANCH`。脚本拒绝存在其他未提交
 修改的工作树，也拒绝覆盖已经存在的同版本 Release。
 
+## GitHub Actions 一键发布
+
+仓库的 `Release AgentMicro` 工作流把正式发布放在 GitHub 托管的 macOS runner 上完成，
+不需要自建更新服务器。GitHub Release 托管 ZIP，仓库 main 分支的
+`agentmicro-appcast.xml` 是 Sparkle 更新清单。
+
+先在 GitHub 仓库创建名为 `agentmicro-release` 的 Environment。建议给该 Environment
+增加 required reviewer，避免误触正式发布。配置两个 Environment variables：
+
+- `AGENTMICRO_PUBLIC_ED_KEY`：AgentMicro Sparkle Ed25519 公钥。
+- `AGENTMICRO_SIGNING_IDENTITY`：完整 Developer ID Application 身份名称。
+
+再配置六个 Environment secrets：
+
+- `AGENTMICRO_DEVELOPER_ID_P12_BASE64`：Developer ID 证书与私钥导出的 P12，经
+  `base64 < certificate.p12 | pbcopy` 编码后的内容。
+- `AGENTMICRO_DEVELOPER_ID_P12_PASSWORD`：P12 导出密码。
+- `AGENTMICRO_SPARKLE_PRIVATE_KEY_BASE64`：Sparkle 导出私钥文件经 base64 编码后的内容。
+- `APP_STORE_CONNECT_KEY_ID`：App Store Connect API Key ID。
+- `APP_STORE_CONNECT_ISSUER_ID`：App Store Connect Issuer ID。
+- `APP_STORE_CONNECT_API_KEY_P8`：P8 私钥完整内容。
+
+配置完成后：
+
+1. 在 `agentmicro-version.env` 提高版本号或构建号，并按 `feat → dev → main` 合入。
+2. 打开 GitHub 仓库的 **Actions → Release AgentMicro → Run workflow**。
+3. 输入与 `agentmicro-version.env` 完全一致的版本号。
+4. 工作流会验证源码、临时安装证书、构建 universal 应用、签名、公证、创建 GitHub
+   Release，并把新 appcast 提交回 main。
+
+工作流不会把 P12、P8 或 Sparkle 私钥写入仓库。每次 runner 结束前还会删除临时
+Keychain 和密钥文件。
+
 首次闭环验证需要两个版本：
 
 1. 安装正式签名、公证且已经嵌入 feed 的旧版本。

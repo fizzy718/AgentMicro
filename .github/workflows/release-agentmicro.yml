@@ -1,0 +1,150 @@
+name: Release AgentMicro
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to publish (must match agentmicro-version.env)
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-agentmicro
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Sign, notarize, and publish
+    runs-on: macos-15-intel
+    timeout-minutes: 90
+    environment: agentmicro-release
+    env:
+      AGENTMICRO_GITHUB_REPOSITORY: ${{ github.repository }}
+      AGENTMICRO_FEED_BRANCH: main
+      AGENTMICRO_FEED_URL: https://raw.githubusercontent.com/${{ github.repository }}/main/agentmicro-appcast.xml
+      AGENTMICRO_PUBLIC_ED_KEY: ${{ vars.AGENTMICRO_PUBLIC_ED_KEY }}
+      AGENTMICRO_SPARKLE_ACCOUNT: agentmicro
+      AGENTMICRO_BUNDLE_ID: com.agentmicro.macos
+      AGENTMICRO_SIGNING_IDENTITY: ${{ vars.AGENTMICRO_SIGNING_IDENTITY }}
+      APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_P8: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}
+      AGENTMICRO_DEVELOPER_ID_P12_BASE64: ${{ secrets.AGENTMICRO_DEVELOPER_ID_P12_BASE64 }}
+      AGENTMICRO_DEVELOPER_ID_P12_PASSWORD: ${{ secrets.AGENTMICRO_DEVELOPER_ID_P12_PASSWORD }}
+      AGENTMICRO_SPARKLE_PRIVATE_KEY_BASE64: ${{ secrets.AGENTMICRO_SPARKLE_PRIVATE_KEY_BASE64 }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Check out main
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Select Xcode 26
+        shell: bash
+        run: |
+          set -euo pipefail
+          for candidate in /Applications/Xcode_26.3.app /Applications/Xcode_26.2.app; do
+            if [[ -d "$candidate" ]]; then
+              sudo xcode-select -s "${candidate}/Contents/Developer"
+              echo "DEVELOPER_DIR=${candidate}/Contents/Developer" >> "$GITHUB_ENV"
+              break
+            fi
+          done
+          [[ "$(/usr/bin/xcodebuild -version)" == Xcode\ 26.* ]]
+          /usr/bin/xcodebuild -version
+
+      - name: Validate version and release configuration
+        shell: bash
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          source ./agentmicro-version.env
+          if [[ "$REQUESTED_VERSION" != "$AGENTMICRO_VERSION" ]]; then
+            echo "Requested version $REQUESTED_VERSION does not match agentmicro-version.env ($AGENTMICRO_VERSION)." >&2
+            exit 1
+          fi
+
+          missing=()
+          for name in \
+            AGENTMICRO_PUBLIC_ED_KEY \
+            AGENTMICRO_SIGNING_IDENTITY \
+            APP_STORE_CONNECT_KEY_ID \
+            APP_STORE_CONNECT_ISSUER_ID \
+            APP_STORE_CONNECT_API_KEY_P8 \
+            AGENTMICRO_DEVELOPER_ID_P12_BASE64 \
+            AGENTMICRO_DEVELOPER_ID_P12_PASSWORD \
+            AGENTMICRO_SPARKLE_PRIVATE_KEY_BASE64; do
+            if [[ -z "${!name:-}" ]]; then
+              missing+=("$name")
+            fi
+          done
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing AgentMicro release variables or secrets:\n' >&2
+            printf -- '- %s\n' "${missing[@]}" >&2
+            exit 1
+          fi
+
+      - name: Install Developer ID certificate and Sparkle key
+        shell: bash
+        run: |
+          set -euo pipefail
+          certificate_path="$RUNNER_TEMP/agentmicro-developer-id.p12"
+          sparkle_key_path="$RUNNER_TEMP/agentmicro-sparkle-private-key"
+          keychain_path="$RUNNER_TEMP/agentmicro-signing.keychain-db"
+          keychain_password="$(openssl rand -hex 24)"
+
+          (
+            umask 077
+            printf '%s' "$AGENTMICRO_DEVELOPER_ID_P12_BASE64" | base64 --decode > "$certificate_path"
+            printf '%s' "$AGENTMICRO_SPARKLE_PRIVATE_KEY_BASE64" | base64 --decode > "$sparkle_key_path"
+          )
+
+          security create-keychain -p "$keychain_password" "$keychain_path"
+          security set-keychain-settings -lut 21600 "$keychain_path"
+          security unlock-keychain -p "$keychain_password" "$keychain_path"
+          security import "$certificate_path" \
+            -P "$AGENTMICRO_DEVELOPER_ID_P12_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$keychain_path"
+          security set-key-partition-list \
+            -S apple-tool:,apple: \
+            -k "$keychain_password" \
+            "$keychain_path"
+          security list-keychains -d user -s "$keychain_path"
+          security find-identity -v -p codesigning "$keychain_path"
+
+          echo "SPARKLE_PRIVATE_KEY_FILE=$sparkle_key_path" >> "$GITHUB_ENV"
+          echo "AGENTMICRO_RELEASE_KEYCHAIN=$keychain_path" >> "$GITHUB_ENV"
+          echo "AGENTMICRO_RELEASE_CERTIFICATE=$certificate_path" >> "$GITHUB_ENV"
+          echo "AGENTMICRO_RELEASE_SPARKLE_KEY=$sparkle_key_path" >> "$GITHUB_ENV"
+
+      - name: Verify source
+        run: make check
+
+      - name: Publish signed and notarized release
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          ./Scripts/release_agentmicro.sh --publish
+
+      - name: Clean up signing material
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set +e
+          if [[ -n "${AGENTMICRO_RELEASE_KEYCHAIN:-}" ]]; then
+            security delete-keychain "$AGENTMICRO_RELEASE_KEYCHAIN"
+          fi
+          rm -f \
+            "${AGENTMICRO_RELEASE_CERTIFICATE:-}" \
+            "${AGENTMICRO_RELEASE_SPARKLE_KEY:-}"

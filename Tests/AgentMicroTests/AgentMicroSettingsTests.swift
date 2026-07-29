@@ -6,6 +6,22 @@ import Testing
 @MainActor
 struct AgentMicroSettingsTests {
     @Test
+    func `version display includes the build number`() {
+        #expect(
+            AgentMicroVersionDisplay.value(
+                shortVersion: "0.1.0",
+                buildNumber: "7") == "0.1.0 (7)")
+        #expect(
+            AgentMicroVersionDisplay.value(
+                shortVersion: "0.1.0",
+                buildNumber: nil) == "0.1.0")
+        #expect(
+            AgentMicroVersionDisplay.value(
+                shortVersion: nil,
+                buildNumber: nil) == "–")
+    }
+
+    @Test
     func `settings use task title and project with six visible tasks by default`() throws {
         let (defaults, suiteName) = try Self.makeDefaults()
         defer { defaults.removePersistentDomain(forName: suiteName) }

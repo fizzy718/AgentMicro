@@ -142,6 +142,16 @@ Issues, focused pull requests, translations, reproducible state-sync reports, an
 
 Never attach real Codex prompts, source code, credentials, or unredacted rollout files to a public issue.
 
+## Community
+
+Join the AgentMicro WeChat group to discuss usage, state detection, translations, and development.
+
+<p align="center">
+  <img src="docs/community/agentmicro-wechat-group.jpg" width="360" alt="QR code for the AgentMicro WeChat community group">
+</p>
+
+This invitation QR code is valid through August 5, 2026. WeChat periodically refreshes group invitation codes, so this image may be replaced after it expires.
+
 ## Upstream and credits
 
 AgentMicro is derived from [steipete/CodexBar](https://github.com/steipete/CodexBar), created by Peter Steinberger and distributed under the MIT License. It reuses portions of CodexBar's macOS application foundation, local session discovery, localization conventions, and Sparkle integration while developing a separate Codex task-observation product.

@@ -876,6 +876,42 @@
 - 完整 `make test` 已执行，但上游 `AdaptiveRefreshTimerTests` 中两个定时器用例连续两次
   在 30 秒处收到 `CancellationError`；AgentMicro 自身 73 个测试不受影响。
 
+## 2026-07-29
+
+### `release`：增加 GitHub Actions 正式发布入口
+
+变化：
+
+- 新增手动触发的 `Release AgentMicro` GitHub Actions 工作流；输入版本必须与
+  `agentmicro-version.env` 一致。
+- 工作流从受保护的 `agentmicro-release` Environment 读取 Developer ID、App Store
+  Connect 和 Sparkle 密钥，临时导入 runner Keychain，完成 universal 构建、签名、
+  Apple 公证、GitHub Release 和 appcast 发布。
+- 发布脚本在构建和公证前检查 GitHub 登录、目标分支和 Release 是否已存在，避免在
+  无法上传时浪费一次公证流程。
+- 设置页始终显示 `版本号 (构建号)`、自动检查开关和手动检查按钮；开发包中更新控件
+  置灰并解释缺少正式 feed 或 Developer ID 签名，正式安装包中直接启用。
+- 英文和中文 README 增加 AgentMicro 微信交流群二维码及明确有效期。
+
+影响：
+
+- 项目无需自建更新服务器；GitHub Releases 托管 ZIP，main 分支的 appcast 提供
+  Sparkle 更新清单。
+- 发布私钥不进入 Git 或构建产物，GitHub runner 结束前删除临时 Keychain 和密钥文件。
+
+验证：
+
+- `Scripts/test_agentmicro_release.sh`
+- `make check`
+- `make test`
+
+限制：
+
+- 首次 Release 仍需仓库维护者配置 Apple Developer ID P12、App Store Connect P8、
+  AgentMicro 独立 Sparkle 密钥和 GitHub Environment；这些正式身份信息不能由源码
+  自动生成。
+- 微信群二维码有效期至 2026 年 8 月 5 日，到期后需要替换仓库图片。
+
 ## 后续记录模板
 
 ```markdown

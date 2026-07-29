@@ -20,6 +20,45 @@ case "${1:-}" in
     ;;
 esac
 
+if [[ "$PUBLISH" == true ]]; then
+  require_publish_value() {
+    local name="$1"
+    if [[ -z "${!name:-}" ]]; then
+      echo "ERROR: Missing required release setting: $name" >&2
+      exit 1
+    fi
+  }
+
+  require_publish_value AGENTMICRO_GITHUB_REPOSITORY
+  require_publish_value AGENTMICRO_FEED_URL
+  require_publish_value AGENTMICRO_FEED_BRANCH
+
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "ERROR: gh is required for --publish" >&2
+    exit 1
+  fi
+  if ! gh auth status --hostname github.com >/dev/null 2>&1; then
+    echo "ERROR: gh is not authenticated for github.com" >&2
+    exit 1
+  fi
+  if ! git -C "$ROOT" remote get-url origin >/dev/null 2>&1; then
+    echo "ERROR: AgentMicro repository has no origin remote" >&2
+    exit 1
+  fi
+
+  CURRENT_BRANCH="$(git -C "$ROOT" branch --show-current)"
+  if [[ "$CURRENT_BRANCH" != "$AGENTMICRO_FEED_BRANCH" ]]; then
+    echo "ERROR: Publish from $AGENTMICRO_FEED_BRANCH, not ${CURRENT_BRANCH:-detached HEAD}" >&2
+    exit 1
+  fi
+
+  TAG="v$AGENTMICRO_VERSION"
+  if gh release view "$TAG" --repo "$AGENTMICRO_GITHUB_REPOSITORY" >/dev/null 2>&1; then
+    echo "ERROR: GitHub release already exists: $TAG" >&2
+    exit 1
+  fi
+fi
+
 DIRTY_PATHS="$(git -C "$ROOT" status --short)"
 if [[ "$PUBLISH" == true ]]; then
   UNEXPECTED_DIRTY="$(
@@ -42,25 +81,6 @@ ARCHIVE="$ROOT/.build/agentmicro-release/$AGENTMICRO_VERSION/AgentMicro-macos-un
 if [[ "$PUBLISH" != true ]]; then
   echo "Release prepared locally. Re-run with --publish after reviewing the archive and appcast."
   exit 0
-fi
-
-if [[ -z "${AGENTMICRO_GITHUB_REPOSITORY:-}" ]]; then
-  echo "ERROR: Missing required release setting: AGENTMICRO_GITHUB_REPOSITORY" >&2
-  exit 1
-fi
-if ! command -v gh >/dev/null 2>&1; then
-  echo "ERROR: gh is required for --publish" >&2
-  exit 1
-fi
-if ! git -C "$ROOT" remote get-url origin >/dev/null 2>&1; then
-  echo "ERROR: AgentMicro repository has no origin remote" >&2
-  exit 1
-fi
-
-TAG="v$AGENTMICRO_VERSION"
-if gh release view "$TAG" --repo "$AGENTMICRO_GITHUB_REPOSITORY" >/dev/null 2>&1; then
-  echo "ERROR: GitHub release already exists: $TAG" >&2
-  exit 1
 fi
 
 RELEASE_ARGS=(
