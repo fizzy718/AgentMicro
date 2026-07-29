@@ -243,6 +243,32 @@ Known limitations:
 
 - A complete Sparkle update test begins with 0.1.1 and requires a later signed build as the update target.
 
+## 2026-07-30
+
+### `release`: published AgentMicro 0.1.1
+
+Changes:
+
+- Published the signed universal `v0.1.1` release from source commit `47f28c1` through GitHub Actions run `30475516851`.
+- Apple Notary Service accepted the application, the release archive received a stapled ticket, and the workflow published the reviewed versioned notes.
+- Updated the production Sparkle appcast in commit `b318be6` with build 2, the release archive size, and its Ed25519 signature.
+
+Impact:
+
+- New installations receive the first production build with the closed-loop task state model, optional Enhanced Status Detection, expanded localization, and the updated menu and settings experience.
+- AgentMicro 0.1.1 can use the production appcast for future signed updates. Users on 0.1.0 must install 0.1.1 manually because 0.1.0 cannot reliably start Sparkle.
+
+Validation:
+
+- GitHub's macOS 15 runner verified that the signed app is valid on disk and satisfies its designated requirement.
+- Apple notarization completed with an `Accepted` status.
+- The published ZIP returned HTTP 200; its app reports version 0.1.1, build 2, contains both arm64 and x86_64 slices, and matches the live appcast entry.
+
+Known limitations:
+
+- Developer ID verification on the local beta macOS installation is not trustworthy: the same host reports equivalent trust or signature failures for Apple/Xcode and ChatGPT applications. Release acceptance therefore uses the clean GitHub runner and Apple Notary Service as the authoritative checks.
+- End-to-end automatic-update installation can first be exercised when a later signed release is available as the update target.
+
 ## Future Entry Template
 
 ```markdown
