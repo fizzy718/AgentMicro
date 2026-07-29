@@ -1,0 +1,2 @@
+{"type":"session_meta","timestamp":"2026-07-28T12:00:00Z","payload":{"id":"rate-limited-session","cwd":"/tmp/AgentMicro","originator":"codex_cli_rs","timestamp":"2026-07-28T12:00:00Z"}}
+{"type":"event_msg","timestamp":"2026-07-28T12:00:05Z","payload":{"type":"token_count","rate_limits":{"limit_id":"codex","primary":{"used_percent":100.0,"window_minutes":300},"secondary":{"used_percent":42.0,"window_minutes":10080}}}}

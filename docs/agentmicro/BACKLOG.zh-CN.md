@@ -19,6 +19,7 @@
 | AM-004 | candidate | 显示上下文窗口和压缩事件 | V1 状态稳定后进入 V2.5 |
 | AM-005 | candidate | 显示 CPU、内存和子进程 | 证明对任务决策有持续价值 |
 | AM-006 | candidate | 监听 Agent 启动的本地端口 | 有明确清理和安全边界 |
+| AM-007 | research | 精确关联 Codex Desktop rollout、owner 与窗口 | 找到不按 app-server PID 合并任务、可由真实多任务场景验证的稳定证据 |
 
 ## 注意力与通知
 

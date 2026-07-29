@@ -1,0 +1,6 @@
+{"type":"session_meta","timestamp":"2026-07-28T12:00:00Z","payload":{"id":"waiting-session","cwd":"/tmp/AgentMicro","originator":"codex_cli_rs","timestamp":"2026-07-28T12:00:00Z"}}
+{"type":"event_msg","timestamp":"2026-07-28T12:00:01Z","payload":{"type":"user_message","message":"Run the focused tests."}}
+{"type":"response_item","timestamp":"2026-07-28T12:00:02Z","payload":{"type":"function_call","name":"exec_command","arguments":"{\"cmd\":\"swift test --filter AgentMicro\"}","call_id":"call-exec"}}
+{"type":"response_item","timestamp":"2026-07-28T12:00:04Z","payload":{"type":"function_call_output","call_id":"call-exec","output":"Process exited with code 0"}}
+{"type":"event_msg","timestamp":"2026-07-28T12:00:05Z","payload":{"type":"agent_message","message":"The focused tests passed."}}
+{"type":"event_msg","timestamp":"2026-07-28T12:00:06Z","payload":{"type":"task_complete"}}

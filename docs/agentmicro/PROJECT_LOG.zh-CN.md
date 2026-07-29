@@ -123,6 +123,37 @@
 - 本次烟测确认进程生命周期，没有完成菜单逐项视觉与窗口定位验证。
 - 上游快照缺少 `.github/workflows/ci.yml`，因此完整 `make check` 在 CI 路径门禁脚本处提前中止；已单独完成 AgentMicro 文件的格式、静态检查和聚焦测试。
 
+### `implementation`：完成 M1 Task State Engine
+
+变化：
+
+- 新增增量 rollout 读取器，按文件保存 offset 和 reducer，支持半行续读、文件截断或轮转重置、异常 JSONL 跳过和单行大小保护。
+- 将 Codex 事件归约为 Thinking、Executing、Waiting、Rate limited、Unknown、Done 六态。
+- 配对新旧 schema 的 function、custom、patch、web、MCP 工具调用；长时间运行的 `exec_command` 通过后续 `write_stdin` / `wait` 轮询保持执行态，直到明确退出。
+- 当前动作只保留工具名与最小参数预览，并清理控制字符、常见 token、Authorization、API key 和密码。
+- 菜单改用 V1 状态优先级，展示状态、当前动作、来源和活动时间；活动进程轮询从 5 秒提高到 2 秒。
+- 新增固定 rollout fixtures 和状态引擎测试，覆盖六态、时间戳乱序、文件边界、异常输入、工具配对、限流恢复与凭证脱敏。
+
+影响：
+
+- 菜单状态不再依赖上游粗粒度 `active/idle`。
+- 读取成本随 rollout 新增内容增长，不需要每 2 秒重读完整文件。
+- 近期但无法确认 owner 的 Desktop rollout 明确显示 `Unknown`，不会借 app-server PID 伪造精确归属。
+
+验证：
+
+- `AGENTMICRO_BUILD_ONLY=1 swift test --disable-automatic-resolution --filter AgentMicro`
+- 15 个 Swift Testing 用例、2 个 suite 全部通过。
+- SwiftFormat 对 AgentMicro 源码和测试检查通过；SwiftLint strict 为 0 violations。
+- `AGENTMICRO_BUILD_ONLY=1 swift run --disable-automatic-resolution AgentMicro` 构建成功，进程持续运行后手动结束。
+- `git diff --check` 通过，`Package.resolved` 未变化。
+
+限制：
+
+- `swift run` 启动的是无 `.app` 包的命令行产物，macOS 辅助功能应用列表无法识别，因此本次只完成运行生命周期烟测；菜单逐项视觉和点击验收进入 M2 打包工作。
+- Desktop rollout 的精确 owner 与窗口关联仍需 M3 真实多任务场景验证。
+- 上游快照仍缺少 `.github/workflows/ci.yml`，完整 `make check` 的既有阻塞未消除。
+
 ## 后续记录模板
 
 ```markdown

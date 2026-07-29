@@ -34,11 +34,16 @@ struct AgentMicroMenuModelTests {
             )
         ]
 
-        let rows = AgentMicroMenuModel.rows(from: sessions, now: now)
+        let tasks = [
+            Self.observation(session: sessions[0], state: .done),
+            Self.observation(session: sessions[1], state: .thinking),
+            Self.observation(session: sessions[2], state: .executing)
+        ]
+        let rows = AgentMicroMenuModel.rows(from: tasks, now: now)
 
         #expect(rows.map(\.title) == ["active-project", "idle-project"])
-        #expect(rows[0].subtitle == "Active · Codex App · 20s")
-        #expect(rows[1].subtitle == "Idle · Codex CLI · 10s")
+        #expect(rows[0].subtitle == "Executing · Codex App · 20s")
+        #expect(rows[1].subtitle == "Done · Codex CLI · 10s ago")
     }
 
     @Test
@@ -96,6 +101,43 @@ struct AgentMicroMenuModelTests {
             for: Self.session(activity: now.addingTimeInterval(-7500)),
             now: now,
         ) == "2h")
+    }
+
+    @Test
+    func `menu follows the V1 state priority and includes the current action`() {
+        let now = Date(timeIntervalSince1970: 10000)
+        let tasks = [
+            Self.observation(session: Self.session(id: "done", activity: now), state: .done),
+            Self.observation(session: Self.session(id: "waiting", activity: now), state: .waiting),
+            Self.observation(
+                session: Self.session(id: "executing", activity: now),
+                state: .executing,
+                currentAction: "exec_command · swift test"
+            ),
+            Self.observation(session: Self.session(id: "limited", activity: now), state: .rateLimited),
+            Self.observation(session: Self.session(id: "thinking", activity: now), state: .thinking),
+            Self.observation(session: Self.session(id: "unknown", activity: now), state: .unknown)
+        ]
+
+        let rows = AgentMicroMenuModel.rows(from: tasks, now: now)
+
+        #expect(rows.map(\.state) == [.executing, .thinking, .rateLimited, .waiting, .unknown, .done])
+        #expect(rows[0].subtitle.contains("Executing · exec_command · swift test"))
+        #expect(rows[0].symbol == "◉")
+        #expect(rows[2].symbol == "!")
+    }
+
+    private static func observation(
+        session: AgentSession,
+        state: CodexTaskState,
+        currentAction: String? = nil
+    ) -> CodexTaskObservation {
+        CodexTaskObservation(
+            session: session,
+            state: state,
+            currentAction: currentAction,
+            lastEventAt: session.lastActivityAt
+        )
     }
 
     private static func session(

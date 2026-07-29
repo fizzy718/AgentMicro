@@ -1,0 +1,4 @@
+{"type":"session_meta","timestamp":"2026-07-28T12:00:00Z","payload":{"id":"executing-session","cwd":"/tmp/AgentMicro","originator":"codex_cli_rs","timestamp":"2026-07-28T12:00:00Z"}}
+{"type":"event_msg","timestamp":"2026-07-28T12:00:01Z","payload":{"type":"user_message","message":"Run the focused tests."}}
+{"type":"event_msg","timestamp":"2026-07-28T12:00:02Z","payload":{"type":"agent_message","message":"Running them now."}}
+{"type":"response_item","timestamp":"2026-07-28T12:00:03Z","payload":{"type":"function_call","name":"exec_command","arguments":"{\"cmd\":\"swift test --filter AgentMicro\"}","call_id":"call-exec"}}

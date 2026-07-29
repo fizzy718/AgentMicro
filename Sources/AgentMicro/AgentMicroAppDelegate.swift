@@ -5,9 +5,10 @@ import Foundation
 @MainActor
 final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let scanner = LocalAgentSessionScanner()
+    private let taskStateEngine = CodexTaskStateEngine()
     private let menu = NSMenu()
     private var statusItem: NSStatusItem?
-    private var sessions: [AgentSession] = []
+    private var tasks: [CodexTaskObservation] = []
     private var hasCompletedInitialScan = false
     private var refreshTask: Task<Void, Never>?
     private var pollingTask: Task<Void, Never>?
@@ -52,7 +53,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
             while !Task.isCancelled {
                 guard let self else { return }
                 self.refresh()
-                let interval: Duration = self.sessions.contains { $0.pid != nil } ? .seconds(5) : .seconds(15)
+                let interval: Duration = self.tasks.contains { $0.session.pid != nil } ? .seconds(2) : .seconds(15)
                 try? await Task.sleep(for: interval)
             }
         }
@@ -61,10 +62,14 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     private func refresh() {
         guard self.refreshTask == nil else { return }
         let scanner = self.scanner
+        let taskStateEngine = self.taskStateEngine
         self.refreshTask = Task { @MainActor [weak self] in
             let scannedSessions = await scanner.scan()
+            let tasks = await taskStateEngine.observe(
+                sessions: scannedSessions.filter { $0.provider == .codex }
+            )
             guard !Task.isCancelled, let self else { return }
-            self.sessions = scannedSessions.filter { $0.provider == .codex }
+            self.tasks = tasks
             self.hasCompletedInitialScan = true
             self.refreshTask = nil
             self.updateStatusItem()
@@ -73,7 +78,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     }
 
     private func updateStatusItem() {
-        let activeCount = self.sessions.count { $0.state == .active }
+        let activeCount = self.tasks.count { $0.state.isWorking }
         self.statusItem?.button?.title = activeCount > 0 ? " \(activeCount)" : ""
         self.statusItem?.button?.toolTip = activeCount > 0
             ? "AgentMicro — \(activeCount) active Codex task\(activeCount == 1 ? "" : "s")"
@@ -83,7 +88,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     private func rebuildMenu(now: Date = Date()) {
         self.menu.removeAllItems()
 
-        let rows = AgentMicroMenuModel.rows(from: self.sessions, now: now)
+        let rows = AgentMicroMenuModel.rows(from: self.tasks, now: now)
         let activeCount = rows.count(where: \.isActive)
         let headline = activeCount > 0
             ? "AgentMicro — \(activeCount) active"
@@ -100,9 +105,8 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
             self.menu.addItem(emptyItem)
         } else {
             for row in rows {
-                let symbol = row.isActive ? "●" : "○"
                 let item = NSMenuItem(
-                    title: "\(symbol) \(row.title)",
+                    title: "\(row.symbol) \(row.title)",
                     action: #selector(self.focusSession(_:)),
                     keyEquivalent: "",
                 )
@@ -138,7 +142,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     @objc
     private func focusSession(_ sender: NSMenuItem) {
         guard let key = sender.representedObject as? String,
-              let session = self.sessions.first(where: { AgentMicroMenuModel.sessionKey(for: $0) == key })
+              let session = self.tasks.first(where: { $0.sessionKey == key })?.session
         else { return }
         _ = SessionWindowFocuser.focus(session)
     }

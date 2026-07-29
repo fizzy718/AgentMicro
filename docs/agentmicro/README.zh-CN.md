@@ -28,17 +28,20 @@ V1 不是 Token 用量监控器、Provider 切换器或任务控制器。
 
 ## 当前实现进度
 
-截至 2026-07-28，M0 垂直切片已经完成：
+截至 2026-07-28，M1 Task State Engine 已经完成：
 
 - 独立的 `AgentMicro` SwiftPM 可执行入口。
 - 原生 macOS 菜单栏图标和即时展开菜单。
 - 复用 `LocalAgentSessionScanner` 发现本机 Codex Desktop、CLI 和可识别的 IDE 会话。
-- 仅展示 Codex，会话按 active 优先、最近活动时间倒序。
+- 增量读取 Codex rollout，处理半行、文件截断、轮转和异常 JSONL。
+- 将事件归约为 Thinking、Executing、Waiting、Rate limited、Unknown、Done 六种状态。
+- 配对普通、custom 和长时间运行工具调用，并显示脱敏后的最小当前动作。
+- 仅展示 Codex，会话按 V1 状态优先级和最近活动时间排序。
 - 默认使用项目名，避免直接暴露可能敏感的任务标题。
 - 点击任务时复用 `SessionWindowFocuser` 尝试回到对应窗口。
-- 有进程时每 5 秒、无进程时每 15 秒刷新；打开菜单时立即异步刷新。
+- 有进程时每 2 秒、无进程时每 15 秒刷新；打开菜单时立即异步刷新。
 
-M0 仍使用上游 `active/idle` 状态。这只是可运行骨架，不代表 V1 状态语义已经完成。下一步是 M1：增量读取 Codex rollout，并实现 Thinking、Executing、Waiting、Rate limited、Unknown、Done 的状态归约。
+下一步是 M2：完成设置、隐私选项、最近完成任务和正式 `.app` 打包，并对菜单逐项做视觉与交互验收。没有可靠 owner 的近期 Desktop rollout 目前保持 `Unknown`，精确的 Desktop 任务归属与窗口关联留在 M3 真实场景验证中解决。
 
 ## 开发验证
 

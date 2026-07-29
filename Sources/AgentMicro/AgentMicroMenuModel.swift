@@ -5,29 +5,44 @@ struct AgentMicroMenuRow: Equatable, Sendable {
     let sessionKey: String
     let title: String
     let subtitle: String
-    let isActive: Bool
+    let state: CodexTaskState
+
+    var isActive: Bool {
+        self.state.isWorking
+    }
+
+    var symbol: String {
+        self.state.symbol
+    }
 }
 
 enum AgentMicroMenuModel {
-    static func rows(from sessions: [AgentSession], now: Date = Date()) -> [AgentMicroMenuRow] {
-        sessions
-            .filter { $0.provider == .codex }
-            .sorted(by: self.sessionComesBefore)
-            .map { session in
+    static func rows(from tasks: [CodexTaskObservation], now: Date = Date()) -> [AgentMicroMenuRow] {
+        tasks
+            .filter { $0.session.provider == .codex }
+            .sorted(by: self.taskComesBefore)
+            .map { task in
+                let session = task.session
                 let title = self.title(for: session)
                 var subtitleParts = [
-                    session.state == .active ? "Active" : "Idle",
-                    self.sourceLabel(session.source)
+                    task.state.displayName
                 ]
+                if let currentAction = self.nonEmpty(task.currentAction) {
+                    subtitleParts.append(currentAction)
+                }
+                subtitleParts.append(
+                    self.sourceLabel(session.source)
+                )
                 if let projectName = session.projectName, projectName != title {
                     subtitleParts.append(projectName)
                 }
-                subtitleParts.append(self.ageLabel(for: session, now: now))
+                let age = self.ageLabel(for: session, now: now)
+                subtitleParts.append(task.state == .done ? "\(age) ago" : age)
                 return AgentMicroMenuRow(
-                    sessionKey: self.sessionKey(for: session),
+                    sessionKey: task.sessionKey,
                     title: title,
                     subtitle: subtitleParts.joined(separator: " · "),
-                    isActive: session.state == .active,
+                    state: task.state,
                 )
             }
     }
@@ -59,12 +74,16 @@ enum AgentMicroMenuModel {
         return "\(seconds / 3600)h"
     }
 
-    private static func sessionComesBefore(_ lhs: AgentSession, _ rhs: AgentSession) -> Bool {
-        if lhs.state != rhs.state {
-            return lhs.state == .active
+    private static func taskComesBefore(_ lhs: CodexTaskObservation, _ rhs: CodexTaskObservation) -> Bool {
+        if lhs.state.sortPriority != rhs.state.sortPriority {
+            return lhs.state.sortPriority < rhs.state.sortPriority
         }
-        return (lhs.lastActivityAt ?? lhs.startedAt ?? .distantPast) >
-            (rhs.lastActivityAt ?? rhs.startedAt ?? .distantPast)
+        let lhsActivity = lhs.lastEventAt ?? lhs.session.lastActivityAt ?? lhs.session.startedAt ?? .distantPast
+        let rhsActivity = rhs.lastEventAt ?? rhs.session.lastActivityAt ?? rhs.session.startedAt ?? .distantPast
+        if lhsActivity != rhsActivity {
+            return lhsActivity > rhsActivity
+        }
+        return lhs.sessionKey < rhs.sessionKey
     }
 
     private static func sourceLabel(_ source: AgentSession.Source) -> String {

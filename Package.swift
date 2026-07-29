@@ -171,6 +171,9 @@ let package = Package(
                 name: "AgentMicroTests",
                 dependencies: ["AgentMicro", "CodexBarCore"],
                 path: "Tests/AgentMicroTests",
+                resources: [
+                    .copy("Fixtures"),
+                ],
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
                     .enableExperimentalFeature("SwiftTesting"),
