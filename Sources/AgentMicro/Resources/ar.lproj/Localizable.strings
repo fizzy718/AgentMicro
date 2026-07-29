@@ -23,6 +23,10 @@
 "settings.error.launchAtLogin" = "تعذر تحديث عنصر تسجيل الدخول: %@";
 "settings.general" = "عام";
 "settings.launchAtLogin" = "تشغيل AgentMicro عند تسجيل الدخول";
+"settings.enhancedStatus" = "اكتشاف محسّن للحالة";
+"settings.enhancedStatus.description" = "يستخدم تسهيلات الاستخدام اختياريًا لتحديد مهمة Codex المفتوحة ورسائل الموافقة أو الأخطاء الظاهرة. يعمل الاكتشاف الأساسي من دون ذلك.";
+"settings.enhancedStatus.permissionRequired" = "يتطلب الاكتشاف المحسّن إذن تسهيلات الاستخدام.";
+"settings.enhancedStatus.openSettings" = "فتح الإعدادات…";
 "settings.privacy" = "يقرأ AgentMicro حالة المهام محليًا ولا يرفع بياناتها.";
 "settings.taskDisplay" = "عرض المهام";
 "settings.taskNames" = "أسماء المهام";

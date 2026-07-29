@@ -162,6 +162,87 @@ Impact:
 - Older supported macOS releases keep a stable fallback icon.
 - The manual SwiftPM package remains reproducible and does not require converting the project to an Xcode app target.
 
+### `research`: modeled Codex Micro as a product system
+
+Changes:
+
+- Added a durable Codex Micro functional model based on OpenAI documentation, the Supply Co. product page, independent coverage, and local `freemicro`, `abtop`, and `opendeck` evidence.
+- Separated official facts, observed implementation details, and AgentMicro decisions.
+- Documented the six-slot assignment model, controls, five-state lifecycle, selection animation, read closure, source confidence, and product invariants.
+
+Impact:
+
+- Future status changes have an evidence-backed reference instead of relying on remembered screenshots or color labels.
+- Green is explicitly modeled as a transient unread result rather than permanent completion history.
+
+### `fix`: closed explicit Desktop read state against stale Codex data
+
+Changes:
+
+- Made an explicit AgentMicro view of the current completion outrank a lagging Codex persisted unread bit.
+- Required exact Desktop navigation success before recording the task as viewed; failed deep links and generic app activation do not clear green.
+- Kept Codex unread state authoritative when no task-specific local view evidence exists.
+- Preserved completion freshness: newer rollout activity invalidates the older read marker and can turn the task green again.
+- Added focused resolver coverage for both precedence paths.
+
+Impact:
+
+- A completed task opened from AgentMicro changes from green to white immediately and does not bounce back to green because of stale persisted state.
+- Tasks not opened through AgentMicro remain unread until Codex clears them or a supported exact-view signal becomes available.
+
+Known limitations:
+
+- Codex does not publish the exact Desktop sidebar selection as a supported local event. AgentMicro does not clear all unread tasks merely because ChatGPT is frontmost and does not require Accessibility UI scraping.
+
+### `fix`: strengthened failure, handoff, and direct-view state evidence
+
+Changes:
+
+- Added structured terminal-failure events, unresolved nonzero tool exits, failed final answers, and blocking abort reasons to the red-state reducer while excluding user interruption and recovered failures.
+- Expanded orange detection for structured question tools and explicit browser/user handoffs without treating Guardian escalation metadata as a user approval request.
+- Added optional Enhanced Status Detection in General settings, disabled by default.
+- When explicitly enabled and granted macOS Accessibility permission, matched a unique selected Codex task and read paired approval/rejection controls or visible blocking error dialogs.
+- Used exact enhanced selection as task-specific read evidence, preserving the green-to-white closure for views made directly inside Codex.
+- Added the setting and explanatory copy to every AgentMicro language catalog.
+
+Impact:
+
+- Base mode remains fully functional and never asks for Accessibility permission.
+- Users who opt in receive faster, more accurate direct-Codex viewed state and visible approval/error detection.
+- AgentMicro's Accessibility integration is read-only: it never clicks, types, approves, declines, or sends content.
+
+Validation:
+
+- Focused state, unread, enhanced-status, and settings suites passed 53 tests.
+- App-localization parity, SwiftFormat, and SwiftLint rules passed.
+- The full sharded suite passed all 732 test selections across 61 groups with no retries.
+
+Known limitations:
+
+- Codex accessibility labels and local rollout formats are not supported public APIs and may change.
+- Ambiguous task labels fail closed rather than clearing unread or assigning an actionable state to the wrong task.
+
+### `release`: prepared AgentMicro 0.1.1
+
+Changes:
+
+- Added the user-facing 0.1.1 GitHub Release notes as a versioned repository document.
+- Made local and GitHub Actions publishing select the matching versioned notes automatically.
+- Kept `agentmicro-version.env` at the next continuous public version, 0.1.1 build 2.
+
+Impact:
+
+- The signed 0.1.1 universal archive, GitHub Release, and Sparkle feed share one reviewed release description.
+- Users of 0.1.0 receive an explicit manual-upgrade notice because that build cannot start Sparkle reliably.
+
+Validation:
+
+- Release script syntax and repository release-pipeline checks pass through `make check`.
+
+Known limitations:
+
+- A complete Sparkle update test begins with 0.1.1 and requires a later signed build as the update target.
+
 ## Future Entry Template
 
 ```markdown

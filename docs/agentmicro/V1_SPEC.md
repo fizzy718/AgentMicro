@@ -55,15 +55,17 @@ When multiple CLI processes share a directory and ownership is ambiguous, AgentM
 - Explicit turn start, active reasoning, pending tool calls, and tool execution can keep a task thinking.
 - Tool output closes its matching tool call even when unrelated malformed lines appear.
 - A final answer ends the active turn immediately.
-- A rate-limit or execution failure enters error when it blocks the turn.
-- An explicit approval request, direct question, or required browser handoff enters needs-input.
+- A rate-limit, structured failure event, unresolved terminal tool failure, or explicit failed final answer enters error when it blocks the turn. Recovered warnings and user interruption do not.
+- An explicit approval request, structured question tool, direct question, or required browser handoff enters needs-input.
 - Merely mentioning a browser or a possible action is not enough.
 - Needs-input remains latched until the user resumes the task.
 - A recent file modification timestamp alone is not proof of thinking.
 - Partial JSONL lines are held until complete; truncation resets the incremental cursor.
 - Initial scans of large rollouts start from a bounded complete-line tail and then continue incrementally.
 
-Completed Desktop unread state follows Codex’s locally persisted unread-thread set. If that source is missing or malformed, AgentMicro fails closed to local read records. Missing data must never be interpreted as an empty unread set.
+Completed Desktop unread state primarily follows Codex’s locally persisted unread-thread set. A successful exact AgentMicro navigation or, in opt-in Enhanced Status Detection, a uniquely matched selected task in the focused Codex window is stronger, completion-specific read evidence and must not be reversed by a lagging Codex unread bit. Generic application activation, ambiguous labels, and failed navigation do not count as viewing a Desktop task. Newer task activity invalidates the local read marker, allowing the next completion to become green again. If Codex state is missing or malformed, AgentMicro fails closed to local read records; missing data must never be interpreted as an empty unread set.
+
+Enhanced Status Detection is disabled by default and the app must not request Accessibility permission at launch. When explicitly enabled and trusted, it may also promote the uniquely selected task to needs-input for paired visible approval/rejection controls, or error for a visible blocking error dialog. It only reads the focused Codex accessibility tree; it never performs an accessibility action. Missing permission or changing UI labels silently returns observation to the base reducer.
 
 ## Titles and Projects
 
@@ -150,6 +152,7 @@ The Guide explains the complete white, green, blue, orange, and red state semant
 
 - Interface language: Follow System by default, or one of 23 languages aligned with CodexBar.
 - Launch AgentMicro at login.
+- Enhanced Status Detection: disabled by default; enabling it explicitly requests Accessibility permission and explains the read-only scope.
 - Local-first privacy explanation.
 
 ### Task Display
@@ -181,8 +184,12 @@ Language overrides are stored only in AgentMicro defaults and never modify globa
 
 - New local events normally appear within 3 seconds.
 - Two concurrent tasks remain separate and sort correctly.
-- A viewed Desktop completion changes from green to white promptly.
+- A Desktop completion opened through AgentMicro changes from green to white immediately, even if Codex's persisted unread set lags.
+- With Enhanced Status Detection enabled and trusted, uniquely selecting a completed task directly in Codex changes that completion from green to white.
+- New completion activity after that view becomes green again.
 - Questions, approvals, and explicit browser handoffs enter orange and clear only after user continuation.
+- Blocking failure events and unresolved terminal failures enter red; interrupted or recovered work does not.
+- Base mode remains fully usable without Accessibility permission, and the app never requests it before explicit opt-in.
 - Final answers stop blue state without waiting for process exit.
 - Working duration advances every second; stopped duration does not.
 - The first launch opens the localized Guide with all five colors and the default checked suppression option.

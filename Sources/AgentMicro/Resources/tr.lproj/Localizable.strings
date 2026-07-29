@@ -20,6 +20,10 @@
 "settings.error.launchAtLogin" = "Oturum açma öğesi güncellenemedi: %@";
 "settings.general" = "Genel";
 "settings.launchAtLogin" = "Oturum açıldığında AgentMicro’yu başlat";
+"settings.enhancedStatus" = "Gelişmiş durum algılama";
+"settings.enhancedStatus.description" = "Açık Codex görevini ve görünen onay ya da hata istemlerini belirlemek için isteğe bağlı olarak Erişilebilirlik kullanır. Temel algılama onsuz çalışır.";
+"settings.enhancedStatus.permissionRequired" = "Gelişmiş algılama için Erişilebilirlik izni gerekir.";
+"settings.enhancedStatus.openSettings" = "Ayarları Aç…";
 "settings.privacy" = "AgentMicro görev durumunu yerel olarak okur ve görev verilerini yüklemez.";
 "settings.taskDisplay" = "Görev görünümü";
 "settings.taskNames" = "Görev adları";

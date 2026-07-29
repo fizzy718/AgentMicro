@@ -88,8 +88,14 @@ RELEASE_ARGS=(
   --repo "$AGENTMICRO_GITHUB_REPOSITORY"
   --title "AgentMicro $AGENTMICRO_VERSION"
 )
-if [[ -n "${AGENTMICRO_RELEASE_NOTES_FILE:-}" ]]; then
-  RELEASE_ARGS+=(--notes-file "$AGENTMICRO_RELEASE_NOTES_FILE")
+DEFAULT_RELEASE_NOTES_FILE="$ROOT/docs/releases/$AGENTMICRO_VERSION.md"
+RELEASE_NOTES_FILE="${AGENTMICRO_RELEASE_NOTES_FILE:-$DEFAULT_RELEASE_NOTES_FILE}"
+if [[ -n "${AGENTMICRO_RELEASE_NOTES_FILE:-}" && ! -f "$RELEASE_NOTES_FILE" ]]; then
+  echo "ERROR: AgentMicro release notes file does not exist: $RELEASE_NOTES_FILE" >&2
+  exit 1
+fi
+if [[ -f "$RELEASE_NOTES_FILE" ]]; then
+  RELEASE_ARGS+=(--notes-file "$RELEASE_NOTES_FILE")
 else
   RELEASE_ARGS+=(--generate-notes)
 fi

@@ -81,6 +81,18 @@ final class CodexUnreadThreadStateReader {
 enum AgentMicroReadStateResolver {
     static let codexStatePropagationGraceInterval: TimeInterval = 5
 
+    static func focusResultConfirmsView(
+        _ result: SessionFocusResult,
+        source: AgentSession.Source) -> Bool
+    {
+        switch source {
+        case .desktopApp:
+            result == .focused
+        default:
+            result != .failed
+        }
+    }
+
     static func readSessionKeys(
         for tasks: [CodexTaskObservation],
         locallyReadSessionKeys: Set<String>,
@@ -91,6 +103,14 @@ enum AgentMicroReadStateResolver {
         var readSessionKeys = locallyReadSessionKeys
 
         for task in tasks where task.session.source == .desktopApp && task.state == .unread {
+            // An explicit AgentMicro view is stronger evidence than Codex's persisted
+            // unread set, which can lag behind the currently selected Desktop thread.
+            // AgentMicroSettings invalidates this record as soon as newer task activity
+            // arrives, so this override cannot hide a later unread completion.
+            if locallyReadSessionKeys.contains(task.sessionKey) {
+                continue
+            }
+
             if codexUnreadSnapshot.unreadThreadIDs.contains(task.session.id) {
                 readSessionKeys.remove(task.sessionKey)
                 continue

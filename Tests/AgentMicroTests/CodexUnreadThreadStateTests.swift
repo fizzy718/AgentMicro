@@ -4,6 +4,22 @@ import Testing
 
 struct CodexUnreadThreadStateTests {
     @Test
+    func `only exact Desktop focus confirms that its completion was viewed`() {
+        #expect(AgentMicroReadStateResolver.focusResultConfirmsView(
+            .focused,
+            source: .desktopApp))
+        #expect(!AgentMicroReadStateResolver.focusResultConfirmsView(
+            .activatedApplicationOnly,
+            source: .desktopApp))
+        #expect(!AgentMicroReadStateResolver.focusResultConfirmsView(
+            .failed,
+            source: .desktopApp))
+        #expect(AgentMicroReadStateResolver.focusResultConfirmsView(
+            .activatedApplicationOnly,
+            source: .cli))
+    }
+
+    @Test
     func `reader loads and combines Codex unread thread ids from every host`() throws {
         let fileURL = FileManager.default.temporaryDirectory
             .appendingPathComponent("CodexGlobalState-\(UUID().uuidString).json")
@@ -43,7 +59,7 @@ struct CodexUnreadThreadStateTests {
     }
 
     @Test
-    func `desktop task follows Codex authoritative unread state`() {
+    func `explicit AgentMicro view overrides stale Codex unread state`() {
         let activity = Date(timeIntervalSince1970: 100)
         let unread = CodexTaskStateTestSupport.observation(
             state: .unread,
@@ -65,8 +81,29 @@ struct CodexUnreadThreadStateTests {
             codexUnreadSnapshot: snapshot,
             now: activity.addingTimeInterval(1))
 
-        #expect(!result.contains(unread.sessionKey))
+        #expect(result.contains(unread.sessionKey))
         #expect(result.contains(viewed.sessionKey))
+    }
+
+    @Test
+    func `Codex unread state remains authoritative without explicit local view evidence`() {
+        let activity = Date(timeIntervalSince1970: 100)
+        let task = CodexTaskStateTestSupport.observation(
+            state: .unread,
+            activity: activity,
+            id: "still-unread",
+            source: .desktopApp)
+        let snapshot = CodexUnreadThreadSnapshot(
+            unreadThreadIDs: ["still-unread"],
+            modifiedAt: activity.addingTimeInterval(1))
+
+        let result = AgentMicroReadStateResolver.readSessionKeys(
+            for: [task],
+            locallyReadSessionKeys: [],
+            codexUnreadSnapshot: snapshot,
+            now: activity.addingTimeInterval(1))
+
+        #expect(result.isEmpty)
     }
 
     @Test

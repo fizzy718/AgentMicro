@@ -180,6 +180,7 @@ final class AgentMicroSettings {
         static let taskNameMode = "agentMicro.taskNameMode"
         static let showRecentlyCompleted = "agentMicro.showRecentlyCompleted"
         static let taskDisplayLimit = "agentMicro.taskDisplayLimit"
+        static let enhancedStatusDetection = "agentMicro.enhancedStatusDetection"
         static let readSessionActivity = "agentMicro.readSessionActivity"
     }
 
@@ -236,6 +237,13 @@ final class AgentMicroSettings {
         }
     }
 
+    var enhancedStatusDetection: Bool {
+        didSet {
+            self.defaults.set(self.enhancedStatusDetection, forKey: Key.enhancedStatusDetection)
+            self.notifyChange()
+        }
+    }
+
     private(set) var launchAtLogin: Bool
     private(set) var launchAtLoginError: String?
     private(set) var hasPresentedGuide: Bool
@@ -277,6 +285,8 @@ final class AgentMicroSettings {
         self.taskDisplayLimit = min(
             Self.maximumTaskDisplayLimit,
             max(Self.minimumTaskDisplayLimit, savedTaskDisplayLimit))
+        self.enhancedStatusDetection =
+            defaults.object(forKey: Key.enhancedStatusDetection) as? Bool ?? false
         self.readSessionActivity = defaults.dictionary(forKey: Key.readSessionActivity)?
             .compactMapValues { ($0 as? NSNumber)?.doubleValue } ?? [:]
         self.launchAtLogin = launchAtLoginStatus()

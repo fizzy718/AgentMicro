@@ -27,7 +27,7 @@ AgentMicro-specific work:
 
 - A separate five-state task model instead of CodexBar’s `active`/`idle` session state.
 - Incremental Codex rollout reduction, current-turn timing, and explicit user-handoff detection.
-- Desktop unread-thread synchronization.
+- Desktop unread-thread synchronization and optional read-only Accessibility evidence for exact visible selection, approval controls, and blocking error dialogs.
 - A 310-point task menu and six-slot animated status icon.
 - A first-launch five-color guide.
 - A separate bundle identity, version source, appcast, Ed25519 key, GitHub Release, and adaptive six-layer Icon Composer application icon.
@@ -86,11 +86,16 @@ Decision: consider usage in V2.5 and the Agent/Hub/SSE protocol in V3.
 
 ## State-Synchronization References
 
-- **freemicro** has no viewed-thread signal and lets completed state expire after a default 180-second TTL. AgentMicro does not treat a timeout as read.
+- **Codex Micro official documentation** defines green as a completed chat with an unread update, makes selection pulse in the existing status color, and offers recent, pinned, priority, and custom assignment modes.
+- **freemicro's vendor-build research** confirms a selected-and-focused unread override to idle and documents the factory state precedence and lighting parameters. FreeMicro itself cannot observe Codex Desktop selection, so its own implementation falls back to a 180-second completion TTL; AgentMicro does not treat a timeout as read.
 - **opendeck** observes only sessions it creates through `codex exec --json`; it does not solve unread synchronization for existing Desktop tasks.
 - **abtop** models lifecycle but not unread/read state.
 
-AgentMicro reads Codex Desktop’s locally persisted unread-thread ID set as the best available Desktop completion source. Because this is not a public API, parsing is narrow and fail-safe: missing or malformed data never means “everything has been read.”
+AgentMicro reads Codex Desktop’s locally persisted unread-thread ID set as the best available general Desktop completion source. Because this is not a public API, parsing is narrow and fail-safe: missing or malformed data never means “everything has been read.” Exact, explicit AgentMicro navigation is higher-confidence evidence for the viewed completion and overrides a stale upstream unread bit until newer activity arrives.
+
+An optional Enhanced Status Detection setting adds a narrow local Accessibility reader. It only runs after explicit opt-in, while Codex is focused, and only accepts a unique task-title match. Paired visible approval/rejection controls may promote that task to needs-input, and visible blocking error dialogs may promote it to error. This is a best-effort supplement, not a runtime dependency or an upstream contract; the default reducer remains complete without Accessibility permission.
+
+The complete evidence model is maintained in [Codex Micro Functional Model](CODEX_MICRO_REFERENCE.md).
 
 ## Recommended Composition
 

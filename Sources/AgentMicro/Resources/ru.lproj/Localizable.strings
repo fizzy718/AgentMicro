@@ -23,6 +23,10 @@
 "settings.error.launchAtLogin" = "Не удалось обновить объект входа: %@";
 "settings.general" = "Основные";
 "settings.launchAtLogin" = "Запускать AgentMicro при входе";
+"settings.enhancedStatus" = "Расширенное определение состояния";
+"settings.enhancedStatus.description" = "Необязательно использует Универсальный доступ, чтобы определить открытую задачу Codex и видимые запросы подтверждения или ошибки. Базовое определение работает без него.";
+"settings.enhancedStatus.permissionRequired" = "Для расширенного определения требуется разрешение Универсального доступа.";
+"settings.enhancedStatus.openSettings" = "Открыть настройки…";
 "settings.privacy" = "AgentMicro читает состояние задач локально и не отправляет их данные.";
 "settings.taskDisplay" = "Отображение задач";
 "settings.taskNames" = "Названия задач";

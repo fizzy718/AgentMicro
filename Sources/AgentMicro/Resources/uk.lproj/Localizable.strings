@@ -20,6 +20,10 @@
 "settings.error.launchAtLogin" = "Не вдалося оновити елемент входу: %@";
 "settings.general" = "Загальні";
 "settings.launchAtLogin" = "Запускати AgentMicro під час входу";
+"settings.enhancedStatus" = "Розширене визначення стану";
+"settings.enhancedStatus.description" = "Необов’язково використовує Доступність, щоб визначити відкриту задачу Codex і видимі запити на схвалення чи помилки. Базове визначення працює без цього.";
+"settings.enhancedStatus.permissionRequired" = "Для розширеного визначення потрібен дозвіл Доступності.";
+"settings.enhancedStatus.openSettings" = "Відкрити параметри…";
 "settings.privacy" = "AgentMicro читає стан завдань локально й не надсилає їхні дані.";
 "settings.taskDisplay" = "Відображення завдань";
 "settings.taskNames" = "Назви завдань";

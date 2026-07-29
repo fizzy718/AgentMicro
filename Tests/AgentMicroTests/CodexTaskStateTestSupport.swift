@@ -170,7 +170,9 @@ enum CodexTaskStateTestSupport {
         activity: Date = CodexTaskStateTestSupport.fixtureNow,
         runStartedAt: Date? = nil,
         id: String? = nil,
-        source: AgentSession.Source = .cli) -> CodexTaskObservation
+        source: AgentSession.Source = .cli,
+        projectName: String = "AgentMicro",
+        sessionName: String? = nil) -> CodexTaskObservation
     {
         let session = AgentSession(
             id: id ?? "policy-\(state.rawValue)-\(pid ?? 0)",
@@ -179,7 +181,8 @@ enum CodexTaskStateTestSupport {
             state: pid == nil ? .idle : .active,
             pid: pid,
             cwd: "/tmp/AgentMicro",
-            projectName: "AgentMicro",
+            projectName: projectName,
+            sessionName: sessionName,
             startedAt: activity.addingTimeInterval(-60),
             lastActivityAt: activity,
             transcriptPath: nil,

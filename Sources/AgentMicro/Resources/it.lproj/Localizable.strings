@@ -20,6 +20,10 @@
 "settings.error.launchAtLogin" = "Impossibile aggiornare l’elemento di login: %@";
 "settings.general" = "Generali";
 "settings.launchAtLogin" = "Avvia AgentMicro al login";
+"settings.enhancedStatus" = "Rilevamento stato avanzato";
+"settings.enhancedStatus.description" = "Usa facoltativamente Accessibilità per identificare l’attività Codex aperta e le richieste di approvazione o gli errori visibili. Il rilevamento di base funziona senza.";
+"settings.enhancedStatus.permissionRequired" = "Il rilevamento avanzato richiede il permesso di Accessibilità.";
+"settings.enhancedStatus.openSettings" = "Apri Impostazioni…";
 "settings.privacy" = "AgentMicro legge lo stato delle attività in locale e non ne carica i dati.";
 "settings.taskDisplay" = "Visualizzazione attività";
 "settings.taskNames" = "Nomi delle attività";

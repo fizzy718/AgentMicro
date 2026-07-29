@@ -23,6 +23,10 @@
 "settings.error.launchAtLogin" = "Impossible de mettre à jour l’ouverture de session : %@";
 "settings.general" = "Général";
 "settings.launchAtLogin" = "Lancer AgentMicro à l’ouverture de session";
+"settings.enhancedStatus" = "Détection d’état améliorée";
+"settings.enhancedStatus.description" = "Utilise facultativement l’accessibilité pour identifier la tâche Codex ouverte et les demandes d’approbation ou erreurs visibles. La détection de base fonctionne sans elle.";
+"settings.enhancedStatus.permissionRequired" = "La détection améliorée nécessite l’autorisation d’accessibilité.";
+"settings.enhancedStatus.openSettings" = "Ouvrir Réglages…";
 "settings.privacy" = "AgentMicro lit localement l’état des tâches et ne téléverse pas leurs données.";
 "settings.taskDisplay" = "Affichage des tâches";
 "settings.taskNames" = "Noms des tâches";

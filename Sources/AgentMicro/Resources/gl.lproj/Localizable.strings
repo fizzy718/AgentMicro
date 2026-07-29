@@ -20,6 +20,10 @@
 "settings.error.launchAtLogin" = "Non se puido actualizar o elemento de inicio: %@";
 "settings.general" = "Xeral";
 "settings.launchAtLogin" = "Iniciar AgentMicro ao acceder";
+"settings.enhancedStatus" = "Detección de estado mellorada";
+"settings.enhancedStatus.description" = "Usa opcionalmente Accesibilidade para identificar a tarefa de Codex aberta e os avisos visibles de aprobación ou erro. A detección básica funciona sen ela.";
+"settings.enhancedStatus.permissionRequired" = "A detección mellorada require permiso de Accesibilidade.";
+"settings.enhancedStatus.openSettings" = "Abrir Axustes…";
 "settings.privacy" = "AgentMicro le o estado das tarefas localmente e non carga os seus datos.";
 "settings.taskDisplay" = "Visualización de tarefas";
 "settings.taskNames" = "Nomes das tarefas";

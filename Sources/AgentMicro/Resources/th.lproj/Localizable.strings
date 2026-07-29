@@ -20,6 +20,10 @@
 "settings.error.launchAtLogin" = "ไม่สามารถอัปเดตรายการเข้าสู่ระบบได้: %@";
 "settings.general" = "ทั่วไป";
 "settings.launchAtLogin" = "เริ่ม AgentMicro เมื่อเข้าสู่ระบบ";
+"settings.enhancedStatus" = "การตรวจจับสถานะแบบปรับปรุง";
+"settings.enhancedStatus.description" = "เลือกใช้การช่วยการเข้าถึงเพื่อระบุงาน Codex ที่เปิดอยู่ รวมถึงคำขออนุมัติหรือข้อผิดพลาดที่มองเห็นได้ การตรวจจับพื้นฐานทำงานได้โดยไม่ต้องเปิด";
+"settings.enhancedStatus.permissionRequired" = "การตรวจจับแบบปรับปรุงต้องใช้สิทธิ์การช่วยการเข้าถึง";
+"settings.enhancedStatus.openSettings" = "เปิดการตั้งค่า…";
 "settings.privacy" = "AgentMicro อ่านสถานะงานภายในเครื่องและไม่อัปโหลดข้อมูลงาน";
 "settings.taskDisplay" = "การแสดงงาน";
 "settings.taskNames" = "ชื่องาน";

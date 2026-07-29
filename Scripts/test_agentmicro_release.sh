@@ -33,6 +33,7 @@ done
 /usr/bin/grep -Fq 'AGENTMICRO_GITHUB_REPOSITORY' "$RELEASE"
 /usr/bin/grep -Fq 'gh auth status --hostname github.com' "$RELEASE"
 /usr/bin/grep -Fq 'Publish from $AGENTMICRO_FEED_BRANCH' "$RELEASE"
+/usr/bin/grep -Fq 'docs/releases/$AGENTMICRO_VERSION.md' "$RELEASE"
 
 test -f "$WORKFLOW"
 /usr/bin/grep -Fq 'workflow_dispatch:' "$WORKFLOW"

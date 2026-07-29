@@ -23,6 +23,10 @@
 "settings.error.launchAtLogin" = "Não foi possível atualizar o item de início de sessão: %@";
 "settings.general" = "Geral";
 "settings.launchAtLogin" = "Iniciar o AgentMicro ao fazer login";
+"settings.enhancedStatus" = "Detecção de status aprimorada";
+"settings.enhancedStatus.description" = "Usa Acessibilidade opcionalmente para identificar a tarefa do Codex aberta e avisos visíveis de aprovação ou erro. A detecção básica funciona sem isso.";
+"settings.enhancedStatus.permissionRequired" = "A detecção aprimorada requer permissão de Acessibilidade.";
+"settings.enhancedStatus.openSettings" = "Abrir Ajustes…";
 "settings.privacy" = "O AgentMicro lê o status das tarefas localmente e não envia seus dados.";
 "settings.taskDisplay" = "Exibição de tarefas";
 "settings.taskNames" = "Nomes das tarefas";

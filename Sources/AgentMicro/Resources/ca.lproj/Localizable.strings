@@ -20,6 +20,10 @@
 "settings.error.launchAtLogin" = "No s’ha pogut actualitzar l’element d’inici de sessió: %@";
 "settings.general" = "General";
 "settings.launchAtLogin" = "Inicia AgentMicro en iniciar sessió";
+"settings.enhancedStatus" = "Detecció d’estat millorada";
+"settings.enhancedStatus.description" = "Utilitza opcionalment Accessibilitat per identificar la tasca de Codex oberta i els avisos visibles d’aprovació o error. La detecció bàsica funciona sense.";
+"settings.enhancedStatus.permissionRequired" = "La detecció millorada necessita permís d’Accessibilitat.";
+"settings.enhancedStatus.openSettings" = "Obre la configuració…";
 "settings.privacy" = "AgentMicro llegeix l’estat de les tasques localment i no en puja les dades.";
 "settings.taskDisplay" = "Visualització de tasques";
 "settings.taskNames" = "Noms de les tasques";

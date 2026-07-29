@@ -23,6 +23,10 @@
 "settings.error.launchAtLogin" = "Could not update login item: %@";
 "settings.general" = "General";
 "settings.launchAtLogin" = "Start AgentMicro at login";
+"settings.enhancedStatus" = "Enhanced status detection";
+"settings.enhancedStatus.description" = "Optionally uses Accessibility to identify the open Codex task and visible approval or error prompts. Basic detection works without it.";
+"settings.enhancedStatus.permissionRequired" = "Accessibility permission is required for enhanced detection.";
+"settings.enhancedStatus.openSettings" = "Open Settings…";
 "settings.privacy" = "AgentMicro reads task state locally and does not upload task data.";
 "settings.taskDisplay" = "Task display";
 "settings.taskNames" = "Task names";

@@ -33,6 +33,8 @@ Reduce the cost of monitoring and returning to concurrent Codex work while prese
 
 Show a state only when local evidence supports it. A stale file timestamp is not sufficient evidence that a task is thinking. Uncertain evidence falls back to idle instead of inventing an extra user-visible color.
 
+Read state is completion-specific evidence, not a permanent task attribute. An explicit view of the current completion outranks a lagging persisted unread bit, while any newer completion invalidates that view.
+
 ### Local first
 
 Task observation happens on the user’s Mac. AgentMicro does not require a hosted task backend.
@@ -47,7 +49,7 @@ The menu bar icon and compact menu are the primary product surface. Information 
 
 ### Progressive enhancement
 
-Desktop deep links, unread synchronization, and signed updates enhance the experience, but failure of one optional integration must not block task observation.
+Desktop deep links, unread synchronization, optional Accessibility-backed status detection, and signed updates enhance the experience, but failure of one optional integration must not block task observation.
 
 ## Product Boundary
 
@@ -58,6 +60,7 @@ V1 includes:
 - Current-turn duration and fast-mode indication.
 - Project and task naming controls.
 - One-click return to Codex Desktop conversations.
+- Optional Enhanced Status Detection for a selected Codex task and visible approval/error controls.
 - Configurable recent task count.
 - First-launch color guide and paged settings.
 - Launch at login, localization, and signed Sparkle updates.
@@ -81,10 +84,12 @@ AgentMicro:
 
 - Reads only known Codex process and local session locations.
 - Does not require Full Disk Access.
+- Does not require Accessibility permission; Enhanced Status Detection requests it only after the user enables that option.
 - Does not read Keychain credentials.
 - Does not upload prompts, responses, source code, command output, or session files.
 - Uses network access only for the optional AgentMicro update feed.
 - Offers a project-only display mode for shared-screen privacy.
+- When Enhanced Status Detection is enabled, reads visible Codex accessibility labels locally and never clicks, types, approves, or sends content.
 
 ## V1 Success Criteria
 

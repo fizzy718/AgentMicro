@@ -20,6 +20,10 @@
 "settings.error.launchAtLogin" = "Det gick inte att uppdatera inloggningsobjektet: %@";
 "settings.general" = "Allmänt";
 "settings.launchAtLogin" = "Starta AgentMicro vid inloggning";
+"settings.enhancedStatus" = "Förbättrad statusidentifiering";
+"settings.enhancedStatus.description" = "Använder valfritt Hjälpmedel för att identifiera den öppna Codex-uppgiften och synliga godkännanden eller fel. Grundidentifiering fungerar utan.";
+"settings.enhancedStatus.permissionRequired" = "Förbättrad identifiering kräver behörighet för Hjälpmedel.";
+"settings.enhancedStatus.openSettings" = "Öppna inställningar…";
 "settings.privacy" = "AgentMicro läser uppgiftsstatus lokalt och laddar inte upp uppgiftsdata.";
 "settings.taskDisplay" = "Uppgiftsvisning";
 "settings.taskNames" = "Uppgiftsnamn";

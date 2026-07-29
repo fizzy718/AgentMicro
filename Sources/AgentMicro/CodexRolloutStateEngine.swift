@@ -133,6 +133,9 @@ struct CodexRolloutReducer {
     private var awaitsUserAction = false
     private var thinkingSince: Date?
     private var rateLimited = false
+    private var blockingError = false
+    private var unresolvedToolFailure = false
+    private var sawFinalAnswer = false
     private var lastEventAt: Date?
     private var parsedEventCount = 0
     private var isTurnActive: Bool?
@@ -146,6 +149,7 @@ struct CodexRolloutReducer {
             hasParsedEvents: self.parsedEventCount > 0,
             isThinking: self.thinkingSince != nil,
             isRateLimited: self.rateLimited,
+            hasBlockingError: self.blockingError,
             hasPendingToolCall: !self.pendingCalls.isEmpty,
             requiresInput: self.awaitsUserAction
                 || self.pendingCalls.values.contains(where: \.requiresInput),
@@ -179,6 +183,8 @@ struct CodexRolloutReducer {
             self.consumeEvent(payload: object["payload"] as? [String: Any] ?? [:], eventDate: eventDate)
         case "response_item":
             self.consumeResponseItem(payload: object["payload"] as? [String: Any] ?? [:])
+        case "error", "fatal_error", "stream_error", "task_failed", "turn_failed":
+            self.failTurn()
         default:
             break
         }
@@ -197,15 +203,25 @@ struct CodexRolloutReducer {
         case "agent_message":
             self.updateUserActionRequest(from: payload)
             if Self.isFinalAnswer(payload) {
+                self.consumeFinalAnswer(from: payload)
                 self.completeTurn()
             } else {
                 self.thinkingSince = nil
             }
         case "task_complete":
+            if !self.sawFinalAnswer, self.unresolvedToolFailure {
+                self.blockingError = true
+            }
             self.completeTurn()
         case "turn_aborted":
             self.awaitsUserAction = false
-            self.completeTurn()
+            if CodexTerminalFailureClassifier.isFailureAbortReason(Self.string(payload["reason"])) {
+                self.failTurn()
+            } else {
+                self.completeTurn()
+            }
+        case "error", "fatal_error", "stream_error", "task_failed", "turn_failed":
+            self.failTurn()
         case "thread_settings_applied":
             self.updateServiceTier(from: payload["thread_settings"])
         case "token_count":
@@ -220,6 +236,9 @@ struct CodexRolloutReducer {
     private mutating func beginTurn(at eventDate: Date?) {
         let date = eventDate ?? self.lastEventAt ?? Date()
         self.awaitsUserAction = false
+        self.blockingError = false
+        self.unresolvedToolFailure = false
+        self.sawFinalAnswer = false
         if self.isTurnActive != true {
             self.turnStartedAt = date
         }
@@ -228,7 +247,7 @@ struct CodexRolloutReducer {
     }
 
     private var transitionState: TransitionState {
-        if self.rateLimited {
+        if self.rateLimited || self.blockingError {
             return .error
         }
         if self.awaitsUserAction || self.pendingCalls.values.contains(where: \.requiresInput) {
@@ -251,9 +270,12 @@ struct CodexRolloutReducer {
             if Self.string(payload["role"]) == "assistant" {
                 self.updateUserActionRequest(from: payload)
                 if Self.isFinalAnswer(payload) {
+                    self.consumeFinalAnswer(from: payload)
                     self.completeTurn()
                 }
             }
+        case "error", "fatal_error":
+            self.failTurn()
         default:
             break
         }
@@ -263,6 +285,23 @@ struct CodexRolloutReducer {
         self.isTurnActive = false
         self.thinkingSince = nil
         self.closeAllCalls()
+    }
+
+    private mutating func failTurn() {
+        self.blockingError = true
+        self.awaitsUserAction = false
+        self.completeTurn()
+    }
+
+    private mutating func consumeFinalAnswer(from payload: [String: Any]) {
+        let text = Self.flattenedOutputText(
+            payload["message"] ?? payload["content"],
+            characterLimit: 8192)
+        self.sawFinalAnswer = true
+        self.blockingError = CodexTerminalFailureClassifier.isBlockingFailure(text)
+        if !self.blockingError {
+            self.unresolvedToolFailure = false
+        }
     }
 
     private mutating func updateUserActionRequest(from payload: [String: Any]) {
@@ -326,6 +365,12 @@ struct CodexRolloutReducer {
         {
             self.runningCallsByHandle[handle] = callID
             return
+        }
+
+        if CodexToolOutputFailureClassifier.isTerminalFailure(outputText) {
+            self.unresolvedToolFailure = true
+        } else if CodexToolOutputFailureClassifier.isTerminalSuccess(outputText) {
+            self.unresolvedToolFailure = false
         }
 
         if CodexToolCallClassifier.isPolling(toolName) {

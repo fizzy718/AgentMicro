@@ -200,6 +200,38 @@ private struct AgentMicroSettingsView: View {
             }
 
             Section {
+                Toggle(
+                    AgentMicroLocalization.text("settings.enhancedStatus"),
+                    isOn: Binding(
+                        get: { self.settings.enhancedStatusDetection },
+                        set: { enabled in
+                            self.settings.enhancedStatusDetection = enabled
+                            if enabled {
+                                AgentMicroAccessibilityAccess.requestPermission()
+                            }
+                        }))
+                Text(AgentMicroLocalization.text("settings.enhancedStatus.description"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if self.settings.enhancedStatusDetection,
+                   !AgentMicroAccessibilityAccess.isTrusted
+                {
+                    HStack {
+                        Text(AgentMicroLocalization.text(
+                            "settings.enhancedStatus.permissionRequired"))
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                        Spacer()
+                        Button(AgentMicroLocalization.text(
+                            "settings.enhancedStatus.openSettings"))
+                        {
+                            AgentMicroAccessibilityAccess.openSystemSettings()
+                        }
+                    }
+                }
+            }
+
+            Section {
                 Text(AgentMicroLocalization.text("settings.privacy"))
                     .font(.caption)
                     .foregroundStyle(.secondary)

@@ -13,7 +13,7 @@ Backlog items are not commitments. Each item includes an entry condition so spec
 | ID | Status | Idea | Entry condition |
 | --- | --- | --- | --- |
 | AM-101 | candidate | Add stable upstream event transport | Codex publishes a supported task event API. |
-| AM-102 | candidate | Improve Desktop window/viewed correlation | A stable, non-private local signal is available. |
+| AM-102 | candidate | Replace best-effort Enhanced Status Detection with an authoritative selected-task signal | Codex exposes a stable supported task-selection event. |
 | AM-103 | deferred | Show subagents as independent rows | Ownership and user value are defined without duplication. |
 | AM-104 | candidate | Add task-state diagnostic export | Export can redact titles, paths, prompts, and payloads by default. |
 | AM-105 | candidate | Reduce the remaining brief UI synchronization gap | Reproducible fixtures identify a safe local source of truth. |

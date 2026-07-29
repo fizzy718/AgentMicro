@@ -561,6 +561,117 @@ struct CodexTaskStateEngineTests {
     }
 
     @Test
+    func `terminal failure answer becomes red while recovered error prose does not`() throws {
+        var failed = CodexRolloutReducer()
+        failed.consume(line: CodexTaskStateTestSupport.event(
+            type: "user_message",
+            timestamp: "2026-07-28T12:00:01Z"))
+        failed.consume(line: CodexTaskStateTestSupport.assistantResponse(
+            phase: "final_answer",
+            text: "I was unable to complete the requested release.",
+            timestamp: "2026-07-28T12:00:02Z"))
+        #expect(failed.snapshot.hasBlockingError)
+
+        let session = try CodexTaskStateTestSupport.session(
+            transcriptURL: CodexTaskStateTestSupport.fixtureURL(named: "waiting"),
+            pid: nil,
+            activity: CodexTaskStateTestSupport.fixtureNow)
+        #expect(CodexTaskStateResolver.observation(
+            session: session,
+            snapshot: failed.snapshot,
+            now: CodexTaskStateTestSupport.fixtureNow)?.state == .error)
+
+        var recovered = CodexRolloutReducer()
+        recovered.consume(line: CodexTaskStateTestSupport.assistantResponse(
+            phase: "final_answer",
+            text: "The earlier execution failed, but it is fixed and all tests passed.",
+            timestamp: "2026-07-28T12:00:03Z"))
+        #expect(!recovered.snapshot.hasBlockingError)
+    }
+
+    @Test
+    func `unresolved terminal tool failure becomes red only when the turn ends`() {
+        var reducer = CodexRolloutReducer()
+        reducer.consume(line: CodexTaskStateTestSupport.event(
+            type: "user_message",
+            timestamp: "2026-07-28T12:00:01Z"))
+        reducer.consume(line: CodexTaskStateTestSupport.toolCall(
+            callID: "failed-exec",
+            name: "exec_command",
+            inputKey: "arguments",
+            input: #"{"cmd":"make test"}"#,
+            timestamp: "2026-07-28T12:00:02Z"))
+        reducer.consume(line: CodexTaskStateTestSupport.toolOutput(
+            callID: "failed-exec",
+            output: "Process exited with code 1",
+            timestamp: "2026-07-28T12:00:03Z"))
+
+        #expect(!reducer.snapshot.hasBlockingError)
+        #expect(reducer.snapshot.isTurnActive == true)
+
+        reducer.consume(line: CodexTaskStateTestSupport.event(
+            type: "task_complete",
+            timestamp: "2026-07-28T12:00:04Z"))
+        #expect(reducer.snapshot.hasBlockingError)
+    }
+
+    @Test
+    func `successful recovery clears an earlier tool failure`() {
+        var reducer = CodexRolloutReducer()
+        reducer.consume(line: CodexTaskStateTestSupport.event(
+            type: "user_message",
+            timestamp: "2026-07-28T12:00:01Z"))
+        reducer.consume(line: CodexTaskStateTestSupport.toolCall(
+            callID: "failed-exec",
+            name: "exec_command",
+            inputKey: "arguments",
+            input: #"{"cmd":"make test"}"#,
+            timestamp: "2026-07-28T12:00:02Z"))
+        reducer.consume(line: CodexTaskStateTestSupport.toolOutput(
+            callID: "failed-exec",
+            output: "Process exited with code 1",
+            timestamp: "2026-07-28T12:00:03Z"))
+        reducer.consume(line: CodexTaskStateTestSupport.toolCall(
+            callID: "fixed-exec",
+            name: "exec_command",
+            inputKey: "arguments",
+            input: #"{"cmd":"make test"}"#,
+            timestamp: "2026-07-28T12:00:04Z"))
+        reducer.consume(line: CodexTaskStateTestSupport.toolOutput(
+            callID: "fixed-exec",
+            output: "Process exited with code 0",
+            timestamp: "2026-07-28T12:00:05Z"))
+        reducer.consume(line: CodexTaskStateTestSupport.event(
+            type: "task_complete",
+            timestamp: "2026-07-28T12:00:06Z"))
+
+        #expect(!reducer.snapshot.hasBlockingError)
+    }
+
+    @Test
+    func `user interruption is not red but structured failure is red`() {
+        var interrupted = CodexRolloutReducer()
+        interrupted.consume(line: CodexTaskStateTestSupport.event(
+            type: "turn_aborted",
+            timestamp: "2026-07-28T12:00:01Z",
+            extraPayload: ["reason": "interrupted"]))
+        #expect(!interrupted.snapshot.hasBlockingError)
+
+        var failed = CodexRolloutReducer()
+        failed.consume(line: CodexTaskStateTestSupport.event(
+            type: "turn_failed",
+            timestamp: "2026-07-28T12:00:02Z"))
+        #expect(failed.snapshot.hasBlockingError)
+    }
+
+    @Test
+    func `additional structured question tools require input`() {
+        #expect(CodexToolCallClassifier.requiresInput("elicitation_request"))
+        #expect(CodexToolCallClassifier.requiresInput("ask_user_question"))
+        #expect(!CodexToolCallClassifier.requiresInput("exec_command"))
+    }
+
+    @Test
     func `tool action removes common credentials`() {
         let action = CodexToolActionFormatter.action(
             toolName: "exec_command",

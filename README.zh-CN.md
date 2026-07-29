@@ -57,7 +57,8 @@ AgentMicro 对外只使用五种状态：
 
 - 观察本机 Codex Desktop 和 Codex CLI 任务。
 - 监听本地会话变化，并使用短周期轮询兜底。
-- 使用 Codex 本地未读线程状态同步 Desktop 已完成任务的未读颜色。
+- 使用 Codex 本地未读线程状态同步 Desktop 已完成任务；从 AgentMicro 打开的结果会立即完成绿色到白色的已读闭环。
+- 可选“增强状态检测”可补充识别 Codex 当前选中的任务和可见审批／错误控件；默认关闭，普通模式不需要辅助功能权限。
 - 明确把操作权交给用户后持续显示橙色，直到用户继续任务。
 - 正在工作的任务优先，其余任务按最近状态变化排序。
 - 显示项目名、任务标题和精确到秒的当前单轮时长。
@@ -118,8 +119,12 @@ AgentMicro 菜单，也不是 AgentMicro 对外提供的功能；V1 有意保持
 
 Codex 目前没有为全部 Desktop 任务状态提供稳定的公开事件接口，因此 AgentMicro
 根据有界的本地元数据和 rollout 事件归纳生命周期，并从 Codex 本地未读线程状态同步
-Desktop 已完成任务是否已查看。CLI 任务继续使用 AgentMicro 本地已读记录。项目会优先
-显示诚实的空闲状态，而不是包装成确定结论；本地文件尚在落盘时仍可能存在短暂差异。
+Desktop 已完成任务是否已查看。从 AgentMicro 成功打开某个准确任务属于更强的单任务查看证据，
+会立即把这次完成从绿色改为白色；之后出现新结果时仍会重新变绿。CLI 任务继续使用
+AgentMicro 本地已读记录。用户也可以主动开启“增强状态检测”，让 AgentMicro 在 Codex 位于前台时
+只读识别唯一选中的任务和可见审批／错误控件。该功能默认关闭，只有主动开启后才请求辅助功能权限，
+且不会点击、输入、批准或发送任何内容。项目会优先显示诚实的空闲状态，而不是包装成确定结论；
+本地文件尚在落盘时仍可能存在短暂差异。
 
 ## 开发
 
@@ -139,6 +144,8 @@ make test
 产品决策和实现约束见英文 [AgentMicro 产品文档](docs/agentmicro/README.md)，签名与在线
 更新流程见英文 [AgentMicro 发布指南](docs/agentmicro/RELEASING.md)。项目只保留本页
 作为中文 README，内部产品与工程文档统一使用英文维护。
+Codex Micro 原厂行为、第三方观察与 AgentMicro 取舍见英文
+[Codex Micro 功能模型](docs/agentmicro/CODEX_MICRO_REFERENCE.md)。
 
 ## 参与贡献
 

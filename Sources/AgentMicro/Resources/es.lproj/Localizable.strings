@@ -23,6 +23,10 @@
 "settings.error.launchAtLogin" = "No se pudo actualizar el inicio de sesión: %@";
 "settings.general" = "General";
 "settings.launchAtLogin" = "Abrir AgentMicro al iniciar sesión";
+"settings.enhancedStatus" = "Detección de estado mejorada";
+"settings.enhancedStatus.description" = "Usa Accesibilidad de forma opcional para identificar la tarea de Codex abierta y los avisos visibles de aprobación o error. La detección básica funciona sin ella.";
+"settings.enhancedStatus.permissionRequired" = "La detección mejorada requiere permiso de Accesibilidad.";
+"settings.enhancedStatus.openSettings" = "Abrir Ajustes…";
 "settings.privacy" = "AgentMicro lee el estado de las tareas localmente y no sube sus datos.";
 "settings.taskDisplay" = "Visualización de tareas";
 "settings.taskNames" = "Nombres de tareas";

@@ -10,12 +10,12 @@ Delivered:
 
 - Independent macOS menu bar application.
 - Codex Desktop and CLI session discovery.
-- Incremental rollout reduction and lifecycle state engine.
+- Incremental rollout reduction with structured/user-handoff and terminal-failure classification.
 - Five visible states: idle, unread, thinking, needs input, and error.
 - Working-first, recent-state-change ordering.
 - Configurable 1–20 task menu and fixed six-slot menu bar icon.
 - Project/title display modes, second-level current-turn duration, and fast-mode badge.
-- Desktop unread synchronization and one-click thread deep links.
+- Desktop unread synchronization, explicit-view closure, optional Enhanced Status Detection, and one-click thread deep links.
 - CodexBar-style paged settings and first-launch five-color guide.
 - System language plus 23 selectable languages.
 - Adaptive six-layer Icon Composer application icon with Default, Dark, Clear, and Tinted appearances.

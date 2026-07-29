@@ -64,6 +64,10 @@ After reviewing the archive, signature, notarization, and appcast:
 
 Publish mode creates the GitHub Release, uploads the ZIP, stages only `agentmicro-appcast.xml`, commits it, and pushes it to the configured feed branch. It refuses a dirty worktree or an existing release tag.
 
+When `docs/releases/<version>.md` exists, publish mode uses it as the GitHub Release body. Set
+`AGENTMICRO_RELEASE_NOTES_FILE` only to override that versioned file. If neither exists, the script
+falls back to GitHub-generated notes.
+
 ## GitHub Actions Release
 
 Create a GitHub Environment named `agentmicro-release`. A required reviewer is recommended.

@@ -48,6 +48,14 @@ enum CodexToolCallClassifier {
     }
 
     static func requiresInput(_ name: String) -> Bool {
-        name.localizedCaseInsensitiveContains("request_user_input")
+        let value = name
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+            .replacingOccurrences(of: "-", with: "_")
+        return value.contains("request_user_input") ||
+            value.contains("requestuserinput") ||
+            value.contains("ask_user") ||
+            value.contains("askuserquestion") ||
+            value.contains("elicitation_request")
     }
 }

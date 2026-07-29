@@ -23,6 +23,10 @@
 "settings.error.launchAtLogin" = "로그인 항목을 업데이트할 수 없습니다: %@";
 "settings.general" = "일반";
 "settings.launchAtLogin" = "로그인 시 AgentMicro 시작";
+"settings.enhancedStatus" = "향상된 상태 감지";
+"settings.enhancedStatus.description" = "선택적으로 손쉬운 사용을 이용해 열린 Codex 작업과 표시된 승인 또는 오류를 식별합니다. 기본 감지는 권한 없이도 작동합니다.";
+"settings.enhancedStatus.permissionRequired" = "향상된 감지에는 손쉬운 사용 권한이 필요합니다.";
+"settings.enhancedStatus.openSettings" = "설정 열기…";
 "settings.privacy" = "AgentMicro는 작업 상태를 로컬에서 읽으며 작업 데이터를 업로드하지 않습니다.";
 "settings.taskDisplay" = "작업 표시";
 "settings.taskNames" = "작업 이름";

@@ -6,6 +6,7 @@ This directory is the product and engineering source of truth for AgentMicro. Th
 
 - [Product definition](PRODUCT.md): audience, problem, principles, privacy, and V1 success criteria.
 - [V1 specification](V1_SPEC.md): supported task model, state reduction, menu behavior, settings, and acceptance criteria.
+- [Codex Micro functional model](CODEX_MICRO_REFERENCE.md): official behavior, observed implementation details, evidence levels, and AgentMicro implications.
 - [Roadmap](ROADMAP.md): completed V1 milestones and explicitly gated future stages.
 - [Capability map](CAPABILITY_MAP.md): what is reused from CodexBar and what was learned from neighboring projects.
 - [Backlog](BACKLOG.md): deferred ideas with entry conditions.
@@ -30,7 +31,7 @@ The five user-visible colors are:
 
 Settings use a CodexBar-style sidebar with Guide, General, Task Display, and Updates pages. The Guide is opened automatically on first launch, explains all five colors, and includes a checked-by-default “Don’t show this guide on next launch” checkbox. All AgentMicro UI copy is available in the same 23 interface languages exposed by CodexBar.
 
-AgentMicro reads known local Codex process and session metadata. It does not upload task titles, prompts, responses, source code, command output, or session files. Software updates use AgentMicro’s own signed Sparkle feed.
+AgentMicro reads known local Codex process and session metadata. Optional Enhanced Status Detection can use macOS Accessibility, only after explicit opt-in, to recognize the uniquely selected Codex task and visible approval/error controls. Base mode never requires that permission, and the enhanced reader does not click or type. AgentMicro does not upload task titles, prompts, responses, source code, command output, or session files. Software updates use AgentMicro’s own signed Sparkle feed.
 
 ## Development
 

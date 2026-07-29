@@ -57,7 +57,8 @@ Insufficient evidence is represented internally as `unknown`, but displayed as i
 
 - Observes local Codex Desktop and Codex CLI tasks.
 - Updates from filesystem events with a short fallback polling interval.
-- Synchronizes completed Desktop-task unread state with Codex's local unread-thread state.
+- Synchronizes completed Desktop-task unread state with Codex's local state, while explicit AgentMicro navigation immediately closes the viewed result.
+- Offers optional Enhanced Status Detection for direct Codex selection and visible approval/error controls; it is off by default and Accessibility permission is never required for base mode.
 - Keeps explicit user handoffs orange until the user resumes the task.
 - Sorts working tasks first, then by the most recent state change.
 - Shows project name, task title, and the current turn duration down to the second.
@@ -122,7 +123,7 @@ The repository still contains provider implementations and tests inherited from
 the CodexBar baseline. They are not connected to the AgentMicro menu or exposed
 as AgentMicro features; V1 is intentionally Codex-only.
 
-Codex does not currently expose a stable public event API for observing every Desktop task transition. AgentMicro therefore derives lifecycle state from bounded local metadata and rollout events, and synchronizes completed Desktop-task unread state from Codex's local unread-thread state. CLI read state still uses AgentMicro's local record. The project prefers an honest idle state over an unsupported guess, but brief differences from the Codex UI may still occur while local files settle.
+Codex does not currently expose a stable public event API for observing every Desktop task transition. AgentMicro therefore derives lifecycle state from bounded local metadata and rollout events, and synchronizes completed Desktop-task unread state from Codex's local unread-thread state. Successfully opening the exact task through AgentMicro is stronger, task-specific view evidence and immediately changes that completion from green to white; newer completion activity can make it green again. Optional Enhanced Status Detection can also recognize a uniquely selected task and visible approval/error controls in the focused Codex window. It is disabled by default, only requests Accessibility permission after explicit opt-in, and never clicks or types. CLI read state still uses AgentMicro's local record. The project prefers an honest idle state over an unsupported guess, but brief differences from the Codex UI may still occur while local files settle.
 
 ## Development
 
@@ -143,6 +144,8 @@ Product decisions and implementation constraints are documented in the
 [AgentMicro product docs](docs/agentmicro/README.md). Release signing and
 Sparkle setup are documented in the
 [AgentMicro release guide](docs/agentmicro/RELEASING.md).
+The evidence-backed model of the original hardware and ChatGPT integration lives in the
+[Codex Micro functional model](docs/agentmicro/CODEX_MICRO_REFERENCE.md).
 
 ## Contributing
 

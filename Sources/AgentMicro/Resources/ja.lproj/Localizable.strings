@@ -23,6 +23,10 @@
 "settings.error.launchAtLogin" = "ログイン項目を更新できませんでした：%@";
 "settings.general" = "一般";
 "settings.launchAtLogin" = "ログイン時に AgentMicro を起動";
+"settings.enhancedStatus" = "高度なステータス検出";
+"settings.enhancedStatus.description" = "アクセシビリティを任意で使用し、開いている Codex タスクと表示中の承認・エラーを識別します。基本検出は権限なしでも動作します。";
+"settings.enhancedStatus.permissionRequired" = "高度な検出にはアクセシビリティ権限が必要です。";
+"settings.enhancedStatus.openSettings" = "設定を開く…";
 "settings.privacy" = "AgentMicro はタスクの状態をローカルで読み取り、タスクデータをアップロードしません。";
 "settings.taskDisplay" = "タスク表示";
 "settings.taskNames" = "タスク名";

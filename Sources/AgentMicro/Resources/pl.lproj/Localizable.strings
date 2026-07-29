@@ -20,6 +20,10 @@
 "settings.error.launchAtLogin" = "Nie udało się zaktualizować elementu logowania: %@";
 "settings.general" = "Ogólne";
 "settings.launchAtLogin" = "Uruchamiaj AgentMicro po zalogowaniu";
+"settings.enhancedStatus" = "Ulepszone wykrywanie stanu";
+"settings.enhancedStatus.description" = "Opcjonalnie używa Dostępności do rozpoznawania otwartego zadania Codex oraz widocznych próśb o zatwierdzenie lub błędów. Wykrywanie podstawowe działa bez niej.";
+"settings.enhancedStatus.permissionRequired" = "Ulepszone wykrywanie wymaga uprawnienia Dostępności.";
+"settings.enhancedStatus.openSettings" = "Otwórz ustawienia…";
 "settings.privacy" = "AgentMicro odczytuje stan zadań lokalnie i nie przesyła ich danych.";
 "settings.taskDisplay" = "Wyświetlanie zadań";
 "settings.taskNames" = "Nazwy zadań";

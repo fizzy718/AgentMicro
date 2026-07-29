@@ -66,6 +66,7 @@ struct CodexRolloutSnapshot: Equatable, Sendable {
     let hasParsedEvents: Bool
     let isThinking: Bool
     let isRateLimited: Bool
+    let hasBlockingError: Bool
     let hasPendingToolCall: Bool
     let requiresInput: Bool
     let currentAction: String?
@@ -98,7 +99,9 @@ enum CodexTaskStateResolver {
                                            snapshot.isTurnActive == true ||
                                            snapshot.hasPendingToolCall ||
                                            snapshot.isThinking ||
-                                           snapshot.requiresInput
+                                           snapshot.requiresInput ||
+                                           snapshot.isRateLimited ||
+                                           snapshot.hasBlockingError
             {
                 self.liveState(
                     snapshot: snapshot,
@@ -152,7 +155,7 @@ enum CodexTaskStateResolver {
         activityAge: TimeInterval?,
         thinkingFreshness: TimeInterval) -> CodexTaskState
     {
-        if snapshot.isRateLimited {
+        if snapshot.isRateLimited || snapshot.hasBlockingError {
             return .error
         }
         if snapshot.requiresInput {

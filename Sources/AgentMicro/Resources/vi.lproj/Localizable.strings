@@ -20,6 +20,10 @@
 "settings.error.launchAtLogin" = "Không thể cập nhật mục đăng nhập: %@";
 "settings.general" = "Chung";
 "settings.launchAtLogin" = "Khởi chạy AgentMicro khi đăng nhập";
+"settings.enhancedStatus" = "Nhận diện trạng thái nâng cao";
+"settings.enhancedStatus.description" = "Tùy chọn dùng Trợ năng để xác định tác vụ Codex đang mở và lời nhắc phê duyệt hoặc lỗi đang hiển thị. Nhận diện cơ bản vẫn hoạt động nếu không bật.";
+"settings.enhancedStatus.permissionRequired" = "Nhận diện nâng cao cần quyền Trợ năng.";
+"settings.enhancedStatus.openSettings" = "Mở Cài đặt…";
 "settings.privacy" = "AgentMicro đọc trạng thái tác vụ trên máy và không tải dữ liệu tác vụ lên.";
 "settings.taskDisplay" = "Hiển thị tác vụ";
 "settings.taskNames" = "Tên tác vụ";

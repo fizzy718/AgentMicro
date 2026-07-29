@@ -13,6 +13,11 @@ enum CodexUserActionRequestClassifier {
         "等待您",
         "轮到你",
         "轮到您",
+        "完成后",
+        "操作后",
+        "然后告诉我",
+        "再告诉我",
+        "回复我",
     ]
 
     private static let chineseActionMarkers = [
@@ -30,6 +35,8 @@ enum CodexUserActionRequestClassifier {
         "操作",
         "接管",
         "提交",
+        "回复",
+        "告诉",
     ]
 
     private static let englishRequestMarkers = [
@@ -39,6 +46,11 @@ enum CodexUserActionRequestClassifier {
         "wait for you to",
         "your action is required",
         "requires your action",
+        "when you are done",
+        "when you're done",
+        "once you have completed",
+        "then let me know",
+        "reply when",
     ]
 
     private static let englishActionMarkers = [
@@ -56,6 +68,8 @@ enum CodexUserActionRequestClassifier {
         "select",
         "take over",
         "submit",
+        "reply",
+        "let me know",
     ]
 
     private static let negativeMarkers = [

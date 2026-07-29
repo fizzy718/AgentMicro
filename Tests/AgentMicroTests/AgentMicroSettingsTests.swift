@@ -37,6 +37,7 @@ struct AgentMicroSettingsTests {
         #expect(settings.autoUpdateEnabled)
         #expect(settings.taskDisplayLimit == 6)
         #expect(settings.showRecentlyCompleted)
+        #expect(!settings.enhancedStatusDetection)
         #expect(!settings.launchAtLogin)
         #expect(settings.shouldPresentGuideOnLaunch)
         #expect(!settings.showGuideOnLaunch)
@@ -67,7 +68,7 @@ struct AgentMicroSettingsTests {
     }
 
     @Test
-    func `language override and update preference persist across settings instances`() throws {
+    func `language update and enhanced preferences persist across settings instances`() throws {
         let (defaults, suiteName) = try Self.makeDefaults()
         defer { defaults.removePersistentDomain(forName: suiteName) }
         let first = AgentMicroSettings(
@@ -77,6 +78,7 @@ struct AgentMicroSettingsTests {
 
         first.appLanguage = .chineseSimplified
         first.autoUpdateEnabled = false
+        first.enhancedStatusDetection = true
 
         let reloaded = AgentMicroSettings(
             defaults: defaults,
@@ -84,6 +86,7 @@ struct AgentMicroSettingsTests {
             updateLaunchAtLogin: { _ in })
         #expect(reloaded.appLanguage == .chineseSimplified)
         #expect(!reloaded.autoUpdateEnabled)
+        #expect(reloaded.enhancedStatusDetection)
 
         reloaded.appLanguage = .system
         #expect(defaults.object(forKey: AgentMicroLocalization.appLanguageDefaultsKey) == nil)

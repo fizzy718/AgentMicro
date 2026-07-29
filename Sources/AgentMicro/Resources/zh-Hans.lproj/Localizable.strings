@@ -23,6 +23,10 @@
 "settings.error.launchAtLogin" = "无法更新登录项：%@";
 "settings.general" = "通用";
 "settings.launchAtLogin" = "登录时启动 AgentMicro";
+"settings.enhancedStatus" = "增强状态识别";
+"settings.enhancedStatus.description" = "可选使用辅助功能识别当前打开的 Codex 任务，以及可见的批准或错误提示。不开启也能使用基础识别。";
+"settings.enhancedStatus.permissionRequired" = "增强识别需要辅助功能权限。";
+"settings.enhancedStatus.openSettings" = "打开系统设置…";
 "settings.privacy" = "AgentMicro 仅在本地读取任务状态，不会上传任务数据。";
 "settings.taskDisplay" = "任务显示";
 "settings.taskNames" = "任务名称";

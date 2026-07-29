@@ -23,6 +23,10 @@
 "settings.error.launchAtLogin" = "Anmeldeobjekt konnte nicht aktualisiert werden: %@";
 "settings.general" = "Allgemein";
 "settings.launchAtLogin" = "AgentMicro bei der Anmeldung starten";
+"settings.enhancedStatus" = "Erweiterte Statuserkennung";
+"settings.enhancedStatus.description" = "Verwendet optional Bedienungshilfen, um die geöffnete Codex-Aufgabe und sichtbare Genehmigungs- oder Fehlermeldungen zu erkennen. Die Basiserkennung funktioniert ohne sie.";
+"settings.enhancedStatus.permissionRequired" = "Für die erweiterte Erkennung ist die Berechtigung für Bedienungshilfen erforderlich.";
+"settings.enhancedStatus.openSettings" = "Einstellungen öffnen…";
 "settings.privacy" = "AgentMicro liest den Aufgabenstatus lokal und lädt keine Aufgabendaten hoch.";
 "settings.taskDisplay" = "Aufgabenanzeige";
 "settings.taskNames" = "Aufgabennamen";

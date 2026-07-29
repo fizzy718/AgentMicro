@@ -20,6 +20,10 @@
 "settings.error.launchAtLogin" = "無法更新登入項目：%@";
 "settings.general" = "一般";
 "settings.launchAtLogin" = "登入時啟動 AgentMicro";
+"settings.enhancedStatus" = "增強狀態辨識";
+"settings.enhancedStatus.description" = "可選用輔助使用功能辨識目前開啟的 Codex 任務，以及可見的核准或錯誤提示。不開啟也能使用基本辨識。";
+"settings.enhancedStatus.permissionRequired" = "增強辨識需要輔助使用權限。";
+"settings.enhancedStatus.openSettings" = "開啟系統設定…";
 "settings.privacy" = "AgentMicro 僅在本機讀取任務狀態，不會上傳任務資料。";
 "settings.taskDisplay" = "任務顯示";
 "settings.taskNames" = "任務名稱";

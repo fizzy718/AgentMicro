@@ -15,6 +15,8 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     private var tasks: [CodexTaskObservation] = []
     private var knownSessions: [AgentSession] = []
     private var viewedTurnTracker = AgentMicroViewedTurnTracker()
+    private let enhancedStatusReader = CodexEnhancedStatusReader()
+    private var enhancedStatusTracker = CodexEnhancedStatusTracker()
     private let codexUnreadThreadStateReader = CodexUnreadThreadStateReader()
     private var hasCompletedInitialScan = false
     private var refreshTask: Task<Void, Never>?
@@ -39,6 +41,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
             self.updater.automaticallyChecksForUpdates = self.settings.autoUpdateEnabled
             self.updater.automaticallyDownloadsUpdates = self.settings.autoUpdateEnabled
             self.settingsWindowController?.refreshLocalization()
+            self.reconcileKnownSessions()
             self.updateStatusItem()
             self.rebuildMenu()
         }
@@ -302,9 +305,14 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
 
     private func focusSession(sessionKey: String) {
         guard let task = self.tasks.first(where: { $0.sessionKey == sessionKey }) else { return }
-        self.viewedTurnTracker.noteViewing(task)
-        self.settings.markSessionRead(task)
-        _ = SessionWindowFocuser.focus(task.session, promptForAccessibility: false)
+        let focusResult = SessionWindowFocuser.focus(task.session, promptForAccessibility: false)
+        if AgentMicroReadStateResolver.focusResultConfirmsView(
+            focusResult,
+            source: task.session.source)
+        {
+            self.viewedTurnTracker.noteViewing(task)
+            self.settings.markSessionRead(task)
+        }
         self.reconcileKnownSessions()
         self.scheduleReconciliationBurst()
     }
@@ -399,16 +407,43 @@ extension AgentMicroAppDelegate {
     }
 
     private func applyTasks(_ tasks: [CodexTaskObservation], now: Date = Date()) {
+        let enhancedSnapshot: CodexEnhancedStatusSnapshot? = if self.settings
+            .enhancedStatusDetection,
+            AgentMicroAccessibilityAccess.isTrusted
+        {
+            self.enhancedStatusReader.snapshot(for: tasks)
+        } else {
+            nil
+        }
+        if !self.settings.enhancedStatusDetection ||
+            !AgentMicroAccessibilityAccess.isTrusted
+        {
+            self.enhancedStatusTracker.reset()
+        }
+        if let selectedSessionKey = enhancedSnapshot?.selectedSessionKey,
+           let selectedTask = tasks.first(where: { $0.sessionKey == selectedSessionKey })
+        {
+            self.viewedTurnTracker.noteViewing(selectedTask, now: now)
+            if selectedTask.state == .unread {
+                self.settings.markSessionRead(
+                    selectedTask,
+                    now: selectedTask.lastEventAt ?? now,
+                    notifyChange: false)
+            }
+        }
+        let effectiveTasks = self.enhancedStatusTracker.apply(
+            snapshot: enhancedSnapshot,
+            to: tasks)
         let completedViewedTasks = self.viewedTurnTracker.completedTasksToMarkRead(
-            in: tasks,
+            in: effectiveTasks,
             now: now)
         for task in completedViewedTasks {
             self.settings.markSessionRead(task, now: task.lastEventAt ?? now, notifyChange: false)
         }
-        self.tasks = tasks
+        self.tasks = effectiveTasks
         self.updateStatusItem()
         self.rebuildMenu(now: now)
-        if self.isMenuOpen, tasks.contains(where: \.state.isWorking) {
+        if self.isMenuOpen, effectiveTasks.contains(where: \.state.isWorking) {
             self.startMenuDurationTimerIfNeeded()
         } else {
             self.stopMenuDurationTimer()

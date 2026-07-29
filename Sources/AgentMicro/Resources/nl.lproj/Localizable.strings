@@ -20,6 +20,10 @@
 "settings.error.launchAtLogin" = "Inlogonderdeel kon niet worden bijgewerkt: %@";
 "settings.general" = "Algemeen";
 "settings.launchAtLogin" = "Start AgentMicro bij inloggen";
+"settings.enhancedStatus" = "Verbeterde statusdetectie";
+"settings.enhancedStatus.description" = "Gebruikt optioneel Toegankelijkheid om de geopende Codex-taak en zichtbare goedkeurings- of foutmeldingen te herkennen. Basisdetectie werkt zonder.";
+"settings.enhancedStatus.permissionRequired" = "Voor verbeterde detectie is toestemming voor Toegankelijkheid vereist.";
+"settings.enhancedStatus.openSettings" = "Instellingen openen…";
 "settings.privacy" = "AgentMicro leest de taakstatus lokaal en uploadt geen taakgegevens.";
 "settings.taskDisplay" = "Taakweergave";
 "settings.taskNames" = "Taaknamen";

@@ -20,6 +20,10 @@
 "settings.error.launchAtLogin" = "Tidak dapat memperbarui item masuk: %@";
 "settings.general" = "Umum";
 "settings.launchAtLogin" = "Mulai AgentMicro saat masuk";
+"settings.enhancedStatus" = "Deteksi status yang ditingkatkan";
+"settings.enhancedStatus.description" = "Secara opsional menggunakan Aksesibilitas untuk mengenali tugas Codex yang terbuka serta permintaan persetujuan atau galat yang terlihat. Deteksi dasar tetap bekerja tanpanya.";
+"settings.enhancedStatus.permissionRequired" = "Deteksi yang ditingkatkan memerlukan izin Aksesibilitas.";
+"settings.enhancedStatus.openSettings" = "Buka Pengaturan…";
 "settings.privacy" = "AgentMicro membaca status tugas secara lokal dan tidak mengunggah data tugas.";
 "settings.taskDisplay" = "Tampilan tugas";
 "settings.taskNames" = "Nama tugas";

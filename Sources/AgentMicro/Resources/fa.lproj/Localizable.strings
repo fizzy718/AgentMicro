@@ -20,6 +20,10 @@
 "settings.error.launchAtLogin" = "به‌روزرسانی مورد ورود ممکن نشد: %@";
 "settings.general" = "عمومی";
 "settings.launchAtLogin" = "اجرای AgentMicro هنگام ورود";
+"settings.enhancedStatus" = "تشخیص پیشرفتهٔ وضعیت";
+"settings.enhancedStatus.description" = "به‌صورت اختیاری از دسترس‌پذیری برای شناسایی وظیفهٔ باز Codex و درخواست‌های تأیید یا خطاهای قابل مشاهده استفاده می‌کند. تشخیص پایه بدون آن کار می‌کند.";
+"settings.enhancedStatus.permissionRequired" = "تشخیص پیشرفته به مجوز دسترس‌پذیری نیاز دارد.";
+"settings.enhancedStatus.openSettings" = "باز کردن تنظیمات…";
 "settings.privacy" = "AgentMicro وضعیت وظایف را به‌صورت محلی می‌خواند و داده‌های آن‌ها را بارگذاری نمی‌کند.";
 "settings.taskDisplay" = "نمایش وظایف";
 "settings.taskNames" = "نام وظایف";
