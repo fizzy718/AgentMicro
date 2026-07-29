@@ -17,13 +17,21 @@ struct AgentMicroMenuRow: Equatable, Sendable {
 }
 
 enum AgentMicroMenuModel {
-    static func rows(from tasks: [CodexTaskObservation], now: Date = Date()) -> [AgentMicroMenuRow] {
+    static func rows(
+        from tasks: [CodexTaskObservation],
+        preferences: AgentMicroPreferences = AgentMicroPreferences(),
+        now: Date = Date()
+    ) -> [AgentMicroMenuRow] {
         tasks
-            .filter { $0.session.provider == .codex }
+            .filter { task in
+                task.session.provider == .codex &&
+                    (preferences.showRecentlyCompleted || task.state != .done)
+            }
             .sorted(by: self.taskComesBefore)
             .map { task in
                 let session = task.session
-                let title = self.title(for: session)
+                let title = self.title(for: session, mode: preferences.taskNameMode)
+                let displayTitle = task.state == .done ? "Recently completed: \(title)" : title
                 var subtitleParts = [
                     task.state.displayName
                 ]
@@ -33,14 +41,19 @@ enum AgentMicroMenuModel {
                 subtitleParts.append(
                     self.sourceLabel(session.source)
                 )
-                if let projectName = session.projectName, projectName != title {
+                if preferences.taskNameMode == .taskTitleAndProject,
+                   let projectName = self.nonEmpty(session.projectName),
+                   projectName != title {
                     subtitleParts.append(projectName)
                 }
-                let age = self.ageLabel(for: session, now: now)
+                let age = self.ageLabel(
+                    activity: task.lastEventAt ?? session.lastActivityAt ?? session.startedAt,
+                    now: now
+                )
                 subtitleParts.append(task.state == .done ? "\(age) ago" : age)
                 return AgentMicroMenuRow(
                     sessionKey: task.sessionKey,
-                    title: title,
+                    title: displayTitle,
                     subtitle: subtitleParts.joined(separator: " · "),
                     state: task.state,
                 )
@@ -52,18 +65,33 @@ enum AgentMicroMenuModel {
     }
 
     static func title(for session: AgentSession) -> String {
-        if let projectName = self.nonEmpty(session.projectName) {
-            return projectName
-        }
-        if let sessionName = self.nonEmpty(session.sessionName) {
-            return sessionName
+        self.title(for: session, mode: .projectOnly)
+    }
+
+    static func title(for session: AgentSession, mode: AgentMicroTaskNameMode) -> String {
+        switch mode {
+        case .projectOnly:
+            if let projectName = self.nonEmpty(session.projectName) {
+                return projectName
+            }
+        case .taskTitle, .taskTitleAndProject:
+            if let sessionName = self.nonEmpty(session.sessionName) {
+                return sessionName
+            }
+            if let projectName = self.nonEmpty(session.projectName) {
+                return projectName
+            }
         }
         let compactID = session.id.split(separator: "-").first.map(String.init) ?? session.id
         return compactID.isEmpty ? "Codex task" : compactID
     }
 
     static func ageLabel(for session: AgentSession, now: Date) -> String {
-        guard let activity = session.lastActivityAt ?? session.startedAt else { return "now" }
+        self.ageLabel(activity: session.lastActivityAt ?? session.startedAt, now: now)
+    }
+
+    static func ageLabel(activity: Date?, now: Date) -> String {
+        guard let activity else { return "now" }
         let seconds = max(0, Int(now.timeIntervalSince(activity)))
         if seconds < 60 {
             return "\(seconds)s"

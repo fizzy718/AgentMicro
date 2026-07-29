@@ -41,7 +41,7 @@ struct AgentMicroMenuModelTests {
         ]
         let rows = AgentMicroMenuModel.rows(from: tasks, now: now)
 
-        #expect(rows.map(\.title) == ["active-project", "idle-project"])
+        #expect(rows.map(\.title) == ["active-project", "Recently completed: idle-project"])
         #expect(rows[0].subtitle == "Executing · Codex App · 20s")
         #expect(rows[1].subtitle == "Done · Codex CLI · 10s ago")
     }
@@ -62,7 +62,7 @@ struct AgentMicroMenuModelTests {
     }
 
     @Test
-    func `title falls back through session name and compact session identifier`() {
+    func `title modes preserve privacy defaults and fall back safely`() {
         let named = Self.session(
             id: "019f-named",
             provider: .codex,
@@ -81,7 +81,8 @@ struct AgentMicroMenuModelTests {
             activity: nil,
         )
 
-        #expect(AgentMicroMenuModel.title(for: named) == "Fix task scanner")
+        #expect(AgentMicroMenuModel.title(for: named) == "019f")
+        #expect(AgentMicroMenuModel.title(for: named, mode: .taskTitle) == "Fix task scanner")
         #expect(AgentMicroMenuModel.title(for: unidentified) == "019f1234")
     }
 
@@ -125,6 +126,48 @@ struct AgentMicroMenuModelTests {
         #expect(rows[0].subtitle.contains("Executing · exec_command · swift test"))
         #expect(rows[0].symbol == "◉")
         #expect(rows[2].symbol == "!")
+    }
+
+    @Test
+    func `preferences hide completed tasks and include project only when requested`() {
+        let now = Date(timeIntervalSince1970: 10000)
+        let titled = Self.session(
+            id: "titled",
+            projectName: "AgentMicro",
+            sessionName: "Polish settings",
+            activity: now
+        )
+        let tasks = [
+            Self.observation(session: titled, state: .waiting),
+            Self.observation(session: Self.session(id: "done", activity: now), state: .done)
+        ]
+
+        let rows = AgentMicroMenuModel.rows(
+            from: tasks,
+            preferences: AgentMicroPreferences(
+                taskNameMode: .taskTitleAndProject,
+                showRecentlyCompleted: false
+            ),
+            now: now
+        )
+
+        #expect(rows.count == 1)
+        #expect(rows[0].title == "Polish settings")
+        #expect(rows[0].subtitle == "Waiting · Codex CLI · AgentMicro · 0s")
+    }
+
+    @Test
+    func `completed rows use the recent completion label`() {
+        let now = Date(timeIntervalSince1970: 10000)
+        let task = Self.observation(
+            session: Self.session(id: "done", projectName: "AgentMicro", activity: now.addingTimeInterval(-60)),
+            state: .done
+        )
+
+        let row = AgentMicroMenuModel.rows(from: [task], now: now).first
+
+        #expect(row?.title == "Recently completed: AgentMicro")
+        #expect(row?.subtitle == "Done · Codex CLI · 1m ago")
     }
 
     private static func observation(

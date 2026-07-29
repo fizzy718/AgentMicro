@@ -28,7 +28,7 @@ V1 不是 Token 用量监控器、Provider 切换器或任务控制器。
 
 ## 当前实现进度
 
-截至 2026-07-28，M1 Task State Engine 已经完成：
+截至 2026-07-28，M2 菜单产品化已经完成：
 
 - 独立的 `AgentMicro` SwiftPM 可执行入口。
 - 原生 macOS 菜单栏图标和即时展开菜单。
@@ -40,8 +40,11 @@ V1 不是 Token 用量监控器、Provider 切换器或任务控制器。
 - 默认使用项目名，避免直接暴露可能敏感的任务标题。
 - 点击任务时复用 `SessionWindowFocuser` 尝试回到对应窗口。
 - 有进程时每 2 秒、无进程时每 15 秒刷新；打开菜单时立即异步刷新。
+- 设置页支持开机启动、三种任务名称模式和最近完成任务开关。
+- 隐私默认值为“仅项目名”，最近完成任务默认显示并固定保留 5 分钟。
+- 提供本地签名的 `AgentMicro.app` 打包、启动和停止命令。
 
-下一步是 M2：完成设置、隐私选项、最近完成任务和正式 `.app` 打包，并对菜单逐项做视觉与交互验收。没有可靠 owner 的近期 Desktop rollout 目前保持 `Unknown`，精确的 Desktop 任务归属与窗口关联留在 M3 真实场景验证中解决。
+下一步是 M3：在真实 Codex Desktop/CLI 多任务场景中验证状态时效、任务归属和点击返回，并修正性能或误报。没有可靠 owner 的近期 Desktop rollout 目前保持 `Unknown`，不会通过 app-server PID 猜测归属。
 
 ## 开发验证
 
@@ -53,6 +56,16 @@ AGENTMICRO_BUILD_ONLY=1 swift test --disable-automatic-resolution --filter Agent
 ```
 
 `--disable-automatic-resolution` 用于保持上游 `Package.resolved` 不变。
+
+打包并启动可点击的菜单栏应用：
+
+```bash
+make agentmicro-package
+make agentmicro-start
+make agentmicro-stop
+```
+
+本地开发包使用 ad-hoc 签名，输出为项目根目录的 `AgentMicro.app`。面向外部用户分发所需的 Developer ID 签名、公证和更新机制属于后续发布工程。
 
 ## 维护约定
 

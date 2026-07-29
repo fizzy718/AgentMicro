@@ -154,6 +154,39 @@
 - Desktop rollout 的精确 owner 与窗口关联仍需 M3 真实多任务场景验证。
 - 上游快照仍缺少 `.github/workflows/ci.yml`，完整 `make check` 的既有阻塞未消除。
 
+### `implementation`：完成 M2 菜单产品化
+
+变化：
+
+- 新增原生设置窗口，支持开机启动、仅项目名/任务标题/任务标题加项目名三种名称模式，以及最近完成任务开关。
+- 默认只显示项目名以保护任务标题隐私；最近完成任务默认显示，继续使用状态引擎固定的 5 分钟保留窗口。
+- 菜单将结束任务明确标记为 `Recently completed`，并按设置决定是否显示项目副标题或隐藏结束任务。
+- 新增基于 `SMAppService.mainApp` 的开机启动管理，注册失败时恢复系统真实状态并在设置页显示错误。
+- 新增 `AgentMicro.app` 本地打包和启动脚本、Makefile 入口、最小 `Info.plist`、菜单栏应用标记与 ad-hoc 签名验证。
+- 新增 `--show-settings` 本地验收入口，只用于稳定打开设置窗口，不改变正常启动行为。
+
+影响：
+
+- AgentMicro 已能作为独立 `.app` 从 Finder 或 `make agentmicro-start` 启动，不再局限于 `swift run` 的命令行产物。
+- 用户可以在不修改代码的情况下选择隐私与最近任务展示方式，并可选择随 macOS 登录启动。
+- 本地开发包可直接使用；Developer ID 签名、公证、安装器和自动更新仍属于后续发布工程。
+
+验证：
+
+- `make test`：727 个 selections、61 个 groups 全部一次通过，0 失败、0 重试、0 超时。
+- `AGENTMICRO_BUILD_ONLY=1 swift test --disable-automatic-resolution --filter AgentMicro`：AgentMicro 聚焦测试通过。
+- SwiftFormat lint 和 SwiftLint strict 对 AgentMicro 源码与测试均通过。
+- `./Scripts/package_agentmicro.sh debug`：`Info.plist` 校验、ad-hoc 签名和 `codesign --verify --deep --strict` 通过，产物为 Apple Silicon `AgentMicro.app`。
+- `./Scripts/run_agentmicro.sh debug`：从应用包启动后进程持续运行。
+- 通过 macOS UI 自动化实际打开并检查设置窗口，确认默认项目名模式、最近完成任务开启、开机启动开关和本地隐私说明可见。
+
+限制：
+
+- 当前 UI 自动化接口能读取设置窗口，但不暴露隐藏在系统菜单栏中的状态项；未使用坐标猜测点击。菜单内容由模型测试覆盖，真实点击和多任务状态联动进入 M3 人工场景验收。
+- 开机启动的系统注册写操作未在自动测试中执行；注册分支由注入式单元测试覆盖，避免修改开发机登录项。
+- 本地应用使用 ad-hoc 签名，不适合作为面向外部用户的正式分发包。
+- 上游快照仍缺少 `.github/workflows/ci.yml`，完整 `make check` 的既有阻塞未消除。
+
 ## 后续记录模板
 
 ```markdown

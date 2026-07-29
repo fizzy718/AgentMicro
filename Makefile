@@ -1,6 +1,15 @@
 SHELL := /bin/bash
 
-.PHONY: build check docs-list format lint release restart start start-debug start-release stop test test-live test-tty
+.PHONY: agentmicro-package agentmicro-start agentmicro-stop build check docs-list format lint release restart start start-debug start-release stop test test-live test-tty
+
+agentmicro-package:
+	./Scripts/package_agentmicro.sh debug
+
+agentmicro-start:
+	./Scripts/run_agentmicro.sh debug
+
+agentmicro-stop:
+	pkill -f "$(CURDIR)/AgentMicro.app/Contents/MacOS/AgentMicro" || true
 
 start:
 	./Scripts/compile_and_run.sh

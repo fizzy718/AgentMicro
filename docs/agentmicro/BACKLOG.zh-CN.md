@@ -81,6 +81,13 @@
 | AM-602 | deferred | OpenCode | 同上 |
 | AM-603 | deferred | Gemini、Hermes、OpenClaw | 证明多 Agent 是核心需求 |
 
+## 分发与发布
+
+| ID | 状态 | 需求 | 进入条件 |
+|---|---|---|---|
+| AM-701 | candidate | Developer ID 签名、公证和可安装发布包 | V1 真实场景验收通过并确定发布渠道 |
+| AM-702 | candidate | 自动更新与回滚 | 发布渠道、签名身份和版本策略稳定 |
+
 ## 新需求模板
 
 ```markdown

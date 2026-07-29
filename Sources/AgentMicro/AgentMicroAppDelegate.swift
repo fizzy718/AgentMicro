@@ -6,17 +6,26 @@ import Foundation
 final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let scanner = LocalAgentSessionScanner()
     private let taskStateEngine = CodexTaskStateEngine()
+    private let settings = AgentMicroSettings()
     private let menu = NSMenu()
     private var statusItem: NSStatusItem?
+    private var settingsWindowController: AgentMicroSettingsWindowController?
     private var tasks: [CodexTaskObservation] = []
     private var hasCompletedInitialScan = false
     private var refreshTask: Task<Void, Never>?
     private var pollingTask: Task<Void, Never>?
 
     func applicationDidFinishLaunching(_: Notification) {
+        self.settings.onChange = { [weak self] in
+            self?.updateStatusItem()
+            self?.rebuildMenu()
+        }
         self.configureStatusItem()
         self.rebuildMenu()
         self.startPolling()
+        if CommandLine.arguments.contains("--show-settings") {
+            self.showSettings()
+        }
     }
 
     func applicationWillTerminate(_: Notification) {
@@ -88,7 +97,11 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     private func rebuildMenu(now: Date = Date()) {
         self.menu.removeAllItems()
 
-        let rows = AgentMicroMenuModel.rows(from: self.tasks, now: now)
+        let rows = AgentMicroMenuModel.rows(
+            from: self.tasks,
+            preferences: self.settings.preferences,
+            now: now
+        )
         let activeCount = rows.count(where: \.isActive)
         let headline = activeCount > 0
             ? "AgentMicro — \(activeCount) active"
@@ -97,7 +110,11 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         headlineItem.isEnabled = false
         self.menu.addItem(headlineItem)
         self.menu.addItem(.separator())
+        self.addTaskRows(rows)
+        self.addMenuFooter()
+    }
 
+    private func addTaskRows(_ rows: [AgentMicroMenuRow]) {
         if rows.isEmpty {
             let title = self.hasCompletedInitialScan ? "No Codex tasks found" : "Scanning for Codex tasks…"
             let emptyItem = NSMenuItem(title: title, action: nil, keyEquivalent: "")
@@ -120,7 +137,9 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
                 self.menu.addItem(item)
             }
         }
+    }
 
+    private func addMenuFooter() {
         self.menu.addItem(.separator())
         let refreshItem = NSMenuItem(
             title: "Refresh",
@@ -129,6 +148,14 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         )
         refreshItem.target = self
         self.menu.addItem(refreshItem)
+
+        let settingsItem = NSMenuItem(
+            title: "Settings…",
+            action: #selector(self.showSettings),
+            keyEquivalent: ",",
+        )
+        settingsItem.target = self
+        self.menu.addItem(settingsItem)
 
         let quitItem = NSMenuItem(
             title: "Quit AgentMicro",
@@ -150,6 +177,15 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     @objc
     private func refreshFromMenu() {
         self.refresh()
+    }
+
+    @objc
+    private func showSettings() {
+        self.settings.refreshLaunchAtLoginStatus()
+        if self.settingsWindowController == nil {
+            self.settingsWindowController = AgentMicroSettingsWindowController(settings: self.settings)
+        }
+        self.settingsWindowController?.present()
     }
 
     @objc
