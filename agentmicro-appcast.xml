@@ -3,6 +3,15 @@
     <channel>
         <title>AgentMicro</title>
         <item>
+            <title>0.1.1</title>
+            <pubDate>Wed, 29 Jul 2026 17:51:19 +0000</pubDate>
+            <link>https://github.com/fizzy718/AgentMicro</link>
+            <sparkle:version>2</sparkle:version>
+            <sparkle:shortVersionString>0.1.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/fizzy718/AgentMicro/releases/download/v0.1.1/AgentMicro-macos-universal-0.1.1.zip" length="19808890" type="application/octet-stream" sparkle:edSignature="fwK8mMv6giumnywkccL3LDyvWIIzWs03IEjpVGM0Uo7DD78cZC+0Dvg5+W3ZBPE5t9Ld4WNj8Ndt2/58NEYLDg=="/>
+        </item>
+        <item>
             <title>0.1.0</title>
             <pubDate>Wed, 29 Jul 2026 09:16:26 +0000</pubDate>
             <link>https://github.com/fizzy718/AgentMicro</link>
