@@ -105,8 +105,11 @@ make agentmicro-stop
 `AGENTMICRO_PUBLIC_ED_KEY` 才会写入更新配置。正式发布入口为
 `./Scripts/release_agentmicro.sh`，具体配置和验收步骤见
 [发布与在线更新](RELEASING.zh-CN.md)。源码仓库已经公开在
-[`fizzy718/AgentMicro`](https://github.com/fizzy718/AgentMicro)，但正式证书和专属
-密钥尚未配置，因此当前开发包不会伪装成可在线更新的正式包。
+[`fizzy718/AgentMicro`](https://github.com/fizzy718/AgentMicro)。正式证书和专属密钥
+保存在 GitHub `agentmicro-release` Environment 与本机钥匙串中，不进入仓库；正式
+签名、公证版本通过
+[GitHub Releases](https://github.com/fizzy718/AgentMicro/releases/latest) 发布并启用
+Sparkle 在线更新。开发包继续使用 ad-hoc 签名，并明确显示更新不可用。
 
 只输出一次隐私安全的任务诊断快照，或验证某个任务的返回路径：
 

@@ -73,7 +73,11 @@ Insufficient evidence is represented internally as `unknown`, but displayed as i
 - macOS 14 Sonoma or later
 - Codex Desktop or Codex CLI with local sessions
 
-Signed and notarized builds will be published on [GitHub Releases](https://github.com/fizzy718/AgentMicro/releases). Until the first release is available, build AgentMicro from source.
+Download the latest signed and notarized build from
+[GitHub Releases](https://github.com/fizzy718/AgentMicro/releases/latest), unzip it,
+move `AgentMicro.app` to `/Applications`, and launch it. Release builds check the
+AgentMicro Sparkle feed for updates automatically; you can also check manually in
+Settings.
 
 ### Build from source
 
