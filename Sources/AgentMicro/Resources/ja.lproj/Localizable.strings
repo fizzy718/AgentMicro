@@ -1,0 +1,49 @@
+"accessibility.status" = "AgentMicro の Codex タスク";
+"accessibility.task.unread" = "未読";
+"accessibility.taskStatus" = "AgentMicro タスクの状態";
+
+"language.system" = "システムに従う";
+"language.title" = "言語";
+
+"menu.empty" = "Codex タスクが見つかりません";
+"menu.footer.quit" = "AgentMicro を終了";
+"menu.footer.refresh" = "更新";
+"menu.footer.settings" = "設定…";
+"menu.headline.active" = "AgentMicro — %d 件実行中";
+"menu.scanning" = "Codex タスクを検索中…";
+
+"settings.error.launchAtLogin" = "ログイン項目を更新できませんでした：%@";
+"settings.general" = "一般";
+"settings.launchAtLogin" = "ログイン時に AgentMicro を起動";
+"settings.privacy" = "AgentMicro はタスクの状態をローカルで読み取り、タスクデータをアップロードしません。";
+"settings.taskDisplay" = "タスク表示";
+"settings.taskNames" = "タスク名";
+"settings.tasksShown" = "表示するタスク数";
+"settings.showRecentlyCompleted" = "最近完了したタスクを表示";
+"settings.title" = "AgentMicro 設定";
+
+"settings.taskNameMode.projectOnly" = "プロジェクト名のみ";
+"settings.taskNameMode.taskTitle" = "タスクのタイトル";
+"settings.taskNameMode.taskTitleAndProject" = "タスクのタイトルとプロジェクト";
+
+"state.error" = "エラー";
+"state.idle" = "待機中";
+"state.requiresInput" = "承認または回答が必要";
+"state.thinking" = "思考中";
+"state.unknown" = "不明";
+"state.unread" = "未読チャット";
+
+"status.tooltip.active" = "AgentMicro — 最近の Codex タスク %2$d 件中 %1$d 件が実行中";
+"status.tooltip.none" = "AgentMicro — 最近の Codex タスクはありません";
+"status.tooltip.recent.one" = "AgentMicro — 最近の Codex タスク %d 件";
+"status.tooltip.recent.other" = "AgentMicro — 最近の Codex タスク %d 件";
+"task.fallbackTitle" = "Codex タスク";
+"task.fastMode" = "高速モード";
+
+"updates.automatic" = "アップデートを自動的に確認";
+"updates.check" = "アップデートを確認…";
+"updates.section" = "アップデート";
+"updates.unavailable.build" = "このビルドではアップデートを利用できません。";
+"updates.unavailable.feed" = "アップデート配信元がまだ設定されていません。";
+"updates.unavailable.signature" = "アップデートには Developer ID で署名されたリリースビルドが必要です。";
+"updates.version" = "バージョン %@";

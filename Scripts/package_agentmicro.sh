@@ -13,32 +13,120 @@ esac
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_FINAL="$ROOT/AgentMicro.app"
 APP_STAGE="$ROOT/.build/package-agentmicro/AgentMicro.app"
+source "$ROOT/agentmicro-version.env"
 VERSION="${AGENTMICRO_VERSION:-0.1.0}"
 BUILD_NUMBER="${AGENTMICRO_BUILD_NUMBER:-1}"
 BUNDLE_ID="${AGENTMICRO_BUNDLE_ID:-com.agentmicro.macos}"
+FEED_URL="${AGENTMICRO_FEED_URL:-}"
+PUBLIC_ED_KEY="${AGENTMICRO_PUBLIC_ED_KEY:-}"
+SIGNING_MODE="${AGENTMICRO_SIGNING:-adhoc}"
+SIGNING_IDENTITY="${AGENTMICRO_SIGNING_IDENTITY:-}"
 
 cd "$ROOT"
 
-AGENTMICRO_BUILD_ONLY=1 swift build \
-  -c "$CONFIGURATION" \
-  --product AgentMicro \
-  --disable-automatic-resolution
+case "$SIGNING_MODE" in
+  adhoc) ;;
+  identity)
+    if [[ -z "$SIGNING_IDENTITY" ]]; then
+      echo "ERROR: AGENTMICRO_SIGNING_IDENTITY is required for identity signing" >&2
+      exit 1
+    fi
+    ;;
+  *)
+    echo "ERROR: Unsupported AGENTMICRO_SIGNING: $SIGNING_MODE (expected adhoc or identity)" >&2
+    exit 1
+    ;;
+esac
 
-BIN_DIR="$(
-  AGENTMICRO_BUILD_ONLY=1 swift build \
-    -c "$CONFIGURATION" \
-    --disable-automatic-resolution \
-    --show-bin-path
-)"
-BINARY="$BIN_DIR/AgentMicro"
-if [[ ! -x "$BINARY" ]]; then
-  echo "ERROR: AgentMicro binary not found at $BINARY" >&2
-  exit 1
+ARCH_LIST=( ${ARCHES:-} )
+if [[ ${#ARCH_LIST[@]} -eq 0 ]]; then
+  ARCH_LIST=("$(uname -m)")
 fi
 
+PRODUCT_STAGE_ROOT="$ROOT/.build/package-agentmicro-products/$CONFIGURATION"
+rm -rf "$PRODUCT_STAGE_ROOT"
+PREFERRED_BIN_DIR=""
+for ARCH in "${ARCH_LIST[@]}"; do
+  AGENTMICRO_BUILD_ONLY=1 swift build \
+    -c "$CONFIGURATION" \
+    --arch "$ARCH" \
+    --product AgentMicro \
+    --disable-automatic-resolution
+  BIN_DIR="$(
+    AGENTMICRO_BUILD_ONLY=1 swift build \
+      -c "$CONFIGURATION" \
+      --arch "$ARCH" \
+      --disable-automatic-resolution \
+      --show-bin-path
+  )"
+  BINARY="$BIN_DIR/AgentMicro"
+  if [[ ! -x "$BINARY" ]]; then
+    echo "ERROR: AgentMicro binary not found at $BINARY" >&2
+    exit 1
+  fi
+  if ! lipo -archs "$BINARY" | tr ' ' '\n' | grep -qx "$ARCH"; then
+    echo "ERROR: AgentMicro binary does not contain required architecture: $ARCH" >&2
+    exit 1
+  fi
+  mkdir -p "$PRODUCT_STAGE_ROOT/$ARCH"
+  cp "$BINARY" "$PRODUCT_STAGE_ROOT/$ARCH/AgentMicro"
+  if [[ -z "$PREFERRED_BIN_DIR" ]]; then
+    PREFERRED_BIN_DIR="$BIN_DIR"
+  fi
+done
+
 rm -rf "$APP_STAGE"
-mkdir -p "$APP_STAGE/Contents/MacOS" "$APP_STAGE/Contents/Resources"
-install -m 755 "$BINARY" "$APP_STAGE/Contents/MacOS/AgentMicro"
+mkdir -p "$APP_STAGE/Contents/MacOS" "$APP_STAGE/Contents/Resources" "$APP_STAGE/Contents/Frameworks"
+if [[ ${#ARCH_LIST[@]} -gt 1 ]]; then
+  BINARIES=()
+  for ARCH in "${ARCH_LIST[@]}"; do
+    BINARIES+=("$PRODUCT_STAGE_ROOT/$ARCH/AgentMicro")
+  done
+  lipo -create "${BINARIES[@]}" -output "$APP_STAGE/Contents/MacOS/AgentMicro"
+  chmod 755 "$APP_STAGE/Contents/MacOS/AgentMicro"
+else
+  install -m 755 \
+    "$PRODUCT_STAGE_ROOT/${ARCH_LIST[0]}/AgentMicro" \
+    "$APP_STAGE/Contents/MacOS/AgentMicro"
+fi
+
+ACTUAL_ARCHES="$(lipo -archs "$APP_STAGE/Contents/MacOS/AgentMicro")"
+for ARCH in "${ARCH_LIST[@]}"; do
+  if ! tr ' ' '\n' <<<"$ACTUAL_ARCHES" | grep -qx "$ARCH"; then
+    echo "ERROR: Packaged AgentMicro binary is missing architecture: $ARCH" >&2
+    exit 1
+  fi
+done
+
+RESOURCE_BUNDLE="$PREFERRED_BIN_DIR/CodexBar_AgentMicro.bundle"
+if [[ ! -d "$RESOURCE_BUNDLE" ]]; then
+  echo "ERROR: AgentMicro resource bundle not found at $RESOURCE_BUNDLE" >&2
+  exit 1
+fi
+cp -R "$RESOURCE_BUNDLE" "$APP_STAGE/Contents/Resources/"
+SPARKLE_FRAMEWORK="$PREFERRED_BIN_DIR/Sparkle.framework"
+if [[ ! -d "$SPARKLE_FRAMEWORK" ]]; then
+  echo "ERROR: Sparkle framework not found at $SPARKLE_FRAMEWORK" >&2
+  exit 1
+fi
+cp -R "$SPARKLE_FRAMEWORK" "$APP_STAGE/Contents/Frameworks/"
+if ! otool -l "$APP_STAGE/Contents/MacOS/AgentMicro" |
+  grep -Fq "@executable_path/../Frameworks"; then
+  install_name_tool -add_rpath "@executable_path/../Frameworks" \
+    "$APP_STAGE/Contents/MacOS/AgentMicro"
+fi
+
+if [[ -n "$FEED_URL" || -n "$PUBLIC_ED_KEY" ]]; then
+  if [[ -z "$FEED_URL" || -z "$PUBLIC_ED_KEY" ]]; then
+    echo "ERROR: AGENTMICRO_FEED_URL and AGENTMICRO_PUBLIC_ED_KEY must be set together" >&2
+    exit 1
+  fi
+fi
+
+if [[ "$SIGNING_MODE" == "identity" && (-z "$FEED_URL" || -z "$PUBLIC_ED_KEY") ]]; then
+  echo "ERROR: identity-signed releases require AgentMicro feed URL and public Ed25519 key" >&2
+  exit 1
+fi
 
 BUILD_TIMESTAMP="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 GIT_COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")"
@@ -49,6 +137,32 @@ cat > "$APP_STAGE/Contents/Info.plist" <<PLIST
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>zh-Hans</string>
+        <string>zh-Hant</string>
+        <string>es</string>
+        <string>ca</string>
+        <string>pt-BR</string>
+        <string>de</string>
+        <string>sv</string>
+        <string>fr</string>
+        <string>it</string>
+        <string>nl</string>
+        <string>ja</string>
+        <string>ko</string>
+        <string>vi</string>
+        <string>tr</string>
+        <string>uk</string>
+        <string>ru</string>
+        <string>id</string>
+        <string>pl</string>
+        <string>ar</string>
+        <string>fa</string>
+        <string>th</string>
+        <string>gl</string>
+    </array>
     <key>CFBundleDisplayName</key><string>AgentMicro</string>
     <key>CFBundleExecutable</key><string>AgentMicro</string>
     <key>CFBundleIdentifier</key><string>${BUNDLE_ID}</string>
@@ -67,11 +181,34 @@ cat > "$APP_STAGE/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
+if [[ -n "$FEED_URL" ]]; then
+  /usr/libexec/PlistBuddy -c "Add :SUFeedURL string $FEED_URL" \
+    "$APP_STAGE/Contents/Info.plist"
+  /usr/libexec/PlistBuddy -c "Add :SUPublicEDKey string $PUBLIC_ED_KEY" \
+    "$APP_STAGE/Contents/Info.plist"
+  /usr/libexec/PlistBuddy -c "Add :SUEnableAutomaticChecks bool true" \
+    "$APP_STAGE/Contents/Info.plist"
+fi
+
 plutil -lint "$APP_STAGE/Contents/Info.plist"
-codesign --force --deep --sign - "$APP_STAGE"
-codesign --verify --deep --strict "$APP_STAGE"
+xattr -cr "$APP_STAGE"
+
+source "$ROOT/Scripts/sparkle_signing_paths.sh"
+if [[ "$SIGNING_MODE" == "identity" ]]; then
+  CODESIGN_ARGS=(--force --timestamp --options runtime --sign "$SIGNING_IDENTITY")
+else
+  CODESIGN_ARGS=(--force --sign -)
+fi
+
+SPARKLE="$APP_STAGE/Contents/Frameworks/Sparkle.framework"
+SPARKLE_SIGNING_TARGETS="$(codexbar_sparkle_signing_targets "$SPARKLE")"
+while IFS= read -r SIGNING_TARGET; do
+  codesign "${CODESIGN_ARGS[@]}" "$SIGNING_TARGET"
+done <<<"$SPARKLE_SIGNING_TARGETS"
+codesign "${CODESIGN_ARGS[@]}" "$APP_STAGE"
+codesign --verify --deep --strict --verbose=2 "$APP_STAGE"
 
 rm -rf "$APP_FINAL"
 mv "$APP_STAGE" "$APP_FINAL"
 
-echo "Packaged $APP_FINAL"
+echo "Packaged $APP_FINAL (${ARCH_LIST[*]}, $SIGNING_MODE)"

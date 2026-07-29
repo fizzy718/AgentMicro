@@ -20,8 +20,14 @@ assert(providerIDs.length > 0, "UsageProvider must define at least one provider"
 assertEqual(new Set(providerIDs).size, providerIDs.length, "UsageProvider IDs");
 const providerCount = providerIDs.length;
 
+const rootReadme = fs.readFileSync(path.join(repoRoot, "README.md"), "utf8");
+if (rootReadme.startsWith("# CodexBar")) {
+  const expectedText =
+    `alt="CodexBar — every AI coding limit in your menu bar. ${providerCount} providers."`;
+  assert(rootReadme.includes(expectedText), `README.md must advertise ${providerCount} providers`);
+}
+
 const publicCountFiles = [
-  ["README.md", `alt="CodexBar — every AI coding limit in your menu bar. ${providerCount} providers."`],
   ["docs/providers.md", `CodexBar currently registers ${providerCount} provider IDs.`],
   ["docs/social.html", `<strong>${providerCount} providers</strong>`],
   ["docs/llms.txt", `across ${providerCount} providers`],

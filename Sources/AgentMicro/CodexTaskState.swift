@@ -2,64 +2,49 @@ import CodexBarCore
 import Foundation
 
 enum CodexTaskState: String, Equatable, Sendable {
+    case idle
+    case unread
     case thinking
-    case executing
-    case waiting
-    case rateLimited
+    case requiresInput
+    case error
     case unknown
-    case done
 
     var displayName: String {
         switch self {
+        case .idle:
+            AgentMicroLocalization.text("state.idle")
+        case .unread:
+            AgentMicroLocalization.text("state.unread")
         case .thinking:
-            "Thinking"
-        case .executing:
-            "Executing"
-        case .waiting:
-            "Waiting"
-        case .rateLimited:
-            "Rate limited"
+            AgentMicroLocalization.text("state.thinking")
+        case .requiresInput:
+            AgentMicroLocalization.text("state.requiresInput")
+        case .error:
+            AgentMicroLocalization.text("state.error")
         case .unknown:
-            "Unknown"
-        case .done:
-            "Done"
+            AgentMicroLocalization.text("state.unknown")
         }
     }
 
-    var symbol: String {
+    var colorHex: UInt32? {
         switch self {
+        case .idle:
+            0xFFFFFF
+        case .unread:
+            0x9BF396
         case .thinking:
-            "●"
-        case .executing:
-            "◉"
-        case .waiting:
-            "○"
-        case .rateLimited:
-            "!"
+            0x9CD5FE
+        case .requiresInput:
+            0xFFD0B8
+        case .error:
+            0xFF7373
         case .unknown:
-            "?"
-        case .done:
-            "◌"
+            0xFFFFFF
         }
     }
 
     var isWorking: Bool {
-        self == .thinking || self == .executing
-    }
-
-    var sortPriority: Int {
-        switch self {
-        case .thinking, .executing:
-            0
-        case .rateLimited:
-            1
-        case .waiting:
-            2
-        case .unknown:
-            3
-        case .done:
-            4
-        }
+        self == .thinking
     }
 }
 
@@ -68,6 +53,9 @@ struct CodexTaskObservation: Equatable, Sendable {
     let state: CodexTaskState
     let currentAction: String?
     let lastEventAt: Date?
+    let runStartedAt: Date?
+    let stateChangedAt: Date?
+    let usesFastModel: Bool
 
     var sessionKey: String {
         "\(self.session.host):\(self.session.id)"
@@ -79,14 +67,18 @@ struct CodexRolloutSnapshot: Equatable, Sendable {
     let isThinking: Bool
     let isRateLimited: Bool
     let hasPendingToolCall: Bool
+    let requiresInput: Bool
     let currentAction: String?
     let lastEventAt: Date?
     let isTurnActive: Bool?
+    let turnStartedAt: Date?
+    let stateChangedAt: Date?
+    let usesFastModel: Bool
 }
 
 enum CodexTaskStateResolver {
     static let defaultUnknownWindow: TimeInterval = 30
-    static let defaultCompletedRetention: TimeInterval = 5 * 60
+    static let defaultCompletedRetention: TimeInterval = 24 * 60 * 60
     static let defaultThinkingFreshness: TimeInterval = 2 * 60
 
     static func observation(
@@ -95,8 +87,8 @@ enum CodexTaskStateResolver {
         now: Date,
         unknownWindow: TimeInterval = CodexTaskStateResolver.defaultUnknownWindow,
         completedRetention: TimeInterval = CodexTaskStateResolver.defaultCompletedRetention,
-        thinkingFreshness: TimeInterval = CodexTaskStateResolver.defaultThinkingFreshness
-    ) -> CodexTaskObservation? {
+        thinkingFreshness: TimeInterval = CodexTaskStateResolver.defaultThinkingFreshness) -> CodexTaskObservation?
+    {
         let activity = snapshot?.lastEventAt ?? session.lastActivityAt ?? session.startedAt
         let activityAge = activity.map { max(0, now.timeIntervalSince($0)) }
 
@@ -105,23 +97,27 @@ enum CodexTaskStateResolver {
             let state: CodexTaskState = if let snapshot,
                                            snapshot.isTurnActive == true ||
                                            snapshot.hasPendingToolCall ||
-                                           snapshot.isThinking {
+                                           snapshot.isThinking
+            {
                 self.liveState(
                     snapshot: snapshot,
                     activityAge: activityAge,
-                    thinkingFreshness: thinkingFreshness
-                )
+                    thinkingFreshness: thinkingFreshness)
             } else if snapshot?.isTurnActive == false {
-                .done
+                .unread
             } else {
-                activityAge.map { $0 <= unknownWindow } == true ? .unknown : .done
+                activityAge.map { $0 <= unknownWindow } == true ? .unknown : .unread
             }
             return CodexTaskObservation(
                 session: session,
                 state: state,
-                currentAction: state == .executing || state == .unknown ? snapshot?.currentAction : nil,
-                lastEventAt: activity
-            )
+                currentAction: state == .thinking || state == .requiresInput || state == .unknown
+                    ? snapshot?.currentAction
+                    : nil,
+                lastEventAt: activity,
+                runStartedAt: snapshot?.turnStartedAt ?? snapshot?.stateChangedAt,
+                stateChangedAt: snapshot?.stateChangedAt ?? activity,
+                usesFastModel: snapshot?.usesFastModel ?? false)
         }
 
         guard let snapshot, snapshot.hasParsedEvents else {
@@ -129,38 +125,47 @@ enum CodexTaskStateResolver {
                 session: session,
                 state: .unknown,
                 currentAction: nil,
-                lastEventAt: activity
-            )
+                lastEventAt: activity,
+                runStartedAt: session.startedAt,
+                stateChangedAt: activity,
+                usesFastModel: false)
         }
 
         let state = self.liveState(
             snapshot: snapshot,
             activityAge: activityAge,
-            thinkingFreshness: thinkingFreshness
-        )
+            thinkingFreshness: thinkingFreshness)
 
         return CodexTaskObservation(
             session: session,
             state: state,
-            currentAction: state == .executing ? snapshot.currentAction : nil,
-            lastEventAt: activity
-        )
+            currentAction: state == .thinking || state == .requiresInput ? snapshot.currentAction : nil,
+            lastEventAt: activity,
+            runStartedAt: snapshot.turnStartedAt ?? snapshot.stateChangedAt,
+            stateChangedAt: snapshot.stateChangedAt ?? activity,
+            usesFastModel: snapshot.usesFastModel)
     }
 
     private static func liveState(
         snapshot: CodexRolloutSnapshot,
         activityAge: TimeInterval?,
-        thinkingFreshness: TimeInterval
-    ) -> CodexTaskState {
+        thinkingFreshness: TimeInterval) -> CodexTaskState
+    {
+        if snapshot.isRateLimited {
+            return .error
+        }
+        if snapshot.requiresInput {
+            return .requiresInput
+        }
         if snapshot.hasPendingToolCall {
-            return .executing
+            return .thinking
+        }
+        if snapshot.isTurnActive == true {
+            return .thinking
         }
         if snapshot.isThinking, activityAge.map({ $0 <= thinkingFreshness }) ?? false {
             return .thinking
         }
-        if snapshot.isRateLimited {
-            return .rateLimited
-        }
-        return .waiting
+        return .idle
     }
 }

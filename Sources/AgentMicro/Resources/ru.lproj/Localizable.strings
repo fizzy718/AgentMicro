@@ -1,0 +1,49 @@
+"accessibility.status" = "Задачи Codex в AgentMicro";
+"accessibility.task.unread" = "Не прочитано";
+"accessibility.taskStatus" = "Состояние задач AgentMicro";
+
+"language.system" = "Как в системе";
+"language.title" = "Язык";
+
+"menu.empty" = "Задачи Codex не найдены";
+"menu.footer.quit" = "Выйти из AgentMicro";
+"menu.footer.refresh" = "Обновить";
+"menu.footer.settings" = "Настройки…";
+"menu.headline.active" = "AgentMicro — активно: %d";
+"menu.scanning" = "Поиск задач Codex…";
+
+"settings.error.launchAtLogin" = "Не удалось обновить объект входа: %@";
+"settings.general" = "Основные";
+"settings.launchAtLogin" = "Запускать AgentMicro при входе";
+"settings.privacy" = "AgentMicro читает состояние задач локально и не отправляет их данные.";
+"settings.taskDisplay" = "Отображение задач";
+"settings.taskNames" = "Названия задач";
+"settings.tasksShown" = "Показывать задач";
+"settings.showRecentlyCompleted" = "Показывать недавно завершённые задачи";
+"settings.title" = "Настройки AgentMicro";
+
+"settings.taskNameMode.projectOnly" = "Только название проекта";
+"settings.taskNameMode.taskTitle" = "Название задачи";
+"settings.taskNameMode.taskTitleAndProject" = "Название задачи и проект";
+
+"state.error" = "Ошибка";
+"state.idle" = "Неактивно";
+"state.requiresInput" = "Нужно одобрение или ответ";
+"state.thinking" = "Обдумывание";
+"state.unknown" = "Неизвестно";
+"state.unread" = "Непрочитанный чат";
+
+"status.tooltip.active" = "AgentMicro — активно %d из %d недавних задач Codex";
+"status.tooltip.none" = "AgentMicro — нет недавних задач Codex";
+"status.tooltip.recent.one" = "AgentMicro — недавних задач Codex: %d";
+"status.tooltip.recent.other" = "AgentMicro — недавних задач Codex: %d";
+"task.fallbackTitle" = "Задача Codex";
+"task.fastMode" = "Быстрый режим";
+
+"updates.automatic" = "Автоматически проверять обновления";
+"updates.check" = "Проверить наличие обновлений…";
+"updates.section" = "Обновления";
+"updates.unavailable.build" = "Обновления недоступны в этой сборке.";
+"updates.unavailable.feed" = "Источник обновлений ещё не настроен.";
+"updates.unavailable.signature" = "Для обновлений нужна сборка, подписанная Developer ID.";
+"updates.version" = "Версия %@";

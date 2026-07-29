@@ -71,6 +71,7 @@ public struct SessionScanConfig: Equatable, Sendable {
     public var directoryScanBudget: TimeInterval
     public var adaptiveDirectoryScanBudget: TimeInterval
     public var includeCodexSubagents: Bool
+    public var includeCodexGuardianParents: Bool
     public var requireUnambiguousCodexProcessOwnership: Bool
 
     public init(
@@ -84,6 +85,7 @@ public struct SessionScanConfig: Equatable, Sendable {
         directoryScanBudget: TimeInterval = 0.25,
         adaptiveDirectoryScanBudget: TimeInterval = 0.15,
         includeCodexSubagents: Bool = true,
+        includeCodexGuardianParents: Bool = false,
         requireUnambiguousCodexProcessOwnership: Bool = false)
     {
         self.activeWindow = activeWindow
@@ -96,6 +98,7 @@ public struct SessionScanConfig: Equatable, Sendable {
         self.directoryScanBudget = directoryScanBudget
         self.adaptiveDirectoryScanBudget = adaptiveDirectoryScanBudget
         self.includeCodexSubagents = includeCodexSubagents
+        self.includeCodexGuardianParents = includeCodexGuardianParents
         self.requireUnambiguousCodexProcessOwnership = requireUnambiguousCodexProcessOwnership
     }
 
@@ -524,6 +527,7 @@ public enum AgentSessionCorrelation {
 
 public struct CodexRolloutMetadata: Equatable, Sendable {
     public let sessionID: String
+    public let startedAt: Date?
     public let cwd: String?
     public let originator: String?
     public let source: String?
@@ -533,6 +537,7 @@ public struct CodexRolloutMetadata: Equatable, Sendable {
 
     public init(
         sessionID: String,
+        startedAt: Date? = nil,
         cwd: String?,
         originator: String?,
         source: String?,
@@ -541,6 +546,7 @@ public struct CodexRolloutMetadata: Equatable, Sendable {
         isSubagent: Bool = false)
     {
         self.sessionID = sessionID
+        self.startedAt = startedAt
         self.cwd = cwd
         self.originator = originator
         self.source = source
@@ -646,8 +652,13 @@ public enum CodexRolloutFirstLineParser {
         let subagent = sourceObject?["subagent"] as? [String: Any]
         let threadSpawn = subagent?["thread_spawn"] as? [String: Any]
         let source = payload["source"] as? String
+        let startedAt = [payload["timestamp"], object["timestamp"]]
+            .compactMap { $0 as? String }
+            .compactMap { try? Date($0, strategy: .iso8601) }
+            .first
         return CodexRolloutMetadata(
             sessionID: sessionID,
+            startedAt: startedAt,
             cwd: payload["cwd"] as? String,
             originator: payload["originator"] as? String,
             source: source,
@@ -694,7 +705,7 @@ public enum CodexRolloutFirstLineParser {
             pid: pid,
             cwd: cwd,
             projectName: cwd.map { URL(fileURLWithPath: $0).lastPathComponent },
-            startedAt: startedAt,
+            startedAt: startedAt ?? metadata.startedAt,
             lastActivityAt: modifiedAt,
             transcriptPath: transcriptURL.path,
             host: host)

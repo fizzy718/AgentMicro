@@ -3,13 +3,13 @@ import SwiftUI
 
 @MainActor
 final class AgentMicroSettingsWindowController: NSWindowController, NSWindowDelegate {
-    init(settings: AgentMicroSettings) {
-        let rootView = AgentMicroSettingsView(settings: settings)
+    init(settings: AgentMicroSettings, updater: AgentMicroUpdaterProviding) {
+        let rootView = AgentMicroSettingsView(settings: settings, updater: updater)
         let hostingController = NSHostingController(rootView: rootView)
         let window = NSWindow(contentViewController: hostingController)
-        window.title = "AgentMicro Settings"
+        window.title = AgentMicroLocalization.text("settings.title")
         window.styleMask = [.titled, .closable]
-        window.setContentSize(NSSize(width: 460, height: 300))
+        window.setContentSize(NSSize(width: 460, height: 480))
         window.isReleasedWhenClosed = false
         window.center()
         super.init(window: window)
@@ -26,21 +26,36 @@ final class AgentMicroSettingsWindowController: NSWindowController, NSWindowDele
         self.showWindow(nil)
         NSApplication.shared.activate(ignoringOtherApps: true)
     }
+
+    func refreshLocalization() {
+        self.window?.title = AgentMicroLocalization.text("settings.title")
+    }
 }
 
 private struct AgentMicroSettingsView: View {
     @Bindable var settings: AgentMicroSettings
+    let updater: AgentMicroUpdaterProviding
+
+    private var version: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–"
+    }
 
     var body: some View {
         Form {
-            Section("General") {
+            Section(AgentMicroLocalization.text("settings.general")) {
+                Picker(
+                    AgentMicroLocalization.text("language.title"),
+                    selection: self.$settings.appLanguage)
+                {
+                    ForEach(AgentMicroAppLanguage.allCases) { language in
+                        Text(verbatim: language.displayName).tag(language)
+                    }
+                }
                 Toggle(
-                    "Start AgentMicro at login",
+                    AgentMicroLocalization.text("settings.launchAtLogin"),
                     isOn: Binding(
                         get: { self.settings.launchAtLogin },
-                        set: { self.settings.setLaunchAtLogin($0) }
-                    )
-                )
+                        set: { self.settings.setLaunchAtLogin($0) }))
                 if let error = self.settings.launchAtLoginError {
                     Text(error)
                         .font(.caption)
@@ -48,22 +63,65 @@ private struct AgentMicroSettingsView: View {
                 }
             }
 
-            Section("Task display") {
-                Picker("Task names", selection: self.$settings.taskNameMode) {
+            Section(AgentMicroLocalization.text("settings.taskDisplay")) {
+                Picker(AgentMicroLocalization.text("settings.taskNames"), selection: self.$settings.taskNameMode) {
                     ForEach(AgentMicroTaskNameMode.allCases) { mode in
                         Text(mode.displayName).tag(mode)
                     }
                 }
-                Toggle("Show recently completed tasks", isOn: self.$settings.showRecentlyCompleted)
+                LabeledContent(AgentMicroLocalization.text("settings.tasksShown")) {
+                    HStack(spacing: 10) {
+                        TextField(
+                            AgentMicroLocalization.text("settings.tasksShown"),
+                            value: self.$settings.taskDisplayLimit,
+                            format: .number)
+                            .textFieldStyle(.roundedBorder)
+                            .multilineTextAlignment(.trailing)
+                            .monospacedDigit()
+                            .frame(width: 52)
+                        Stepper(
+                            "",
+                            value: self.$settings.taskDisplayLimit,
+                            in: AgentMicroSettings.minimumTaskDisplayLimit ...
+                                AgentMicroSettings.maximumTaskDisplayLimit)
+                            .labelsHidden()
+                    }
+                }
+                Toggle(
+                    AgentMicroLocalization.text("settings.showRecentlyCompleted"),
+                    isOn: self.$settings.showRecentlyCompleted)
+            }
+
+            Section(AgentMicroLocalization.text("updates.section")) {
+                if self.updater.isAvailable {
+                    Toggle(
+                        AgentMicroLocalization.text("updates.automatic"),
+                        isOn: self.$settings.autoUpdateEnabled)
+                    LabeledContent(
+                        AgentMicroLocalization.text("updates.version", arguments: self.version))
+                    {
+                        Button(AgentMicroLocalization.text("updates.check")) {
+                            self.updater.checkForUpdates(nil)
+                        }
+                    }
+                } else {
+                    Text(
+                        self.updater.unavailableReason ??
+                            AgentMicroLocalization.text("updates.unavailable.build"))
+                        .foregroundStyle(.secondary)
+                }
             }
 
             Section {
-                Text("AgentMicro reads task state locally and does not upload task data.")
+                Text(AgentMicroLocalization.text("settings.privacy"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
-        .frame(width: 460, height: 300)
+        .frame(width: 460, height: 480)
+        .environment(
+            \.layoutDirection,
+            AgentMicroLocalization.isRightToLeft ? LayoutDirection.rightToLeft : .leftToRight)
     }
 }

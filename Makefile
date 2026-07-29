@@ -1,9 +1,15 @@
 SHELL := /bin/bash
 
-.PHONY: agentmicro-package agentmicro-start agentmicro-stop build check docs-list format lint release restart start start-debug start-release stop test test-live test-tty
+.PHONY: agentmicro-appcast agentmicro-package agentmicro-release agentmicro-start agentmicro-stop build check docs-list format lint release restart start start-debug start-release stop test test-live test-tty
+
+agentmicro-appcast:
+	./Scripts/make_agentmicro_appcast.sh
 
 agentmicro-package:
 	./Scripts/package_agentmicro.sh debug
+
+agentmicro-release:
+	./Scripts/release_agentmicro.sh
 
 agentmicro-start:
 	./Scripts/run_agentmicro.sh debug

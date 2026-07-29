@@ -24,6 +24,7 @@ struct CodexSessionRolloutTests {
         #expect(session.id == "019f-session-fixture")
         #expect(session.cwd == "/Users/test/Projects/alpha")
         #expect(session.projectName == "alpha")
+        #expect(session.startedAt == Date(timeIntervalSince1970: 1_783_353_600))
         #expect(session.source == .cli)
         #expect(session.state == .active)
         #expect(session.pid == nil)
@@ -205,6 +206,25 @@ struct CodexSessionRolloutTests {
         #expect(sessions.first?.transcriptPath.map {
             URL(fileURLWithPath: $0).resolvingSymlinksInPath().path
         } == parentURL.resolvingSymlinksInPath().path)
+
+        let guardianParentScanner = LocalAgentSessionScanner(config: SessionScanConfig(
+            fileOnlyWindow: 60,
+            maxProcessCount: 0,
+            maxCodexRolloutCount: 8,
+            maxClaudeTranscriptCountPerProject: 0,
+            includeCodexSubagents: false,
+            includeCodexGuardianParents: true))
+        let guardianParentSessions = await guardianParentScanner.scan(now: now, environment: [
+            "CODEX_HOME": codexHome.path,
+            "HOME": root.path,
+            "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+        ])
+
+        #expect(guardianParentSessions.count == 1)
+        #expect(guardianParentSessions.first?.id == parentID)
+        #expect(guardianParentSessions.first?.transcriptPath.map {
+            URL(fileURLWithPath: $0).resolvingSymlinksInPath().path
+        } == guardianURL.resolvingSymlinksInPath().path)
     }
 
     @Test

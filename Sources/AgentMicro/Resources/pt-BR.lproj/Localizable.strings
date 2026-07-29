@@ -1,0 +1,49 @@
+"accessibility.status" = "Tarefas do Codex no AgentMicro";
+"accessibility.task.unread" = "Não lida";
+"accessibility.taskStatus" = "Status das tarefas do AgentMicro";
+
+"language.system" = "Seguir o sistema";
+"language.title" = "Idioma";
+
+"menu.empty" = "Nenhuma tarefa do Codex encontrada";
+"menu.footer.quit" = "Encerrar AgentMicro";
+"menu.footer.refresh" = "Atualizar";
+"menu.footer.settings" = "Ajustes…";
+"menu.headline.active" = "AgentMicro — %d ativas";
+"menu.scanning" = "Procurando tarefas do Codex…";
+
+"settings.error.launchAtLogin" = "Não foi possível atualizar o item de início de sessão: %@";
+"settings.general" = "Geral";
+"settings.launchAtLogin" = "Iniciar o AgentMicro ao fazer login";
+"settings.privacy" = "O AgentMicro lê o status das tarefas localmente e não envia seus dados.";
+"settings.taskDisplay" = "Exibição de tarefas";
+"settings.taskNames" = "Nomes das tarefas";
+"settings.tasksShown" = "Tarefas exibidas";
+"settings.showRecentlyCompleted" = "Mostrar tarefas concluídas recentemente";
+"settings.title" = "Ajustes do AgentMicro";
+
+"settings.taskNameMode.projectOnly" = "Somente nome do projeto";
+"settings.taskNameMode.taskTitle" = "Título da tarefa";
+"settings.taskNameMode.taskTitleAndProject" = "Título da tarefa e projeto";
+
+"state.error" = "Erro";
+"state.idle" = "Inativa";
+"state.requiresInput" = "Precisa de aprovação ou resposta";
+"state.thinking" = "Pensando";
+"state.unknown" = "Desconhecido";
+"state.unread" = "Conversa não lida";
+
+"status.tooltip.active" = "AgentMicro — %d ativas de %d tarefas recentes do Codex";
+"status.tooltip.none" = "AgentMicro — nenhuma tarefa recente do Codex";
+"status.tooltip.recent.one" = "AgentMicro — %d tarefa recente do Codex";
+"status.tooltip.recent.other" = "AgentMicro — %d tarefas recentes do Codex";
+"task.fallbackTitle" = "Tarefa do Codex";
+"task.fastMode" = "Modo rápido";
+
+"updates.automatic" = "Buscar atualizações automaticamente";
+"updates.check" = "Buscar atualizações…";
+"updates.section" = "Atualizações";
+"updates.unavailable.build" = "As atualizações não estão disponíveis nesta compilação.";
+"updates.unavailable.feed" = "A fonte de atualizações ainda não foi configurada.";
+"updates.unavailable.signature" = "As atualizações exigem uma versão assinada com Developer ID.";
+"updates.version" = "Versão %@";

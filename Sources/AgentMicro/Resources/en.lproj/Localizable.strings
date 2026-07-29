@@ -1,0 +1,49 @@
+"accessibility.status" = "AgentMicro Codex tasks";
+"accessibility.task.unread" = "Unread";
+"accessibility.taskStatus" = "AgentMicro task status";
+
+"language.system" = "Follow System";
+"language.title" = "Language";
+
+"menu.empty" = "No Codex tasks found";
+"menu.footer.quit" = "Quit AgentMicro";
+"menu.footer.refresh" = "Refresh";
+"menu.footer.settings" = "Settings…";
+"menu.headline.active" = "AgentMicro — %d active";
+"menu.scanning" = "Scanning for Codex tasks…";
+
+"settings.error.launchAtLogin" = "Could not update login item: %@";
+"settings.general" = "General";
+"settings.launchAtLogin" = "Start AgentMicro at login";
+"settings.privacy" = "AgentMicro reads task state locally and does not upload task data.";
+"settings.taskDisplay" = "Task display";
+"settings.taskNames" = "Task names";
+"settings.tasksShown" = "Tasks shown";
+"settings.showRecentlyCompleted" = "Show recently completed tasks";
+"settings.title" = "AgentMicro Settings";
+
+"settings.taskNameMode.projectOnly" = "Project name only";
+"settings.taskNameMode.taskTitle" = "Task title";
+"settings.taskNameMode.taskTitleAndProject" = "Task title and project";
+
+"state.error" = "Error";
+"state.idle" = "Idle";
+"state.requiresInput" = "Needs approval or answer";
+"state.thinking" = "Thinking";
+"state.unknown" = "Unknown";
+"state.unread" = "Unread chat";
+
+"status.tooltip.active" = "AgentMicro — %d active of %d recent Codex tasks";
+"status.tooltip.none" = "AgentMicro — no recent Codex tasks";
+"status.tooltip.recent.one" = "AgentMicro — %d recent Codex task";
+"status.tooltip.recent.other" = "AgentMicro — %d recent Codex tasks";
+"task.fallbackTitle" = "Codex task";
+"task.fastMode" = "Fast mode";
+
+"updates.automatic" = "Automatically check for updates";
+"updates.check" = "Check for Updates…";
+"updates.section" = "Updates";
+"updates.unavailable.build" = "Updates are unavailable in this build.";
+"updates.unavailable.feed" = "The update feed has not been configured yet.";
+"updates.unavailable.signature" = "Updates require a Developer ID signed release build.";
+"updates.version" = "Version %@";

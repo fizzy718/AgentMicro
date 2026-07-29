@@ -8,10 +8,12 @@ import Foundation
 public struct CodexThreadMetadata: Equatable, Sendable {
     public let title: String?
     public let agentPath: String?
+    public let rolloutPath: String?
 
-    public init(title: String?, agentPath: String?) {
+    public init(title: String?, agentPath: String?, rolloutPath: String? = nil) {
         self.title = title
         self.agentPath = agentPath
+        self.rolloutPath = rolloutPath
     }
 }
 
@@ -56,7 +58,9 @@ public struct CodexThreadMetadataReader: Sendable {
     {
         guard !sessionIDs.isEmpty else { return [:] }
         let scopedIndexedNames = indexedNames.filter { sessionIDs.contains($0.key) }
-        var result = scopedIndexedNames.mapValues { CodexThreadMetadata(title: $0, agentPath: nil) }
+        var result = scopedIndexedNames.mapValues {
+            CodexThreadMetadata(title: $0, agentPath: nil)
+        }
         #if canImport(SQLite3) || canImport(CSQLite3)
         var database: OpaquePointer?
         guard sqlite3_open_v2(self.databaseURL.path, &database, SQLITE_OPEN_READONLY, nil) == SQLITE_OK,
@@ -71,8 +75,10 @@ public struct CodexThreadMetadataReader: Sendable {
         sqlite3_busy_timeout(database, 100)
 
         let queries = [
-            "SELECT title, agent_path FROM threads WHERE id = ?1 LIMIT 1",
-            "SELECT title, NULL FROM threads WHERE id = ?1 LIMIT 1",
+            "SELECT title, agent_path, rollout_path FROM threads WHERE id = ?1 LIMIT 1",
+            "SELECT title, NULL, rollout_path FROM threads WHERE id = ?1 LIMIT 1",
+            "SELECT title, agent_path, NULL FROM threads WHERE id = ?1 LIMIT 1",
+            "SELECT title, NULL, NULL FROM threads WHERE id = ?1 LIMIT 1",
         ]
         var statement: OpaquePointer?
         for query in queries where statement == nil {
@@ -91,8 +97,12 @@ public struct CodexThreadMetadataReader: Sendable {
             guard sqlite3_step(statement) == SQLITE_ROW else { continue }
             let title = scopedIndexedNames[sessionID] ?? Self.string(statement, column: 0)
             let agentPath = Self.string(statement, column: 1)
-            if title != nil || agentPath != nil {
-                result[sessionID] = CodexThreadMetadata(title: title, agentPath: agentPath)
+            let rolloutPath = Self.string(statement, column: 2)
+            if title != nil || agentPath != nil || rolloutPath != nil {
+                result[sessionID] = CodexThreadMetadata(
+                    title: title,
+                    agentPath: agentPath,
+                    rolloutPath: rolloutPath)
             }
         }
         return result

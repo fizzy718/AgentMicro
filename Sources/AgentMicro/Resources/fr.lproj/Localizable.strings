@@ -1,0 +1,49 @@
+"accessibility.status" = "Tâches Codex d’AgentMicro";
+"accessibility.task.unread" = "Non lue";
+"accessibility.taskStatus" = "État des tâches AgentMicro";
+
+"language.system" = "Suivre le système";
+"language.title" = "Langue";
+
+"menu.empty" = "Aucune tâche Codex trouvée";
+"menu.footer.quit" = "Quitter AgentMicro";
+"menu.footer.refresh" = "Actualiser";
+"menu.footer.settings" = "Réglages…";
+"menu.headline.active" = "AgentMicro — %d actives";
+"menu.scanning" = "Recherche des tâches Codex…";
+
+"settings.error.launchAtLogin" = "Impossible de mettre à jour l’ouverture de session : %@";
+"settings.general" = "Général";
+"settings.launchAtLogin" = "Lancer AgentMicro à l’ouverture de session";
+"settings.privacy" = "AgentMicro lit localement l’état des tâches et ne téléverse pas leurs données.";
+"settings.taskDisplay" = "Affichage des tâches";
+"settings.taskNames" = "Noms des tâches";
+"settings.tasksShown" = "Tâches affichées";
+"settings.showRecentlyCompleted" = "Afficher les tâches récemment terminées";
+"settings.title" = "Réglages d’AgentMicro";
+
+"settings.taskNameMode.projectOnly" = "Nom du projet uniquement";
+"settings.taskNameMode.taskTitle" = "Titre de la tâche";
+"settings.taskNameMode.taskTitleAndProject" = "Titre de la tâche et projet";
+
+"state.error" = "Erreur";
+"state.idle" = "Inactive";
+"state.requiresInput" = "Approbation ou réponse nécessaire";
+"state.thinking" = "Réflexion";
+"state.unknown" = "Inconnu";
+"state.unread" = "Discussion non lue";
+
+"status.tooltip.active" = "AgentMicro — %d actives sur %d tâches Codex récentes";
+"status.tooltip.none" = "AgentMicro — aucune tâche Codex récente";
+"status.tooltip.recent.one" = "AgentMicro — %d tâche Codex récente";
+"status.tooltip.recent.other" = "AgentMicro — %d tâches Codex récentes";
+"task.fallbackTitle" = "Tâche Codex";
+"task.fastMode" = "Mode rapide";
+
+"updates.automatic" = "Rechercher automatiquement les mises à jour";
+"updates.check" = "Rechercher les mises à jour…";
+"updates.section" = "Mises à jour";
+"updates.unavailable.build" = "Les mises à jour ne sont pas disponibles dans cette version.";
+"updates.unavailable.feed" = "La source de mises à jour n’est pas encore configurée.";
+"updates.unavailable.signature" = "Les mises à jour nécessitent une version signée avec Developer ID.";
+"updates.version" = "Version %@";

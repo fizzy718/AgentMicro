@@ -41,6 +41,10 @@ check_sparkle_signing_paths() {
   "${ROOT_DIR}/Scripts/test_sparkle_signing_paths.sh"
 }
 
+check_agentmicro_release() {
+  "${ROOT_DIR}/Scripts/test_agentmicro_release.sh"
+}
+
 check_swift_test_sharding() {
   "${ROOT_DIR}/Scripts/test_swift_test_sharding.sh"
 }
@@ -91,6 +95,7 @@ run_portable_checks() {
   check_package_info_plist
   check_release_dsym_paths
   check_sparkle_signing_paths
+  check_agentmicro_release
   check_swift_test_sharding
   check_ci_path_gate
   check_repository_size

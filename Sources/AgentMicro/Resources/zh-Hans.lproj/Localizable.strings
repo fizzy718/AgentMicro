@@ -1,0 +1,49 @@
+"accessibility.status" = "AgentMicro Codex 任务";
+"accessibility.task.unread" = "未读";
+"accessibility.taskStatus" = "AgentMicro 任务状态";
+
+"language.system" = "跟随系统";
+"language.title" = "语言";
+
+"menu.empty" = "未找到 Codex 任务";
+"menu.footer.quit" = "退出 AgentMicro";
+"menu.footer.refresh" = "刷新";
+"menu.footer.settings" = "设置…";
+"menu.headline.active" = "AgentMicro — %d 个运行中";
+"menu.scanning" = "正在扫描 Codex 任务…";
+
+"settings.error.launchAtLogin" = "无法更新登录项：%@";
+"settings.general" = "通用";
+"settings.launchAtLogin" = "登录时启动 AgentMicro";
+"settings.privacy" = "AgentMicro 仅在本地读取任务状态，不会上传任务数据。";
+"settings.taskDisplay" = "任务显示";
+"settings.taskNames" = "任务名称";
+"settings.tasksShown" = "显示任务数";
+"settings.showRecentlyCompleted" = "显示最近完成的任务";
+"settings.title" = "AgentMicro 设置";
+
+"settings.taskNameMode.projectOnly" = "仅项目名";
+"settings.taskNameMode.taskTitle" = "任务标题";
+"settings.taskNameMode.taskTitleAndProject" = "任务标题和项目名";
+
+"state.error" = "错误";
+"state.idle" = "空闲";
+"state.requiresInput" = "需要批准或回答";
+"state.thinking" = "思考中";
+"state.unknown" = "未知";
+"state.unread" = "未读对话";
+
+"status.tooltip.active" = "AgentMicro — 最近 %2$d 个 Codex 任务中有 %1$d 个运行中";
+"status.tooltip.none" = "AgentMicro — 没有最近的 Codex 任务";
+"status.tooltip.recent.one" = "AgentMicro — 最近 %d 个 Codex 任务";
+"status.tooltip.recent.other" = "AgentMicro — 最近 %d 个 Codex 任务";
+"task.fallbackTitle" = "Codex 任务";
+"task.fastMode" = "快速模式";
+
+"updates.automatic" = "自动检查更新";
+"updates.check" = "检查更新…";
+"updates.section" = "软件更新";
+"updates.unavailable.build" = "当前构建不支持软件更新。";
+"updates.unavailable.feed" = "尚未配置软件更新源。";
+"updates.unavailable.signature" = "软件更新需要使用 Developer ID 签名的正式版本。";
+"updates.version" = "版本 %@";

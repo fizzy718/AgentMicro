@@ -36,6 +36,11 @@
 复用结论：
 
 - 直接复用菜单栏壳、扫描基础设施和窗口唤起。
+- 已复用 310pt 基础菜单宽度、原生字体/内边距/高亮层级、应用级语言覆盖模式和
+  Sparkle 更新架构；AgentMicro 已将自己的完整资源同步到 CodexBar 的 23 种界面语言，
+  并为阿拉伯语和波斯语补充 RTL 布局。AgentMicro 复用 Sparkle 嵌套签名路径，但使用
+  独立版本文件、universal 发布包、appcast、Ed25519 密钥和 GitHub Release，不能使用
+  CodexBar 的 appcast 或旧公钥。
 - V1 不保留完整 Provider UI。
 - 状态模型需要重新定义。
 

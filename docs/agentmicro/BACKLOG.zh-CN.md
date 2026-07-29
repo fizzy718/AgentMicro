@@ -22,13 +22,14 @@
 | AM-007 | research | 精确关联 Codex Desktop rollout、owner 与窗口 | 找到不按 app-server PID 合并任务、可由真实多任务场景验证的稳定证据 |
 | AM-008 | research | 正确解析包含空格的 `codex exec -C/--cd` 路径 | 能读取原始 argv，且不依赖 `ps` 的展示字符串 |
 | AM-009 | research | 同一目录并发 CLI 的精确 PID、线程和终端窗口关联 | 有稳定的一对一证据；在此之前只展示 rollout，不猜测所有权 |
+| AM-010 | blocked | 识别用户直接在 Codex App 中查看了哪个任务 | Codex 提供可靠的当前线程或已读只读事件；在此之前只确认从 AgentMicro 发起的查看 |
 
 ## 注意力与通知
 
 | ID | 状态 | 需求 | 进入条件 |
 |---|---|---|---|
-| AM-101 | deferred | Waiting 通知 | 能区分普通空闲与需要处理 |
-| AM-102 | candidate | 任务完成通知 | Done 状态经过真实场景验证 |
+| AM-101 | deferred | Needs approval or answer 通知 | 能稳定区分需要用户处理与自动审批 |
+| AM-102 | candidate | 任务完成通知 | Unread chat 状态经过真实场景验证 |
 | AM-103 | candidate | Rate-limit 通知 | 有去重、恢复和冷却机制 |
 | AM-104 | candidate | 错误通知 | 错误状态语义可靠 |
 | AM-105 | candidate | 勿扰时段和声音 | 通知能力进入路线图 |
@@ -87,8 +88,8 @@
 
 | ID | 状态 | 需求 | 进入条件 |
 |---|---|---|---|
-| AM-701 | candidate | Developer ID 签名、公证和可安装发布包 | V1 真实场景验收通过并确定发布渠道 |
-| AM-702 | candidate | 自动更新与回滚 | 发布渠道、签名身份和版本策略稳定 |
+| AM-701 | blocked | Developer ID 签名、公证和可安装发布包；本地流水线已实现 | 安装正式 Developer ID 身份并配置 App Store Connect 公证凭据 |
+| AM-702 | blocked | 发布独立 appcast 并启用已接入的 Sparkle 更新；生成与发布脚本已实现 | 配置 AgentMicro GitHub remote/feed、专属 Ed25519 密钥，并完成两个正式版本的更新闭环 |
 
 ## 新需求模板
 

@@ -1,7 +1,7 @@
-@testable import AgentMicro
 import CodexBarCore
 import Foundation
 import Testing
+@testable import AgentMicro
 
 enum CodexTaskStateTestSupport {
     static let fixtureNow = Date(timeIntervalSince1970: 1_785_240_010)
@@ -12,17 +12,22 @@ enum CodexTaskStateTestSupport {
         itemType: String = "function_call",
         inputKey: String,
         input: String,
-        timestamp: String
-    ) -> String {
-        self.json([
+        namespace: String? = nil,
+        timestamp: String) -> String
+    {
+        var payload: [String: Any] = [
+            "type": itemType,
+            "name": name,
+            inputKey: input,
+            "call_id": callID,
+        ]
+        if let namespace {
+            payload["namespace"] = namespace
+        }
+        return self.json([
             "type": "response_item",
             "timestamp": timestamp,
-            "payload": [
-                "type": itemType,
-                "name": name,
-                inputKey: input,
-                "call_id": callID
-            ]
+            "payload": payload,
         ])
     }
 
@@ -30,16 +35,29 @@ enum CodexTaskStateTestSupport {
         callID: String,
         output: Any,
         itemType: String = "function_call_output",
-        timestamp: String
-    ) -> String {
+        timestamp: String) -> String
+    {
         self.json([
             "type": "response_item",
             "timestamp": timestamp,
             "payload": [
                 "type": itemType,
                 "call_id": callID,
-                "output": output
-            ]
+                "output": output,
+            ],
+        ])
+    }
+
+    static func assistantResponse(phase: String, timestamp: String) -> String {
+        self.json([
+            "type": "response_item",
+            "timestamp": timestamp,
+            "payload": [
+                "type": "message",
+                "role": "assistant",
+                "phase": phase,
+                "content": [["type": "output_text", "text": "Done"]],
+            ],
         ])
     }
 
@@ -50,10 +68,9 @@ enum CodexTaskStateTestSupport {
             extraPayload: [
                 "rate_limits": [
                     "limit_id": "codex",
-                    "primary": ["used_percent": usedPercent]
-                ]
-            ]
-        )
+                    "primary": ["used_percent": usedPercent],
+                ],
+            ])
     }
 
     static func runningExecReducer() -> CodexRolloutReducer {
@@ -64,46 +81,38 @@ enum CodexTaskStateTestSupport {
                 name: "exec_command",
                 inputKey: "arguments",
                 input: #"{"cmd":"swift test"}"#,
-                timestamp: "2026-07-28T12:00:01Z"
-            )
-        )
+                timestamp: "2026-07-28T12:00:01Z"))
         reducer.consume(
             line: self.toolOutput(
                 callID: "exec-1",
                 output: "Process running with session ID 12345",
-                timestamp: "2026-07-28T12:00:02Z"
-            )
-        )
+                timestamp: "2026-07-28T12:00:02Z"))
         reducer.consume(
             line: self.toolCall(
                 callID: "poll-1",
                 name: "write_stdin",
                 inputKey: "arguments",
                 input: #"{"session_id":12345,"chars":""}"#,
-                timestamp: "2026-07-28T12:00:03Z"
-            )
-        )
+                timestamp: "2026-07-28T12:00:03Z"))
         reducer.consume(
             line: self.toolOutput(
                 callID: "poll-1",
                 output: "Process running with session ID 12345",
-                timestamp: "2026-07-28T12:00:04Z"
-            )
-        )
+                timestamp: "2026-07-28T12:00:04Z"))
         return reducer
     }
 
     static func event(
         type: String,
         timestamp: String,
-        extraPayload: [String: Any] = [:]
-    ) -> String {
+        extraPayload: [String: Any] = [:]) -> String
+    {
         var payload = extraPayload
         payload["type"] = type
         return self.json([
             "type": "event_msg",
             "timestamp": timestamp,
-            "payload": payload
+            "payload": payload,
         ])
     }
 
@@ -111,8 +120,7 @@ enum CodexTaskStateTestSupport {
         try #require(Bundle.module.url(
             forResource: name,
             withExtension: "jsonl",
-            subdirectory: "Fixtures"
-        ))
+            subdirectory: "Fixtures"))
     }
 
     static func temporaryCopy(ofFixture name: String) throws -> URL {
@@ -136,8 +144,8 @@ enum CodexTaskStateTestSupport {
         id: String? = nil,
         transcriptURL: URL,
         pid: Int32?,
-        activity: Date
-    ) -> AgentSession {
+        activity: Date) -> AgentSession
+    {
         AgentSession(
             id: id ?? transcriptURL.deletingPathExtension().lastPathComponent,
             provider: .codex,
@@ -149,14 +157,18 @@ enum CodexTaskStateTestSupport {
             startedAt: activity.addingTimeInterval(-60),
             lastActivityAt: activity,
             transcriptPath: transcriptURL.path,
-            host: "local"
-        )
+            host: "local")
     }
 
-    static func observation(state: CodexTaskState, pid: Int32?) -> CodexTaskObservation {
-        let activity = self.fixtureNow
+    static func observation(
+        state: CodexTaskState,
+        pid: Int32? = nil,
+        activity: Date = CodexTaskStateTestSupport.fixtureNow,
+        runStartedAt: Date? = nil,
+        id: String? = nil) -> CodexTaskObservation
+    {
         let session = AgentSession(
-            id: "policy-\(state.rawValue)-\(pid ?? 0)",
+            id: id ?? "policy-\(state.rawValue)-\(pid ?? 0)",
             provider: .codex,
             source: .cli,
             state: pid == nil ? .idle : .active,
@@ -166,14 +178,15 @@ enum CodexTaskStateTestSupport {
             startedAt: activity.addingTimeInterval(-60),
             lastActivityAt: activity,
             transcriptPath: nil,
-            host: "local"
-        )
+            host: "local")
         return CodexTaskObservation(
             session: session,
             state: state,
             currentAction: nil,
-            lastEventAt: activity
-        )
+            lastEventAt: activity,
+            runStartedAt: runStartedAt ?? activity.addingTimeInterval(-60),
+            stateChangedAt: activity,
+            usesFastModel: false)
     }
 
     private static func json(_ object: [String: Any]) -> String {

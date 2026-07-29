@@ -20,7 +20,7 @@ enum CodexToolActionFormatter {
         "xoxp-",
         "AKIA",
         "ASIA",
-        "Bearer "
+        "Bearer ",
     ]
 
     static func action(toolName: String, rawInput: Any?) -> String {
@@ -108,7 +108,7 @@ enum CodexToolActionFormatter {
         for prefix in self.secretPrefixes {
             while let range = result.range(of: prefix) {
                 let end = result[range.upperBound...].firstIndex(where: \.isWhitespace) ?? result.endIndex
-                result.replaceSubrange(range.lowerBound ..< end, with: "[REDACTED]")
+                result.replaceSubrange(range.lowerBound..<end, with: "[REDACTED]")
             }
         }
         result = self.redactNamedSecrets(result)
@@ -125,20 +125,19 @@ enum CodexToolActionFormatter {
         return expression.stringByReplacingMatches(
             in: value,
             range: range,
-            withTemplate: "$1=[REDACTED]"
-        )
+            withTemplate: "$1=[REDACTED]")
     }
 }
 
-private extension Character {
-    var isASCIIControl: Bool {
+extension Character {
+    fileprivate var isASCIIControl: Bool {
         self.unicodeScalars.allSatisfy { $0.value < 0x20 || $0.value == 0x7F }
     }
 
-    var isBidirectionalControl: Bool {
+    fileprivate var isBidirectionalControl: Bool {
         self.unicodeScalars.contains { scalar in
-            (0x202A ... 0x202E).contains(scalar.value) ||
-                (0x2066 ... 0x2069).contains(scalar.value) ||
+            (0x202A...0x202E).contains(scalar.value) ||
+                (0x2066...0x2069).contains(scalar.value) ||
                 scalar.value == 0x200E ||
                 scalar.value == 0x200F
         }

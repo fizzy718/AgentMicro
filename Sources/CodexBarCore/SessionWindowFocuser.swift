@@ -27,6 +27,11 @@ public enum SessionWindowFocuser {
 
     @discardableResult
     public static func focus(_ session: AgentSession, promptForAccessibility: Bool = true) -> SessionFocusResult {
+        if let url = self.codexThreadURL(for: session),
+           NSWorkspace.shared.open(url)
+        {
+            return .focused
+        }
         guard let application = self.application(for: session) else { return .failed }
         guard application.activate() else { return .failed }
 
@@ -42,6 +47,18 @@ public enum SessionWindowFocuser {
         else { return .activatedApplicationOnly }
         AXUIElementPerformAction(window, kAXRaiseAction as CFString)
         return .focused
+    }
+
+    public static func codexThreadURL(for session: AgentSession) -> URL? {
+        guard session.provider == .codex,
+              session.source == .desktopApp,
+              !session.id.isEmpty
+        else { return nil }
+        var components = URLComponents()
+        components.scheme = "codex"
+        components.host = "threads"
+        components.path = "/\(session.id)"
+        return components.url
     }
 
     private static func application(for session: AgentSession) -> NSRunningApplication? {

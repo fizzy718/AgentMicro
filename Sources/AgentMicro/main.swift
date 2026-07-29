@@ -1,7 +1,8 @@
 import AppKit
 
 if let focusIndex = CommandLine.arguments.firstIndex(of: "--diagnose-focus"),
-   CommandLine.arguments.indices.contains(CommandLine.arguments.index(after: focusIndex)) {
+   CommandLine.arguments.indices.contains(CommandLine.arguments.index(after: focusIndex))
+{
     let sessionID = CommandLine.arguments[CommandLine.arguments.index(after: focusIndex)]
     await print(AgentMicroDiagnostics.focus(sessionID: sessionID))
 } else if CommandLine.arguments.contains("--diagnose-once") {

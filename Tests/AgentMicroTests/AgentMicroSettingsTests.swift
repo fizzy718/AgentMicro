@@ -1,24 +1,50 @@
-@testable import AgentMicro
 import Foundation
 import ServiceManagement
 import Testing
+@testable import AgentMicro
 
 @MainActor
 struct AgentMicroSettingsTests {
     @Test
-    func `settings default to privacy preserving local values`() throws {
+    func `settings use task title and project with six visible tasks by default`() throws {
         let (defaults, suiteName) = try Self.makeDefaults()
         defer { defaults.removePersistentDomain(forName: suiteName) }
 
         let settings = AgentMicroSettings(
             defaults: defaults,
             launchAtLoginStatus: { false },
-            updateLaunchAtLogin: { _ in }
-        )
+            updateLaunchAtLogin: { _ in })
 
-        #expect(settings.taskNameMode == .projectOnly)
+        #expect(settings.taskNameMode == .taskTitleAndProject)
+        #expect(AgentMicroTaskNameMode.allCases.first == .taskTitleAndProject)
+        #expect(settings.appLanguage == .system)
+        #expect(settings.autoUpdateEnabled)
+        #expect(settings.taskDisplayLimit == 6)
         #expect(settings.showRecentlyCompleted)
         #expect(!settings.launchAtLogin)
+    }
+
+    @Test
+    func `language override and update preference persist across settings instances`() throws {
+        let (defaults, suiteName) = try Self.makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let first = AgentMicroSettings(
+            defaults: defaults,
+            launchAtLoginStatus: { false },
+            updateLaunchAtLogin: { _ in })
+
+        first.appLanguage = .chineseSimplified
+        first.autoUpdateEnabled = false
+
+        let reloaded = AgentMicroSettings(
+            defaults: defaults,
+            launchAtLoginStatus: { false },
+            updateLaunchAtLogin: { _ in })
+        #expect(reloaded.appLanguage == .chineseSimplified)
+        #expect(!reloaded.autoUpdateEnabled)
+
+        reloaded.appLanguage = .system
+        #expect(defaults.object(forKey: AgentMicroLocalization.appLanguageDefaultsKey) == nil)
     }
 
     @Test
@@ -28,19 +54,62 @@ struct AgentMicroSettingsTests {
         let first = AgentMicroSettings(
             defaults: defaults,
             launchAtLoginStatus: { false },
-            updateLaunchAtLogin: { _ in }
-        )
+            updateLaunchAtLogin: { _ in })
 
         first.taskNameMode = .taskTitleAndProject
         first.showRecentlyCompleted = false
+        first.taskDisplayLimit = 14
 
         let reloaded = AgentMicroSettings(
             defaults: defaults,
             launchAtLoginStatus: { false },
-            updateLaunchAtLogin: { _ in }
-        )
+            updateLaunchAtLogin: { _ in })
         #expect(reloaded.taskNameMode == .taskTitleAndProject)
         #expect(!reloaded.showRecentlyCompleted)
+        #expect(reloaded.taskDisplayLimit == 14)
+    }
+
+    @Test
+    func `task display limit is clamped between one and twenty`() throws {
+        let (defaults, suiteName) = try Self.makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let settings = AgentMicroSettings(
+            defaults: defaults,
+            launchAtLoginStatus: { false },
+            updateLaunchAtLogin: { _ in })
+
+        settings.taskDisplayLimit = 0
+        #expect(settings.taskDisplayLimit == 1)
+
+        settings.taskDisplayLimit = 21
+        #expect(settings.taskDisplayLimit == 20)
+    }
+
+    @Test
+    func `read activity persists and a newer completion becomes unread again`() throws {
+        let (defaults, suiteName) = try Self.makeDefaults()
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let first = AgentMicroSettings(
+            defaults: defaults,
+            launchAtLoginStatus: { false },
+            updateLaunchAtLogin: { _ in })
+        let firstActivity = Date(timeIntervalSince1970: 10000)
+        let firstTask = CodexTaskStateTestSupport.observation(
+            state: .unread,
+            activity: firstActivity)
+
+        first.markSessionRead(firstTask, now: firstActivity)
+
+        let reloaded = AgentMicroSettings(
+            defaults: defaults,
+            launchAtLoginStatus: { false },
+            updateLaunchAtLogin: { _ in })
+        #expect(reloaded.readSessionKeys(for: [firstTask]) == [firstTask.sessionKey])
+
+        let newerTask = CodexTaskStateTestSupport.observation(
+            state: .unread,
+            activity: firstActivity.addingTimeInterval(60))
+        #expect(reloaded.readSessionKeys(for: [newerTask]).isEmpty)
     }
 
     @Test
@@ -51,8 +120,7 @@ struct AgentMicroSettingsTests {
         let settings = AgentMicroSettings(
             defaults: defaults,
             launchAtLoginStatus: { false },
-            updateLaunchAtLogin: { requestedValues.append($0) }
-        )
+            updateLaunchAtLogin: { requestedValues.append($0) })
 
         settings.setLaunchAtLogin(true)
 
@@ -68,8 +136,7 @@ struct AgentMicroSettingsTests {
         let settings = AgentMicroSettings(
             defaults: defaults,
             launchAtLoginStatus: { false },
-            updateLaunchAtLogin: { _ in throw TestError.registrationFailed }
-        )
+            updateLaunchAtLogin: { _ in throw TestError.registrationFailed })
 
         settings.setLaunchAtLogin(true)
 
@@ -86,14 +153,12 @@ struct AgentMicroSettingsTests {
             true,
             status: { .enabled },
             register: { registrations += 1 },
-            unregister: { unregistrations += 1 }
-        )
+            unregister: { unregistrations += 1 })
         try AgentMicroLaunchAtLoginManager.setEnabled(
             false,
             status: { .enabled },
             register: { registrations += 1 },
-            unregister: { unregistrations += 1 }
-        )
+            unregister: { unregistrations += 1 })
 
         #expect(registrations == 0)
         #expect(unregistrations == 1)
@@ -107,8 +172,7 @@ struct AgentMicroSettingsTests {
             true,
             status: { .notRegistered },
             register: { registrations += 1 },
-            unregister: {}
-        )
+            unregister: {})
 
         #expect(registrations == 1)
     }

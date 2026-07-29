@@ -4,9 +4,10 @@ import Foundation
 enum AgentMicroSessionPolicy {
     static var scannerConfiguration: SessionScanConfig {
         SessionScanConfig(
+            fileOnlyWindow: 24 * 60 * 60,
             includeCodexSubagents: false,
-            requireUnambiguousCodexProcessOwnership: true
-        )
+            includeCodexGuardianParents: true,
+            requireUnambiguousCodexProcessOwnership: true)
     }
 }
 
@@ -15,6 +16,7 @@ struct AgentMicroDiagnosticRecord: Codable, Equatable, Sendable {
     let projectName: String?
     let source: String
     let state: String
+    let usesFastModel: Bool
     let currentAction: String?
     let pid: Int32?
     let lastEventAt: Date?
@@ -33,21 +35,20 @@ enum AgentMicroDiagnostics {
         let engine = CodexTaskStateEngine()
         let tasks = await engine.observe(
             sessions: sessions.filter { $0.provider == .codex },
-            now: now
-        )
+            now: now)
         return tasks.map { task in
             AgentMicroDiagnosticRecord(
                 id: task.session.id,
                 projectName: task.session.projectName,
                 source: task.session.source.rawValue,
                 state: task.state.rawValue,
+                usesFastModel: task.usesFastModel,
                 currentAction: task.currentAction,
                 pid: task.session.pid,
                 lastEventAt: task.lastEventAt,
                 transcriptFile: task.session.transcriptPath.map {
                     URL(fileURLWithPath: $0).lastPathComponent
-                }
-            )
+                })
         }
     }
 
@@ -56,8 +57,7 @@ enum AgentMicroDiagnostics {
         let tasks = await self.records()
         let snapshot = AgentMicroDiagnosticSnapshot(
             elapsedMilliseconds: Date().timeIntervalSince(startedAt) * 1000,
-            tasks: tasks
-        )
+            tasks: tasks)
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]

@@ -39,11 +39,9 @@ struct AgentSessionParserTests {
     @Test
     func `ps parser reads explicit Codex CLI working directories`() {
         #expect(AgentPSOutputParser.codexWorkingDirectoryArgument(
-            "/Applications/ChatGPT.app/Contents/Resources/codex exec -C /private/tmp/m3"
-        ) == "/private/tmp/m3")
+            "/Applications/ChatGPT.app/Contents/Resources/codex exec -C /private/tmp/m3") == "/private/tmp/m3")
         #expect(AgentPSOutputParser.codexWorkingDirectoryArgument(
-            "codex exec --cd=relative-project"
-        ) == "relative-project")
+            "codex exec --cd=relative-project") == "relative-project")
         #expect(AgentPSOutputParser.codexWorkingDirectoryArgument("codex exec") == nil)
     }
 

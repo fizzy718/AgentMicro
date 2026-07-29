@@ -51,6 +51,7 @@ let package = Package(
     dependencies: {
         if agentMicroBuildOnly {
             return [
+                .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.3"),
                 .package(url: "https://github.com/steipete/Commander", from: "0.2.1"),
                 .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
                 .package(url: "https://github.com/apple/swift-log", from: "1.13.2"),
@@ -162,10 +163,17 @@ let package = Package(
         targets.append(contentsOf: [
             .executableTarget(
                 name: "AgentMicro",
-                dependencies: ["CodexBarCore"],
+                dependencies: [
+                    "CodexBarCore",
+                    .product(name: "Sparkle", package: "Sparkle"),
+                ],
                 path: "Sources/AgentMicro",
+                resources: [
+                    .process("Resources"),
+                ],
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
+                    .define("ENABLE_AGENTMICRO_SPARKLE"),
                 ]),
             .testTarget(
                 name: "AgentMicroTests",

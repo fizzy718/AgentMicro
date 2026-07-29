@@ -1,0 +1,49 @@
+"accessibility.status" = "AgentMicro Codex 작업";
+"accessibility.task.unread" = "읽지 않음";
+"accessibility.taskStatus" = "AgentMicro 작업 상태";
+
+"language.system" = "시스템 설정 따르기";
+"language.title" = "언어";
+
+"menu.empty" = "Codex 작업을 찾을 수 없음";
+"menu.footer.quit" = "AgentMicro 종료";
+"menu.footer.refresh" = "새로고침";
+"menu.footer.settings" = "설정…";
+"menu.headline.active" = "AgentMicro — %d개 실행 중";
+"menu.scanning" = "Codex 작업 검색 중…";
+
+"settings.error.launchAtLogin" = "로그인 항목을 업데이트할 수 없습니다: %@";
+"settings.general" = "일반";
+"settings.launchAtLogin" = "로그인 시 AgentMicro 시작";
+"settings.privacy" = "AgentMicro는 작업 상태를 로컬에서 읽으며 작업 데이터를 업로드하지 않습니다.";
+"settings.taskDisplay" = "작업 표시";
+"settings.taskNames" = "작업 이름";
+"settings.tasksShown" = "표시할 작업 수";
+"settings.showRecentlyCompleted" = "최근 완료된 작업 표시";
+"settings.title" = "AgentMicro 설정";
+
+"settings.taskNameMode.projectOnly" = "프로젝트 이름만";
+"settings.taskNameMode.taskTitle" = "작업 제목";
+"settings.taskNameMode.taskTitleAndProject" = "작업 제목 및 프로젝트";
+
+"state.error" = "오류";
+"state.idle" = "유휴";
+"state.requiresInput" = "승인 또는 답변 필요";
+"state.thinking" = "생각 중";
+"state.unknown" = "알 수 없음";
+"state.unread" = "읽지 않은 채팅";
+
+"status.tooltip.active" = "AgentMicro — 최근 Codex 작업 %2$d개 중 %1$d개 실행 중";
+"status.tooltip.none" = "AgentMicro — 최근 Codex 작업 없음";
+"status.tooltip.recent.one" = "AgentMicro — 최근 Codex 작업 %d개";
+"status.tooltip.recent.other" = "AgentMicro — 최근 Codex 작업 %d개";
+"task.fallbackTitle" = "Codex 작업";
+"task.fastMode" = "빠른 모드";
+
+"updates.automatic" = "자동으로 업데이트 확인";
+"updates.check" = "업데이트 확인…";
+"updates.section" = "업데이트";
+"updates.unavailable.build" = "이 빌드에서는 업데이트를 사용할 수 없습니다.";
+"updates.unavailable.feed" = "업데이트 피드가 아직 구성되지 않았습니다.";
+"updates.unavailable.signature" = "업데이트에는 Developer ID로 서명된 릴리스 빌드가 필요합니다.";
+"updates.version" = "버전 %@";

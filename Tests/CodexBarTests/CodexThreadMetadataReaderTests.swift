@@ -20,10 +20,14 @@ struct CodexThreadMetadataReaderTests {
 
         let metadata = CodexThreadMetadataReader(databaseURL: databaseURL).metadata(for: ["main", "subagent"])
 
-        #expect(metadata["main"] == CodexThreadMetadata(title: "Fix Claude reauthorization", agentPath: nil))
+        #expect(metadata["main"] == CodexThreadMetadata(
+            title: "Fix Claude reauthorization",
+            agentPath: nil,
+            rolloutPath: "/tmp/main.jsonl"))
         #expect(metadata["subagent"] == CodexThreadMetadata(
             title: "Inherited parent title",
-            agentPath: "/root/neon_patch_review2"))
+            agentPath: "/root/neon_patch_review2",
+            rolloutPath: "/tmp/subagent.jsonl"))
     }
 
     @Test
@@ -173,9 +177,13 @@ struct CodexThreadMetadataReaderTests {
         }
         defer { sqlite3_close(database) }
         let sql = """
-        CREATE TABLE threads (id TEXT PRIMARY KEY, title TEXT, agent_path TEXT);
-        INSERT INTO threads VALUES ('main', 'Fix Claude reauthorization', NULL);
-        INSERT INTO threads VALUES ('subagent', 'Inherited parent title', '/root/neon_patch_review2');
+        CREATE TABLE threads (id TEXT PRIMARY KEY, title TEXT, agent_path TEXT, rollout_path TEXT);
+        INSERT INTO threads VALUES ('main', 'Fix Claude reauthorization', NULL, '/tmp/main.jsonl');
+        INSERT INTO threads VALUES (
+            'subagent',
+            'Inherited parent title',
+            '/root/neon_patch_review2',
+            '/tmp/subagent.jsonl');
         """
         guard sqlite3_exec(database, sql, nil, nil, nil) == SQLITE_OK else {
             throw SQLiteError.exec

@@ -2,10 +2,94 @@ import Foundation
 import Observation
 import ServiceManagement
 
+enum AgentMicroAppLanguage: String, CaseIterable, Identifiable, Sendable {
+    case system = ""
+    case english = "en"
+    case chineseSimplified = "zh-Hans"
+    case chineseTraditional = "zh-Hant"
+    case japanese = "ja"
+    case spanish = "es"
+    case portugueseBrazilian = "pt-BR"
+    case korean = "ko"
+    case german = "de"
+    case french = "fr"
+    case arabic = "ar"
+    case italian = "it"
+    case vietnamese = "vi"
+    case dutch = "nl"
+    case turkish = "tr"
+    case ukrainian = "uk"
+    case russian = "ru"
+    case indonesian = "id"
+    case polish = "pl"
+    case persian = "fa"
+    case thai = "th"
+    case galician = "gl"
+    case catalan = "ca"
+    case swedish = "sv"
+
+    var id: String {
+        self.rawValue
+    }
+
+    var displayName: String {
+        switch self {
+        case .system:
+            AgentMicroLocalization.text("language.system")
+        case .english:
+            "English"
+        case .chineseSimplified:
+            "简体中文"
+        case .chineseTraditional:
+            "繁體中文"
+        case .spanish:
+            "Español"
+        case .catalan:
+            "Català"
+        case .portugueseBrazilian:
+            "Português (Brasil)"
+        case .german:
+            "Deutsch"
+        case .swedish:
+            "Svenska"
+        case .french:
+            "Français"
+        case .italian:
+            "Italiano"
+        case .dutch:
+            "Nederlands"
+        case .japanese:
+            "日本語"
+        case .korean:
+            "한국어"
+        case .vietnamese:
+            "Tiếng Việt"
+        case .turkish:
+            "Türkçe"
+        case .ukrainian:
+            "Українська"
+        case .russian:
+            "Русский"
+        case .indonesian:
+            "Bahasa Indonesia"
+        case .polish:
+            "Polski"
+        case .arabic:
+            "العربية"
+        case .persian:
+            "فارسی"
+        case .thai:
+            "ไทย"
+        case .galician:
+            "Galego"
+        }
+    }
+}
+
 enum AgentMicroTaskNameMode: String, CaseIterable, Identifiable, Sendable {
-    case projectOnly
-    case taskTitle
     case taskTitleAndProject
+    case taskTitle
+    case projectOnly
 
     var id: String {
         self.rawValue
@@ -14,18 +98,19 @@ enum AgentMicroTaskNameMode: String, CaseIterable, Identifiable, Sendable {
     var displayName: String {
         switch self {
         case .projectOnly:
-            "Project name only"
+            AgentMicroLocalization.text("settings.taskNameMode.projectOnly")
         case .taskTitle:
-            "Task title"
+            AgentMicroLocalization.text("settings.taskNameMode.taskTitle")
         case .taskTitleAndProject:
-            "Task title and project"
+            AgentMicroLocalization.text("settings.taskNameMode.taskTitleAndProject")
         }
     }
 }
 
 struct AgentMicroPreferences: Equatable, Sendable {
-    var taskNameMode: AgentMicroTaskNameMode = .projectOnly
+    var taskNameMode: AgentMicroTaskNameMode = .taskTitleAndProject
     var showRecentlyCompleted = true
+    var taskDisplayLimit = AgentMicroSettings.defaultTaskDisplayLimit
 }
 
 enum AgentMicroLaunchAtLoginManager {
@@ -49,16 +134,15 @@ enum AgentMicroLaunchAtLoginManager {
             enabled,
             status: { service.status },
             register: { try service.register() },
-            unregister: { try service.unregister() }
-        )
+            unregister: { try service.unregister() })
     }
 
     static func setEnabled(
         _ enabled: Bool,
         status: StatusProvider,
         register: RegistrationAction,
-        unregister: RegistrationAction
-    ) throws {
+        unregister: RegistrationAction) throws
+    {
         if enabled {
             switch status() {
             case .enabled, .requiresApproval:
@@ -84,9 +168,35 @@ enum AgentMicroLaunchAtLoginManager {
 @MainActor
 @Observable
 final class AgentMicroSettings {
+    nonisolated static let minimumTaskDisplayLimit = 1
+    nonisolated static let maximumTaskDisplayLimit = 20
+    nonisolated static let defaultTaskDisplayLimit = 6
+
     private enum Key {
+        static let appLanguage = AgentMicroLocalization.appLanguageDefaultsKey
+        static let autoUpdateEnabled = "agentMicro.autoUpdateEnabled"
         static let taskNameMode = "agentMicro.taskNameMode"
         static let showRecentlyCompleted = "agentMicro.showRecentlyCompleted"
+        static let taskDisplayLimit = "agentMicro.taskDisplayLimit"
+        static let readSessionActivity = "agentMicro.readSessionActivity"
+    }
+
+    var appLanguage: AgentMicroAppLanguage {
+        didSet {
+            if self.appLanguage == .system {
+                self.defaults.removeObject(forKey: Key.appLanguage)
+            } else {
+                self.defaults.set(self.appLanguage.rawValue, forKey: Key.appLanguage)
+            }
+            self.notifyChange()
+        }
+    }
+
+    var autoUpdateEnabled: Bool {
+        didSet {
+            self.defaults.set(self.autoUpdateEnabled, forKey: Key.autoUpdateEnabled)
+            self.notifyChange()
+        }
     }
 
     var taskNameMode: AgentMicroTaskNameMode {
@@ -99,6 +209,20 @@ final class AgentMicroSettings {
     var showRecentlyCompleted: Bool {
         didSet {
             self.defaults.set(self.showRecentlyCompleted, forKey: Key.showRecentlyCompleted)
+            self.notifyChange()
+        }
+    }
+
+    var taskDisplayLimit: Int {
+        didSet {
+            let boundedValue = min(
+                Self.maximumTaskDisplayLimit,
+                max(Self.minimumTaskDisplayLimit, self.taskDisplayLimit))
+            guard self.taskDisplayLimit == boundedValue else {
+                self.taskDisplayLimit = boundedValue
+                return
+            }
+            self.defaults.set(self.taskDisplayLimit, forKey: Key.taskDisplayLimit)
             self.notifyChange()
         }
     }
@@ -118,27 +242,40 @@ final class AgentMicroSettings {
     @ObservationIgnored
     private let updateLaunchAtLogin: (Bool) throws -> Void
 
+    @ObservationIgnored
+    private var readSessionActivity: [String: TimeInterval]
+
     init(
         defaults: UserDefaults = .standard,
         launchAtLoginStatus: @escaping () -> Bool = { AgentMicroLaunchAtLoginManager.isEnabled },
         updateLaunchAtLogin: @escaping (Bool) throws -> Void = { enabled in
             try AgentMicroLaunchAtLoginManager.setEnabled(enabled)
-        }
-    ) {
+        })
+    {
         self.defaults = defaults
         self.launchAtLoginStatus = launchAtLoginStatus
         self.updateLaunchAtLogin = updateLaunchAtLogin
+        self.appLanguage = defaults.string(forKey: Key.appLanguage)
+            .flatMap(AgentMicroAppLanguage.init(rawValue:)) ?? .system
+        self.autoUpdateEnabled = defaults.object(forKey: Key.autoUpdateEnabled) as? Bool ?? true
         self.taskNameMode = defaults.string(forKey: Key.taskNameMode)
-            .flatMap(AgentMicroTaskNameMode.init(rawValue:)) ?? .projectOnly
+            .flatMap(AgentMicroTaskNameMode.init(rawValue:)) ?? .taskTitleAndProject
         self.showRecentlyCompleted = defaults.object(forKey: Key.showRecentlyCompleted) as? Bool ?? true
+        let savedTaskDisplayLimit = defaults.object(forKey: Key.taskDisplayLimit) as? Int ??
+            Self.defaultTaskDisplayLimit
+        self.taskDisplayLimit = min(
+            Self.maximumTaskDisplayLimit,
+            max(Self.minimumTaskDisplayLimit, savedTaskDisplayLimit))
+        self.readSessionActivity = defaults.dictionary(forKey: Key.readSessionActivity)?
+            .compactMapValues { ($0 as? NSNumber)?.doubleValue } ?? [:]
         self.launchAtLogin = launchAtLoginStatus()
     }
 
     var preferences: AgentMicroPreferences {
         AgentMicroPreferences(
             taskNameMode: self.taskNameMode,
-            showRecentlyCompleted: self.showRecentlyCompleted
-        )
+            showRecentlyCompleted: self.showRecentlyCompleted,
+            taskDisplayLimit: self.taskDisplayLimit)
     }
 
     func setLaunchAtLogin(_ enabled: Bool) {
@@ -148,7 +285,9 @@ final class AgentMicroSettings {
             self.launchAtLoginError = nil
         } catch {
             self.launchAtLogin = self.launchAtLoginStatus()
-            self.launchAtLoginError = "Could not update login item: \(error.localizedDescription)"
+            self.launchAtLoginError = AgentMicroLocalization.text(
+                "settings.error.launchAtLogin",
+                arguments: error.localizedDescription)
         }
         self.notifyChange()
     }
@@ -156,6 +295,37 @@ final class AgentMicroSettings {
     func refreshLaunchAtLoginStatus() {
         self.launchAtLogin = self.launchAtLoginStatus()
         self.launchAtLoginError = nil
+    }
+
+    func readSessionKeys(for tasks: [CodexTaskObservation]) -> Set<String> {
+        Set(tasks.compactMap { task in
+            guard let readAt = self.readSessionActivity[task.sessionKey] else { return nil }
+            let activity = task.lastEventAt ?? task.session.lastActivityAt ?? task.session.startedAt
+            guard activity.map({ readAt >= $0.timeIntervalSince1970 }) ?? true else { return nil }
+            return task.sessionKey
+        })
+    }
+
+    func markSessionRead(
+        _ task: CodexTaskObservation,
+        now: Date = Date(),
+        notifyChange: Bool = true)
+    {
+        let activity = task.lastEventAt ?? task.session.lastActivityAt ?? task.session.startedAt ?? now
+        self.readSessionActivity[task.sessionKey] = max(
+            now.timeIntervalSince1970,
+            activity.timeIntervalSince1970)
+        if self.readSessionActivity.count > 256 {
+            self.readSessionActivity = Dictionary(
+                uniqueKeysWithValues: self.readSessionActivity
+                    .sorted { $0.value > $1.value }
+                    .prefix(256)
+                    .map { ($0.key, $0.value) })
+        }
+        self.defaults.set(self.readSessionActivity, forKey: Key.readSessionActivity)
+        if notifyChange {
+            self.notifyChange()
+        }
     }
 
     private func notifyChange() {

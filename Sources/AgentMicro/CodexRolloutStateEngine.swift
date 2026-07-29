@@ -12,6 +12,7 @@ actor CodexTaskStateEngine {
 
     private static let readChunkSize = 64 * 1024
     private static let maximumLineSize = 10 * 1024 * 1024
+    static let initialReadWindow = 4 * 1024 * 1024
 
     private var cursors: [String: Cursor] = [:]
 
@@ -32,8 +33,7 @@ actor CodexTaskStateEngine {
             return CodexTaskStateResolver.observation(
                 session: session,
                 snapshot: snapshot,
-                now: now
-            )
+                now: now)
         }
     }
 
@@ -43,10 +43,15 @@ actor CodexTaskStateEngine {
             return self.cursors[path]?.reducer.snapshot
         }
         let fileIdentifier = (attributes?[.systemFileNumber] as? NSNumber)?.uint64Value
-        var cursor = self.cursors[path] ?? Cursor()
+        let existingCursor = self.cursors[path]
+        var cursor = existingCursor ?? Self.initialCursor(
+            fileIdentifier: fileIdentifier,
+            fileSize: fileSize)
 
-        if cursor.fileIdentifier != fileIdentifier || fileSize < cursor.byteOffset {
-            cursor = Cursor(fileIdentifier: fileIdentifier)
+        if existingCursor != nil,
+           cursor.fileIdentifier != fileIdentifier || fileSize < cursor.byteOffset
+        {
+            cursor = Self.initialCursor(fileIdentifier: fileIdentifier, fileSize: fileSize)
         } else if cursor.fileIdentifier == nil {
             cursor.fileIdentifier = fileIdentifier
         }
@@ -74,6 +79,14 @@ actor CodexTaskStateEngine {
         return cursor.reducer.snapshot
     }
 
+    private static func initialCursor(fileIdentifier: UInt64?, fileSize: UInt64) -> Cursor {
+        var cursor = Cursor(fileIdentifier: fileIdentifier)
+        guard fileSize > UInt64(self.initialReadWindow) else { return cursor }
+        cursor.byteOffset = fileSize - UInt64(self.initialReadWindow)
+        cursor.isDiscardingOversizedLine = true
+        return cursor
+    }
+
     private func consume(chunk: Data, cursor: inout Cursor) {
         var remaining = chunk
         if cursor.isDiscardingOversizedLine {
@@ -99,8 +112,16 @@ actor CodexTaskStateEngine {
 }
 
 struct CodexRolloutReducer {
+    private enum TransitionState: Equatable {
+        case idle
+        case thinking
+        case requiresInput
+        case error
+    }
+
     private struct PendingCall {
         let action: String
+        let requiresInput: Bool
     }
 
     private var pendingCalls: [String: PendingCall] = [:]
@@ -108,11 +129,15 @@ struct CodexRolloutReducer {
     private var callNames: [String: String] = [:]
     private var pollingTargets: [String: String] = [:]
     private var runningCallsByHandle: [String: String] = [:]
+    private var observedComputerUseTargets: Set<String> = []
     private var thinkingSince: Date?
     private var rateLimited = false
     private var lastEventAt: Date?
     private var parsedEventCount = 0
     private var isTurnActive: Bool?
+    private var turnStartedAt: Date?
+    private var stateChangedAt: Date?
+    private var usesFastModel = false
 
     var snapshot: CodexRolloutSnapshot {
         let currentAction = self.pendingCallOrder.reversed().compactMap { self.pendingCalls[$0]?.action }.first
@@ -121,10 +146,13 @@ struct CodexRolloutReducer {
             isThinking: self.thinkingSince != nil,
             isRateLimited: self.rateLimited,
             hasPendingToolCall: !self.pendingCalls.isEmpty,
+            requiresInput: self.pendingCalls.values.contains(where: \.requiresInput),
             currentAction: currentAction,
             lastEventAt: self.lastEventAt,
-            isTurnActive: self.isTurnActive
-        )
+            isTurnActive: self.isTurnActive,
+            turnStartedAt: self.turnStartedAt,
+            stateChangedAt: self.stateChangedAt,
+            usesFastModel: self.usesFastModel)
     }
 
     mutating func consume(line: String) {
@@ -137,8 +165,9 @@ struct CodexRolloutReducer {
               let outerType = object["type"] as? String
         else { return }
 
-        self.parsedEventCount += 1
         let eventDate = Self.eventDate(object["timestamp"])
+        let previousState = self.transitionState
+        self.parsedEventCount += 1
         if let eventDate, eventDate > self.lastEventAt ?? .distantPast {
             self.lastEventAt = eventDate
         }
@@ -151,27 +180,30 @@ struct CodexRolloutReducer {
         default:
             break
         }
+        if self.transitionState != previousState {
+            self.stateChangedAt = eventDate ?? self.lastEventAt
+        }
     }
 
     private mutating func consumeEvent(payload: [String: Any], eventDate: Date?) {
         guard let eventType = payload["type"] as? String else { return }
         switch eventType {
         case "task_started":
-            self.isTurnActive = true
-            self.thinkingSince = eventDate ?? self.lastEventAt ?? Date()
+            self.beginTurn(at: eventDate)
         case "user_message":
-            self.isTurnActive = true
-            self.thinkingSince = eventDate ?? self.lastEventAt ?? Date()
+            self.beginTurn(at: eventDate)
         case "agent_message":
-            self.thinkingSince = nil
+            if Self.isFinalAnswer(payload) {
+                self.completeTurn()
+            } else {
+                self.thinkingSince = nil
+            }
         case "task_complete":
-            self.isTurnActive = false
-            self.thinkingSince = nil
-            self.closeAllCalls()
+            self.completeTurn()
         case "turn_aborted":
-            self.isTurnActive = false
-            self.thinkingSince = nil
-            self.closeAllCalls()
+            self.completeTurn()
+        case "thread_settings_applied":
+            self.updateServiceTier(from: payload["thread_settings"])
         case "token_count":
             self.updateRateLimit(from: payload["rate_limits"])
         default:
@@ -181,6 +213,28 @@ struct CodexRolloutReducer {
         }
     }
 
+    private mutating func beginTurn(at eventDate: Date?) {
+        let date = eventDate ?? self.lastEventAt ?? Date()
+        if self.isTurnActive != true {
+            self.turnStartedAt = date
+        }
+        self.isTurnActive = true
+        self.thinkingSince = date
+    }
+
+    private var transitionState: TransitionState {
+        if self.rateLimited {
+            return .error
+        }
+        if self.pendingCalls.values.contains(where: \.requiresInput) {
+            return .requiresInput
+        }
+        if !self.pendingCalls.isEmpty || self.isTurnActive == true || self.thinkingSince != nil {
+            return .thinking
+        }
+        return .idle
+    }
+
     private mutating func consumeResponseItem(payload: [String: Any]) {
         guard let itemType = payload["type"] as? String else { return }
         switch itemType {
@@ -188,9 +242,28 @@ struct CodexRolloutReducer {
             self.openCall(payload: payload)
         case "function_call_output", "custom_tool_call_output":
             self.consumeToolOutput(payload: payload)
+        case "message":
+            if Self.string(payload["role"]) == "assistant",
+               Self.isFinalAnswer(payload)
+            {
+                self.completeTurn()
+            }
         default:
             break
         }
+    }
+
+    private mutating func completeTurn() {
+        self.isTurnActive = false
+        self.thinkingSince = nil
+        self.closeAllCalls()
+    }
+
+    private mutating func updateServiceTier(from rawValue: Any?) {
+        guard let settings = rawValue as? [String: Any],
+              let serviceTier = Self.string(settings["service_tier"])
+        else { return }
+        self.usesFastModel = serviceTier == "priority"
     }
 
     private mutating func openCall(payload: [String: Any]) {
@@ -200,14 +273,26 @@ struct CodexRolloutReducer {
 
         let rawInput = payload["arguments"] ?? payload["input"]
         let action = CodexToolActionFormatter.action(toolName: name, rawInput: rawInput)
+        let computerUseTarget = ComputerUseApprovalClassifier.target(
+            namespace: payload["namespace"] as? String,
+            rawInput: rawInput)
+        let isFirstComputerUseAccess = computerUseTarget.map {
+            !self.observedComputerUseTargets.contains($0)
+        } ?? false
         self.callNames[callID] = name
-        self.pendingCalls[callID] = PendingCall(action: action)
+        self.pendingCalls[callID] = PendingCall(
+            action: action,
+            requiresInput: CodexToolCallClassifier.requiresInput(name) || isFirstComputerUseAccess)
+        if let computerUseTarget {
+            self.observedComputerUseTargets.insert(computerUseTarget)
+        }
         self.pendingCallOrder.removeAll { $0 == callID }
         self.pendingCallOrder.append(callID)
         self.thinkingSince = nil
 
-        if Self.isPollingTool(name),
-           let target = CodexToolActionFormatter.targetHandle(rawInput: rawInput) {
+        if CodexToolCallClassifier.isPolling(name),
+           let target = CodexToolActionFormatter.targetHandle(rawInput: rawInput)
+        {
             self.pollingTargets[callID] = target
         }
     }
@@ -217,12 +302,14 @@ struct CodexRolloutReducer {
         let outputText = Self.flattenedOutputText(payload["output"], characterLimit: 4096)
         let toolName = self.callNames[callID] ?? ""
 
-        if Self.isExecutionTool(toolName), let handle = Self.runningHandle(in: outputText) {
+        if CodexToolCallClassifier.isExecution(toolName),
+           let handle = Self.runningHandle(in: outputText)
+        {
             self.runningCallsByHandle[handle] = callID
             return
         }
 
-        if Self.isPollingTool(toolName) {
+        if CodexToolCallClassifier.isPolling(toolName) {
             let target = self.pollingTargets[callID]
             self.closeCall(callID)
             guard let target,
@@ -280,18 +367,14 @@ struct CodexRolloutReducer {
         return nil
     }
 
-    private static func isExecutionTool(_ name: String) -> Bool {
-        name == "exec" || name == "exec_command"
-    }
-
-    private static func isPollingTool(_ name: String) -> Bool {
-        name == "wait" || name == "write_stdin"
+    private static func isFinalAnswer(_ payload: [String: Any]) -> Bool {
+        self.string(payload["phase"]) == "final_answer"
     }
 
     private static func runningHandle(in output: String) -> String? {
         let markers = [
             "Process running with session ID ",
-            "Script running with cell ID "
+            "Script running with cell ID ",
         ]
         for marker in markers {
             guard let range = output.range(of: marker) else { continue }

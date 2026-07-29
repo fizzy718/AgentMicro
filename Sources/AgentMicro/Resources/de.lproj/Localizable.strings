@@ -1,0 +1,49 @@
+"accessibility.status" = "AgentMicro Codex-Aufgaben";
+"accessibility.task.unread" = "Ungelesen";
+"accessibility.taskStatus" = "AgentMicro-Aufgabenstatus";
+
+"language.system" = "Systemsprache";
+"language.title" = "Sprache";
+
+"menu.empty" = "Keine Codex-Aufgaben gefunden";
+"menu.footer.quit" = "AgentMicro beenden";
+"menu.footer.refresh" = "Aktualisieren";
+"menu.footer.settings" = "Einstellungen…";
+"menu.headline.active" = "AgentMicro — %d aktiv";
+"menu.scanning" = "Codex-Aufgaben werden gesucht…";
+
+"settings.error.launchAtLogin" = "Anmeldeobjekt konnte nicht aktualisiert werden: %@";
+"settings.general" = "Allgemein";
+"settings.launchAtLogin" = "AgentMicro bei der Anmeldung starten";
+"settings.privacy" = "AgentMicro liest den Aufgabenstatus lokal und lädt keine Aufgabendaten hoch.";
+"settings.taskDisplay" = "Aufgabenanzeige";
+"settings.taskNames" = "Aufgabennamen";
+"settings.tasksShown" = "Angezeigte Aufgaben";
+"settings.showRecentlyCompleted" = "Kürzlich abgeschlossene Aufgaben anzeigen";
+"settings.title" = "AgentMicro-Einstellungen";
+
+"settings.taskNameMode.projectOnly" = "Nur Projektname";
+"settings.taskNameMode.taskTitle" = "Aufgabentitel";
+"settings.taskNameMode.taskTitleAndProject" = "Aufgabentitel und Projekt";
+
+"state.error" = "Fehler";
+"state.idle" = "Inaktiv";
+"state.requiresInput" = "Genehmigung oder Antwort erforderlich";
+"state.thinking" = "Denkt nach";
+"state.unknown" = "Unbekannt";
+"state.unread" = "Ungelesener Chat";
+
+"status.tooltip.active" = "AgentMicro — %d von %d aktuellen Codex-Aufgaben aktiv";
+"status.tooltip.none" = "AgentMicro — keine aktuellen Codex-Aufgaben";
+"status.tooltip.recent.one" = "AgentMicro — %d aktuelle Codex-Aufgabe";
+"status.tooltip.recent.other" = "AgentMicro — %d aktuelle Codex-Aufgaben";
+"task.fallbackTitle" = "Codex-Aufgabe";
+"task.fastMode" = "Schneller Modus";
+
+"updates.automatic" = "Automatisch nach Updates suchen";
+"updates.check" = "Nach Updates suchen…";
+"updates.section" = "Updates";
+"updates.unavailable.build" = "Updates sind in diesem Build nicht verfügbar.";
+"updates.unavailable.feed" = "Der Update-Feed wurde noch nicht konfiguriert.";
+"updates.unavailable.signature" = "Updates erfordern einen mit Developer ID signierten Release-Build.";
+"updates.version" = "Version %@";

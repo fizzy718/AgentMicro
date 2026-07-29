@@ -1,0 +1,49 @@
+"accessibility.status" = "مهام Codex في AgentMicro";
+"accessibility.task.unread" = "غير مقروء";
+"accessibility.taskStatus" = "حالة مهام AgentMicro";
+
+"language.system" = "اتباع النظام";
+"language.title" = "اللغة";
+
+"menu.empty" = "لم يتم العثور على مهام Codex";
+"menu.footer.quit" = "إنهاء AgentMicro";
+"menu.footer.refresh" = "تحديث";
+"menu.footer.settings" = "الإعدادات…";
+"menu.headline.active" = "AgentMicro — %d قيد التشغيل";
+"menu.scanning" = "جارٍ البحث عن مهام Codex…";
+
+"settings.error.launchAtLogin" = "تعذر تحديث عنصر تسجيل الدخول: %@";
+"settings.general" = "عام";
+"settings.launchAtLogin" = "تشغيل AgentMicro عند تسجيل الدخول";
+"settings.privacy" = "يقرأ AgentMicro حالة المهام محليًا ولا يرفع بياناتها.";
+"settings.taskDisplay" = "عرض المهام";
+"settings.taskNames" = "أسماء المهام";
+"settings.tasksShown" = "عدد المهام المعروضة";
+"settings.showRecentlyCompleted" = "إظهار المهام المكتملة حديثًا";
+"settings.title" = "إعدادات AgentMicro";
+
+"settings.taskNameMode.projectOnly" = "اسم المشروع فقط";
+"settings.taskNameMode.taskTitle" = "عنوان المهمة";
+"settings.taskNameMode.taskTitleAndProject" = "عنوان المهمة والمشروع";
+
+"state.error" = "خطأ";
+"state.idle" = "خامل";
+"state.requiresInput" = "يتطلب موافقة أو إجابة";
+"state.thinking" = "يفكر";
+"state.unknown" = "غير معروف";
+"state.unread" = "محادثة غير مقروءة";
+
+"status.tooltip.active" = "AgentMicro — %d قيد التشغيل من أصل %d من مهام Codex الحديثة";
+"status.tooltip.none" = "AgentMicro — لا توجد مهام Codex حديثة";
+"status.tooltip.recent.one" = "AgentMicro — %d من مهام Codex الحديثة";
+"status.tooltip.recent.other" = "AgentMicro — %d من مهام Codex الحديثة";
+"task.fallbackTitle" = "مهمة Codex";
+"task.fastMode" = "الوضع السريع";
+
+"updates.automatic" = "التحقق تلقائيًا من التحديثات";
+"updates.check" = "التحقق من التحديثات…";
+"updates.section" = "التحديثات";
+"updates.unavailable.build" = "التحديثات غير متاحة في هذا الإصدار.";
+"updates.unavailable.feed" = "لم تتم تهيئة مصدر التحديثات بعد.";
+"updates.unavailable.signature" = "تتطلب التحديثات إصدارًا موقعًا باستخدام Developer ID.";
+"updates.version" = "الإصدار %@";

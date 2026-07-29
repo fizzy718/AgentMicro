@@ -266,7 +266,7 @@ public struct LocalAgentSessionScanner: Sendable {
                         ? rollout?.metadata.descriptiveName(
                             threadMetadata: rollout.flatMap { context.threadMetadata[$0.metadata.sessionID] })
                         : nil,
-                    startedAt: process.startedAt,
+                    startedAt: rollout?.metadata.startedAt ?? process.startedAt,
                     lastActivityAt: rollout?.modifiedAt,
                     transcriptPath: rollout?.url.path,
                     host: context.host))
@@ -276,16 +276,21 @@ public struct LocalAgentSessionScanner: Sendable {
         for rollout in rollouts
             where context.includeFileOnlySessions && !matchedRolloutPaths.contains(rollout.url.path)
         {
+            let threadMetadata = context.threadMetadata[rollout.metadata.sessionID]
+            let effectiveRollout = self.effectiveRollout(
+                rollout,
+                threadMetadata: threadMetadata,
+                now: context.now)
             guard var session = CodexRolloutFirstLineParser.makeSession(
-                metadata: rollout.metadata,
-                transcriptURL: rollout.url,
-                modifiedAt: rollout.modifiedAt,
+                metadata: effectiveRollout.metadata,
+                transcriptURL: effectiveRollout.url,
+                modifiedAt: effectiveRollout.modifiedAt,
                 host: context.host,
                 config: self.config,
                 now: context.now)
             else { continue }
-            session.sessionName = rollout.metadata.descriptiveName(
-                threadMetadata: context.threadMetadata[rollout.metadata.sessionID])
+            session.sessionName = effectiveRollout.metadata.descriptiveName(
+                threadMetadata: threadMetadata)
             session.source = AgentSessionCorrelation.fileOnlyCodexSource(
                 metadataSource: session.source,
                 appServerPresent: context.codexAppServerPresent)
@@ -302,6 +307,32 @@ public struct LocalAgentSessionScanner: Sendable {
                     (rhs.lastActivityAt ?? rhs.startedAt ?? .distantPast)
             }
             .filter { seen.insert("\($0.host):\($0.id)").inserted }
+    }
+
+    private func effectiveRollout(
+        _ rollout: Rollout,
+        threadMetadata: CodexThreadMetadata?,
+        now: Date) -> Rollout
+    {
+        guard rollout.metadata.isGuardian,
+              self.config.includeCodexGuardianParents,
+              let path = threadMetadata?.rolloutPath,
+              !path.isEmpty
+        else { return rollout }
+
+        let url = URL(fileURLWithPath: path).standardizedFileURL
+        guard let metadata = CodexRolloutFirstLineParser.read(from: url),
+              !metadata.isSubagent,
+              let modifiedAt = try? url.resourceValues(
+                  forKeys: [.contentModificationDateKey]).contentModificationDate
+        else { return rollout }
+        return Rollout(
+            url: url,
+            modifiedAt: self.futureModificationDateClamp.clamp(
+                url: url,
+                modifiedAt: modifiedAt,
+                now: now),
+            metadata: metadata)
     }
 
     private func processOutput(environment: [String: String]) async -> String {
@@ -377,7 +408,10 @@ public struct LocalAgentSessionScanner: Sendable {
         for candidate in candidates.prefix(max(0, self.config.maxCodexRolloutCount)) {
             guard directoryBudget.hasTimeRemaining() else { break }
             guard let metadata = CodexRolloutFirstLineParser.read(from: candidate.url) else { continue }
-            guard self.config.includeCodexSubagents || !metadata.isSubagent else { continue }
+            guard self.config.includeCodexSubagents ||
+                !metadata.isSubagent ||
+                (self.config.includeCodexGuardianParents && metadata.isGuardian)
+            else { continue }
             rollouts.append(Rollout(url: candidate.url, modifiedAt: candidate.modifiedAt, metadata: metadata))
             if let index = remainingCWDs.firstIndex(where: {
                 AgentSessionCorrelation.codexWorkingDirectoriesMatch(metadata.cwd, $0)

@@ -43,6 +43,17 @@
 - Record every completed product, architecture, implementation, documentation, or release change in `docs/agentmicro/PROJECT_LOG.zh-CN.md`. Include the date, impact, verification, and known limitations. Do not use the upstream root `CHANGELOG.md` for AgentMicro work.
 - Put new ideas and deferred requirements in `docs/agentmicro/BACKLOG.zh-CN.md` before expanding the active version. Promote work into `docs/agentmicro/ROADMAP.zh-CN.md` only when its milestone and entry conditions are explicit.
 - Keep `docs/agentmicro/CAPABILITY_MAP.zh-CN.md` current when an upstream project or reuse decision changes. Distinguish implemented facts from plans and heuristics.
+- Product documentation is a required handoff step, not optional cleanup. Before ending any AgentMicro product or behavior task, explicitly review every file below and update each affected layer:
+  - `PRODUCT.zh-CN.md`: current promise, user problem, product principles, and long-term boundary.
+  - `V1_SPEC.zh-CN.md`: current UI behavior, state semantics, data rules, refresh policy, and acceptance criteria.
+  - `README.zh-CN.md`: current implementation summary and navigation; it must describe what the installed product does now.
+  - `ROADMAP.zh-CN.md`: active milestone scope, status names, exit conditions, and sequencing when they change.
+  - `BACKLOG.zh-CN.md`: deferred ideas, unresolved limitations, external blockers, and follow-up research.
+  - `CAPABILITY_MAP.zh-CN.md`: upstream evidence and reuse decisions when they change.
+  - `PROJECT_LOG.zh-CN.md`: dated record of what actually changed, its impact, verification, and remaining limitations.
+- Do not consider the documentation pass complete after updating only `V1_SPEC` and `PROJECT_LOG`. Search all `docs/agentmicro` files for superseded state names, timings, colors, UI fields, retention windows, milestone claims, and product promises; update current-truth documents or clearly identify text as historical.
+- Keep historical `PROJECT_LOG` entries intact unless they are factually malformed. Current truth belongs in `PRODUCT`, `V1_SPEC`, `README`, `ROADMAP`, `BACKLOG`, and `CAPABILITY_MAP`; the log records how the product arrived there.
+- In the final handoff, name the product documents updated and call out any known documentation gap. If no product document changed, state why the task had no product, behavior, scope, limitation, or roadmap impact.
 
 ## Agent Notes
 - Use the provided scripts and package manager (SwiftPM); avoid adding dependencies or tooling without confirmation.
@@ -53,7 +64,7 @@
 - Run `./Scripts/compile_and_run.sh` only when UI/runtime behavior needs bundle-level validation; it builds, tests, packages, relaunches, and verifies the app stays running.
 - Widget/Tahoe UI issues: use Parallels macOS VM plus screenshots/clicks for autonomous verification.
 - Release script: keep it in the foreground; do not background it—wait until it finishes.
-- Sparkle release key: use `.mac-release.env` `MAC_RELEASE_SIGNING_KEY_FILE`, the legacy `AGCY8w5vHirVfGGDGc8Szc5iuOqupZSh9pMj/Qs67XI=` key. Do not use `sparkle-private-key-KEEP-SECURE.txt`; that is VibeTunnel's mismatched key.
+- CodexBar Sparkle release key: use `.mac-release.env` `MAC_RELEASE_SIGNING_KEY_FILE`, the legacy `AGCY8w5vHirVfGGDGc8Szc5iuOqupZSh9pMj/Qs67XI=` key. AgentMicro must use its own `AGENTMICRO_PUBLIC_ED_KEY` and dedicated Keychain account/private key; never reuse the CodexBar or VibeTunnel key.
 - Swift concurrency: treat sibling `async let` tasks as a review red flag when one child is required and another is optional/best-effort. Prefer sequential awaits or a drained `withThrowingTaskGroup` that surfaces required failures and explicitly contains optional failures; crash stacks mentioning `swift_task_dealloc` or `asyncLet_finish_after_task_completion` should trigger an audit of nearby `async let` usage.
 - Prefer modern SwiftUI/Observation macros: use `@Observable` models with `@State` ownership and `@Bindable` in views; avoid `ObservableObject`, `@ObservedObject`, and `@StateObject`.
 - Favor modern macOS 15+ APIs over legacy/deprecated counterparts when refactoring (Observation, new display link APIs, updated menu item styling, etc.).
