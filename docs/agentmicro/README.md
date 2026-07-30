@@ -11,6 +11,9 @@ This directory is the product and engineering source of truth for AgentMicro. Th
 - [Capability map](CAPABILITY_MAP.md): what is reused from CodexBar and what was learned from neighboring projects.
 - [Backlog](BACKLOG.md): deferred ideas with entry conditions.
 - [Release guide](RELEASING.md): signing, notarization, GitHub Releases, appcast, and Sparkle.
+- [Product Hunt launch kit](product-hunt-launch.md): public listing copy, gallery brief, demo script, Maker Comment, and launch-day replies.
+- [Demo capture guide](demo-capture.md): exact macOS recording steps for the public product GIF.
+- [GitHub growth playbook](github-growth.md): repository, release, discussion, and directory-submission copy.
 - [Project log](PROJECT_LOG.md): durable record of product, architecture, implementation, documentation, and release changes.
 
 ## Current Product

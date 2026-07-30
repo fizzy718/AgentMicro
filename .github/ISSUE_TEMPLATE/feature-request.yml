@@ -1,0 +1,28 @@
+name: Feature request
+description: Propose a focused improvement to AgentMicro's local Codex task companion.
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. AgentMicro V1 observes and returns to Codex tasks; it does not control tasks or upload task history.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: Describe the workflow friction, not only the proposed UI.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed outcome
+      description: Explain what success would look like.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Share existing workarounds or related tools, if any.

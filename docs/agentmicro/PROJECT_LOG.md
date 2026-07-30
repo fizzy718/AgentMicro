@@ -2,6 +2,18 @@
 
 This log records the durable product and engineering decisions needed by international contributors.
 
+## 2026-07-30
+
+### `marketing`: prepared the Product Hunt launch surface
+
+- Added a focused, static AgentMicro landing page that uses the real menu screenshot and links directly to the public repository and latest release.
+- Added a ready-to-paste Product Hunt launch kit with the approved title/tagline, product positioning, a sanitized five-image capture brief, a 37-second demo storyboard, Maker Comment, comment-safe outreach copy, and pre-flight checklist.
+- Kept the public story within the V1 boundary: local observation and Desktop navigation, never task control, hosted sync, or AI-agent claims.
+
+Known limitation:
+
+- The final gallery and video remain maker-captured assets. They must be recorded from the release build with fictitious task and project names before external publication.
+
 ## 2026-07-28
 
 ### `research`: mapped reusable local projects
@@ -394,6 +406,31 @@ Validation:
 
 - The release-pipeline check passes through both its native macOS path and a simulated Linux path that has no `xcrun`.
 - `make check` passes, and all 732 test selections pass across 61 groups without failures or retries.
+
+### `deployment`: containerized AgentMicro landing page
+
+Changes:
+
+- Added an isolated Nginx container definition for the AgentMicro landing page.
+- Bound the container only to the server loopback interface so the host reverse proxy remains the single public ingress point.
+- Packaged the exact landing page, logo, and product screenshot that the page references; no application telemetry or runtime service is introduced.
+- Added the dedicated host Nginx virtual-host template for `agentmicro.cc`; its upstream is only the AgentMicro container.
+- Updated the Product Hunt launch kit to use the live canonical product URL.
+
+Impact:
+
+- `agentmicro.cc` can be deployed independently of the existing CodexBar documentation site and its domain configuration.
+
+Validation:
+
+- Validated the Compose configuration locally before publishing.
+- Built and started the production container on the server; it is reachable only at `127.0.0.1:8089`.
+- Added the Cloudflare-proxied apex DNS record, validated the dedicated host proxy, and issued the independent `agentmicro.cc` Let's Encrypt certificate.
+- Verified public HTTP redirects to HTTPS, the public homepage and both required image assets return `200`, and the server renewal timer is enabled and active.
+
+Known limitations:
+
+- The `www` hostname is not configured yet; the published canonical URL is `https://agentmicro.cc`.
 
 ## Future Entry Template
 

@@ -4,18 +4,22 @@
 
 # AgentMicro
 
-### Live Codex task status, in your macOS menu bar
+### Monitor multiple Codex tasks in real time, from your macOS menu bar
 
 [![CI](https://github.com/fizzy718/AgentMicro/actions/workflows/ci.yml/badge.svg)](https://github.com/fizzy718/AgentMicro/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/fizzy718/AgentMicro?display_name=tag&sort=semver&style=flat-square&label=release&color=6e5aff)](https://github.com/fizzy718/AgentMicro/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/fizzy718/AgentMicro/total?style=flat-square&label=downloads&color=6e5aff)](https://github.com/fizzy718/AgentMicro/releases/latest)
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-0a0a0c?style=flat-square)](https://github.com/fizzy718/AgentMicro)
 [![Swift 6.2+](https://img.shields.io/badge/Swift-6.2%2B-f05138?style=flat-square)](https://swift.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6e5aff?style=flat-square)](LICENSE)
 
-[简体中文](README.zh-CN.md)
+[Website](https://agentmicro.cc) · [Download](https://github.com/fizzy718/AgentMicro/releases/latest) · [简体中文](README.zh-CN.md)
 
 </div>
 
 AgentMicro is a small, local-first macOS menu bar companion for people running several Codex tasks at once. It shows which tasks are working, waiting for you, finished with unread results, idle, or in error—and lets you return to a Codex Desktop task with one click.
+
+**Open source, local-first, and read-only:** AgentMicro monitors task state on your Mac; it never uploads your prompts, code, responses, or task history.
 
 AgentMicro is an independent, community-maintained project built on the excellent [CodexBar](https://github.com/steipete/CodexBar) codebase. It is not affiliated with or endorsed by OpenAI or the CodexBar maintainers.
 
@@ -85,6 +89,18 @@ folder, then launch AgentMicro from `/Applications`. Older releases that provide
 only a ZIP can be unzipped and moved to `/Applications` manually. Release builds
 check the AgentMicro Sparkle feed for updates automatically; you can also check
 manually in Settings.
+
+### Homebrew
+
+Install the same signed and notarized release with the official Tap:
+
+```bash
+brew install --cask fizzy718/tap/agentmicro
+```
+
+Update it with `brew upgrade --cask fizzy718/tap/agentmicro`. When AgentMicro is
+accepted into the Homebrew Cask repository, the shorter
+`brew install --cask agentmicro` command will become available.
 
 ### Build from source
 
@@ -159,6 +175,7 @@ Never attach real Codex prompts, source code, credentials, or unredacted rollout
 
 Join the AgentMicro community to discuss usage, state detection, translations, and development:
 
+- [GitHub Discussions](https://github.com/fizzy718/AgentMicro/discussions) — feature ideas, task-state questions, and release feedback
 - [Telegram discussion group](https://t.me/+844ZOEqapkI5OTBh)
 - WeChat group: scan the QR code below.
 
