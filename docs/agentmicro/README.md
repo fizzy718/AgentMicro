@@ -33,6 +33,8 @@ Settings use a CodexBar-style sidebar with Guide, General, Task Display, and Upd
 
 AgentMicro reads known local Codex process and session metadata. Optional Enhanced Status Detection can use macOS Accessibility, only after explicit opt-in, to recognize the uniquely selected Codex task and visible approval/error controls. Base mode never requires that permission, and the enhanced reader does not click or type. AgentMicro does not upload task titles, prompts, responses, source code, command output, or session files. Software updates use AgentMicro’s own signed Sparkle feed.
 
+Explicitly archived Codex threads are removed from the current task menu. Unknown archive metadata is tolerated for up to two hours, while orphaned guardian records are not presented as user tasks.
+
 ## Development
 
 ```bash

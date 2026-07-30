@@ -245,6 +245,28 @@ Known limitations:
 
 ## 2026-07-30
 
+### `fix`: removed archived guardian parents from the task menu
+
+Changes:
+
+- Added active, archived, and unknown Codex thread archive metadata with legacy-database fallback.
+- Excluded explicitly archived threads before guardian recovery and state reduction.
+- Prevented guardian records from recovering parents under `archived_sessions` or presenting themselves when no valid parent rollout can be resolved.
+- Limited unknown archive metadata to a two-hour retention window without changing the normal behavior of active Desktop tasks, which commonly have no independent PID.
+
+Impact:
+
+- Archiving a Codex task removes it from AgentMicro instead of leaving a broken menu row that opens “conversation not found.”
+- Active threads remain visible, and temporary database incompatibility does not classify them as archived.
+
+Validation:
+
+- Added metadata compatibility and guardian-archive regression coverage for current and legacy Codex database schemas.
+
+Known limitations:
+
+- Archive metadata remains a best-effort local Codex integration rather than a supported public API.
+
 ### `release`: published AgentMicro 0.1.1
 
 Changes:

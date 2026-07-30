@@ -28,6 +28,22 @@ struct CodexThreadMetadataReaderTests {
             title: "Inherited parent title",
             agentPath: "/root/neon_patch_review2",
             rolloutPath: "/tmp/subagent.jsonl"))
+        #expect(metadata.values.allSatisfy { $0.archiveState == .unknown })
+    }
+
+    @Test
+    func `reader distinguishes active and archived threads`() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("codex-thread-archive-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let databaseURL = root.appendingPathComponent("state_5.sqlite")
+        try Self.createArchiveDatabase(at: databaseURL)
+
+        let metadata = CodexThreadMetadataReader(databaseURL: databaseURL).metadata(for: ["active", "archived"])
+
+        #expect(metadata["active"]?.archiveState == .active)
+        #expect(metadata["archived"]?.archiveState == .archived)
     }
 
     @Test
@@ -184,6 +200,27 @@ struct CodexThreadMetadataReaderTests {
             'Inherited parent title',
             '/root/neon_patch_review2',
             '/tmp/subagent.jsonl');
+        """
+        guard sqlite3_exec(database, sql, nil, nil, nil) == SQLITE_OK else {
+            throw SQLiteError.exec
+        }
+    }
+
+    private static func createArchiveDatabase(at url: URL) throws {
+        var database: OpaquePointer?
+        guard sqlite3_open(url.path, &database) == SQLITE_OK, let database else {
+            throw SQLiteError.open
+        }
+        defer { sqlite3_close(database) }
+        let sql = """
+        CREATE TABLE threads (
+            id TEXT PRIMARY KEY,
+            title TEXT,
+            agent_path TEXT,
+            rollout_path TEXT,
+            archived INTEGER);
+        INSERT INTO threads VALUES ('active', 'Active', NULL, '/tmp/active.jsonl', 0);
+        INSERT INTO threads VALUES ('archived', 'Archived', NULL, '/tmp/archived.jsonl', 1);
         """
         guard sqlite3_exec(database, sql, nil, nil, nil) == SQLITE_OK else {
             throw SQLiteError.exec
