@@ -14,12 +14,16 @@ WORKFLOW="$ROOT/.github/workflows/release-agentmicro.yml"
 for script in "$PACKAGE" "$SIGN" "$APPCAST" "$RELEASE" "$BUILD_ICON" "$CREATE_DMG"; do
   bash -n "$script"
 done
-DMG_MODULE_CACHE="$ROOT/.build/agentmicro-release-check/module-cache"
-/bin/mkdir -p "$DMG_MODULE_CACHE"
-/usr/bin/xcrun swiftc \
-  -module-cache-path "$DMG_MODULE_CACHE" \
-  -typecheck \
-  "$RENDER_DMG_BACKGROUND"
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  DMG_MODULE_CACHE="$ROOT/.build/agentmicro-release-check/module-cache"
+  /bin/mkdir -p "$DMG_MODULE_CACHE"
+  /usr/bin/xcrun swiftc \
+    -module-cache-path "$DMG_MODULE_CACHE" \
+    -typecheck \
+    "$RENDER_DMG_BACKGROUND"
+else
+  echo "Skipping AppKit DMG background type-check outside macOS."
+fi
 
 /usr/bin/grep -Fq 'ARCH_LIST=( ${ARCHES:-} )' "$PACKAGE"
 /usr/bin/grep -Fq 'AgentMicro.icon' "$PACKAGE"
