@@ -70,7 +70,7 @@ each after the next signed release and final demo asset are public.
 | Directory | Placement | Proposed entry |
 | --- | --- | --- |
 | [`phmullins/awesome-macos`](https://github.com/phmullins/awesome-macos) | `Menubar Applications` | `* [AgentMicro](https://github.com/fizzy718/AgentMicro) - Local-first macOS menu bar companion for monitoring multiple Codex tasks in real time.` |
-| [`RoggeOhta/awesome-codex-cli`](https://github.com/RoggeOhta/awesome-codex-cli) | `GUI & Desktop Apps` | `* [fizzy718/AgentMicro](https://github.com/fizzy718/AgentMicro) - Local-first macOS menu bar companion for live status across parallel Codex Desktop and CLI tasks; jump back to the matching Desktop conversation in one click.` |
+| [`RoggeOhta/awesome-codex-cli`](https://github.com/RoggeOhta/awesome-codex-cli) | `GUI & Desktop Apps` | `- [AgentMicro](https://github.com/fizzy718/AgentMicro) — Local-first macOS menu bar companion for live status across parallel Codex Desktop and CLI tasks; jump back to the matching Desktop conversation in one click. ![GitHub stars](https://img.shields.io/github/stars/fizzy718/AgentMicro?style=flat-square)` |
 
 Do not submit AgentMicro to workflow, plugin, or generic agent lists merely
 because it reads Codex state. Its product promise is observation, not task
