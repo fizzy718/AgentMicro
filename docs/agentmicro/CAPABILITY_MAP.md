@@ -59,6 +59,7 @@ Useful capabilities:
 - Codex title, state database, session index, and archived-session parsing.
 - Session search, grouping, details, deletion, and resume commands.
 - Terminal launchers and multi-provider management.
+- A styled drag-to-Applications DMG assembled and notarized in GitHub Actions.
 
 Limits:
 
@@ -66,7 +67,9 @@ Limits:
 - Tauri/React is not appropriate as a dependency of the native menu bar V1.
 - Provider and proxy management is outside AgentMicro’s current scope.
 
-Decision: treat history and resume as V1.2 references; do not include provider/proxy features in V1.
+Decision: treat history and resume as V1.2 references; do not include provider/proxy features in V1. Reuse the
+DMG distribution pattern, but implement it with native macOS tools rather than adding cc-switch's `create-dmg`
+dependency.
 
 ## token-monitor
 

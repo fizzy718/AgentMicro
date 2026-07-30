@@ -245,6 +245,33 @@ Known limitations:
 
 ## 2026-07-30
 
+### `release`: added a notarized drag-to-install DMG
+
+Changes:
+
+- Added a native `hdiutil` DMG builder with a custom AgentMicro background, fixed Finder layout, and an Applications drop target.
+- Kept the existing ZIP as the Sparkle artifact while adding the DMG as a second GitHub Release asset.
+- Extended the release pipeline to Developer ID-sign, separately notarize, staple, assess, and verify the final DMG.
+- Added release guards that fail if either artifact is absent locally or from the published GitHub Release.
+
+Impact:
+
+- New users can install AgentMicro through the standard macOS drag-to-Applications experience.
+- Automatic updates retain the established ZIP appcast and Ed25519 signature contract.
+- GitHub Actions remains the authoritative signed release builder without adding Homebrew or third-party DMG tooling.
+
+Validation:
+
+- The release checks type-check the deterministic AppKit background renderer and validate the native DMG, notarization,
+  Applications-link, and dual-asset publishing paths.
+- A local ad-hoc disk-image smoke test verifies the finished DMG can be mounted and contains both required install items.
+- `make check` passes with zero formatting or lint findings, and the complete sharded test suite passes all 732 selections
+  across 61 groups without failures or retries.
+
+Known limitations:
+
+- The signed DMG path is fully exercised only by the protected GitHub release environment because local development builds do not have release signing and notarization credentials.
+
 ### `release`: published AgentMicro 0.1.1
 
 Changes:

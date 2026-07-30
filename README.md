@@ -79,10 +79,12 @@ Insufficient evidence is represented internally as `unknown`, but displayed as i
 - Codex Desktop or Codex CLI with local sessions
 
 Download the latest signed and notarized build from
-[GitHub Releases](https://github.com/fizzy718/AgentMicro/releases/latest), unzip it,
-move `AgentMicro.app` to `/Applications`, and launch it. Release builds check the
-AgentMicro Sparkle feed for updates automatically; you can also check manually in
-Settings.
+[GitHub Releases](https://github.com/fizzy718/AgentMicro/releases/latest). Prefer
+the DMG when it is listed: open it, drag `AgentMicro.app` onto the Applications
+folder, then launch AgentMicro from `/Applications`. Older releases that provide
+only a ZIP can be unzipped and moved to `/Applications` manually. Release builds
+check the AgentMicro Sparkle feed for updates automatically; you can also check
+manually in Settings.
 
 ### Build from source
 

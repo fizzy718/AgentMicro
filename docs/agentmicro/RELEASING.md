@@ -21,7 +21,8 @@ The production feed is:
 https://raw.githubusercontent.com/fizzy718/AgentMicro/main/agentmicro-appcast.xml
 ```
 
-GitHub Releases hosts the ZIP and the `main` branch hosts the appcast. No separate update server is required.
+GitHub Releases hosts both the drag-to-install DMG and the Sparkle ZIP. The `main` branch hosts the appcast.
+No separate update server is required.
 
 ## Version Source
 
@@ -49,8 +50,10 @@ The script:
 3. Compiles the six-layer Icon Composer source into adaptive `Assets.car` appearances and an ICNS compatibility fallback.
 4. Signs Sparkle components and the app with hardened runtime.
 5. Submits to Apple notarization and staples the ticket.
-6. Produces `.build/agentmicro-release/<version>/AgentMicro-macos-universal-<version>.zip`.
-7. Signs and updates `agentmicro-appcast.xml`.
+6. Produces `.build/agentmicro-release/<version>/AgentMicro-macos-universal-<version>.zip` for Sparkle.
+7. Creates a styled DMG with `AgentMicro.app`, an Applications link, a custom background, and fixed Finder layout.
+8. Signs the DMG with Developer ID, submits it separately to Apple notarization, and staples its ticket.
+9. Signs and updates `agentmicro-appcast.xml` using the ZIP only.
 
 The default command does not upload or commit anything.
 
@@ -62,7 +65,9 @@ After reviewing the archive, signature, notarization, and appcast:
 ./Scripts/release_agentmicro.sh --publish
 ```
 
-Publish mode creates the GitHub Release, uploads the ZIP, stages only `agentmicro-appcast.xml`, commits it, and pushes it to the configured feed branch. It refuses a dirty worktree or an existing release tag.
+Publish mode creates the GitHub Release, uploads both the DMG and ZIP, verifies both assets are present, stages only
+`agentmicro-appcast.xml`, commits it, and pushes it to the configured feed branch. It refuses a dirty worktree or an
+existing release tag. The DMG is the recommended first-install artifact; Sparkle continues to consume the ZIP.
 
 When `docs/releases/<version>.md` exists, publish mode uses it as the GitHub Release body. Set
 `AGENTMICRO_RELEASE_NOTES_FILE` only to override that versioned file. If neither exists, the script
@@ -93,7 +98,9 @@ To publish:
 3. Open **Actions → Release AgentMicro → Run workflow**.
 4. Enter the exact version from `agentmicro-version.env`.
 
-The workflow validates source, creates a temporary keychain, builds the universal app, signs, notarizes, creates the GitHub Release, and commits the appcast back to `main`. Signing material is deleted at the end of the runner job.
+The workflow validates source, creates a temporary keychain, builds the universal app, signs and notarizes both the
+app and final DMG, creates the GitHub Release with DMG and ZIP assets, and commits the ZIP-backed appcast to `main`.
+Signing material is deleted at the end of the runner job.
 
 ## Update Validation
 

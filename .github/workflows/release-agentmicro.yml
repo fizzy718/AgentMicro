@@ -129,7 +129,7 @@ jobs:
       - name: Verify source
         run: make check
 
-      - name: Publish signed and notarized release
+      - name: Publish signed, notarized ZIP and DMG
         shell: bash
         run: |
           set -euo pipefail

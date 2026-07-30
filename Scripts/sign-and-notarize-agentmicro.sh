@@ -37,6 +37,8 @@ APP="$ROOT/AgentMicro.app"
 RELEASE_DIR="$ROOT/.build/agentmicro-release/$AGENTMICRO_VERSION"
 ZIP_NAME="AgentMicro-macos-universal-$AGENTMICRO_VERSION.zip"
 ZIP_PATH="$RELEASE_DIR/$ZIP_NAME"
+DMG_NAME="AgentMicro-macos-universal-$AGENTMICRO_VERSION.dmg"
+DMG_PATH="$RELEASE_DIR/$DMG_NAME"
 TEMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/agentmicro-notarize.XXXXXX")"
 API_KEY_PATH="$TEMP_DIR/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
 NOTARIZATION_ZIP="$TEMP_DIR/AgentMicro-notarization.zip"
@@ -81,4 +83,32 @@ else
   /usr/sbin/spctl --assess --type execute --verbose "$APP"
 fi
 
+AGENTMICRO_DMG_VOLUME_NAME="AgentMicro $AGENTMICRO_VERSION" \
+  "$ROOT/Scripts/create_agentmicro_dmg.sh" "$APP" "$DMG_PATH"
+
+echo "Signing AgentMicro DMG"
+/usr/bin/codesign \
+  --force \
+  --timestamp \
+  --sign "$AGENTMICRO_SIGNING_IDENTITY" \
+  "$DMG_PATH"
+/usr/bin/codesign --verify --verbose=2 "$DMG_PATH"
+
+echo "Submitting AgentMicro DMG to Apple notarization"
+/usr/bin/xcrun notarytool submit "$DMG_PATH" \
+  --key "$API_KEY_PATH" \
+  --key-id "$APP_STORE_CONNECT_KEY_ID" \
+  --issuer "$APP_STORE_CONNECT_ISSUER_ID" \
+  --wait
+
+/usr/bin/xcrun stapler staple "$DMG_PATH"
+/usr/bin/xcrun stapler validate "$DMG_PATH"
+/usr/sbin/spctl \
+  --assess \
+  --type open \
+  --context context:primary-signature \
+  --verbose \
+  "$DMG_PATH"
+
 echo "Prepared notarized update archive: $ZIP_PATH"
+echo "Prepared notarized drag-to-install disk image: $DMG_PATH"

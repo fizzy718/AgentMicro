@@ -19,7 +19,7 @@ Delivered:
 - CodexBar-style paged settings and first-launch five-color guide.
 - System language plus 23 selectable languages.
 - Adaptive six-layer Icon Composer application icon with Default, Dark, Clear, and Tinted appearances.
-- Launch at login and independent signed Sparkle updates.
+- Launch at login, a notarized drag-to-Applications DMG, and independent signed Sparkle updates.
 
 ### V1 Milestones
 
@@ -29,7 +29,7 @@ Delivered:
 | M1 — Task State Engine | Complete | Fixtures cover lifecycle, partial lines, truncation, malformed JSONL, and tool pairing. |
 | M2 — Productized menu | Complete | Menu, paged settings, onboarding, localization, icon, packaging, and updater tests pass. |
 | M3 — Real scenarios | Complete | Concurrent Desktop and CLI tasks remain independently visible and navigable. |
-| M4 — Release hardening | In progress | `0.1.1` installs, launches, and updates successfully from a notarized package. |
+| M4 — Release hardening | In progress | A notarized DMG installs cleanly, and an older signed build completes a Sparkle update to a newer build. |
 
 ## V1.1 — Attention Signals
 
