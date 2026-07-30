@@ -340,6 +340,21 @@ Known limitations:
 
 - Final notarization, release-asset verification, and the 0.1.1-to-0.1.2 update test require the GitHub release workflow to finish successfully.
 
+### `docs`: adopted the macOS 27 light application icon
+
+Changes:
+
+- Recompiled the latest layered `AgentMicro.icon` source with Xcode Beta and exported its light fallback for GitHub rendering.
+- Replaced the legacy dark SVG above both public README titles with the current light application icon.
+
+Impact:
+
+- The repository landing page now matches the current macOS 27 application identity rather than showing the retired dark logo.
+
+Validation:
+
+- `make check` passes, including documentation links, repository resource checks, formatting, and lint.
+
 ## Future Entry Template
 
 ```markdown
