@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/agentmicro-logo.svg" width="128" height="128" alt="AgentMicro logo">
+<img src="docs/agentmicro-logo-macos27-light.png" width="128" height="128" alt="AgentMicro logo">
 
 # AgentMicro
 
