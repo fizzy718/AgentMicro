@@ -379,6 +379,22 @@ Validation:
 
 - `make check` passes, including documentation links, repository resource checks, formatting, and lint.
 
+### `fix`: kept release checks portable in Linux CI
+
+Changes:
+
+- Restricted the AppKit DMG-background Swift type-check to macOS while keeping every portable release-script and workflow assertion active on Linux.
+
+Impact:
+
+- Ubuntu lint runners no longer fail with exit 127 solely because `/usr/bin/xcrun` is a macOS tool.
+- macOS checks still type-check the deterministic DMG background renderer with the selected Xcode toolchain.
+
+Validation:
+
+- The release-pipeline check passes through both its native macOS path and a simulated Linux path that has no `xcrun`.
+- `make check` passes, and all 732 test selections pass across 61 groups without failures or retries.
+
 ## Future Entry Template
 
 ```markdown
