@@ -23,6 +23,7 @@ final class FutureModificationDateClamp: @unchecked Sendable {
 public struct LocalAgentSessionScanner: Sendable {
     typealias ProcessOutputProvider = @Sendable ([String: String]) async -> String
     typealias CWDProvider = @Sendable ([Int32], [String: String]) async -> [Int32: String]
+    static let unknownArchiveStateRetention: TimeInterval = 2 * 60 * 60
 
     private struct Rollout: Sendable {
         let url: URL
@@ -32,6 +33,7 @@ public struct LocalAgentSessionScanner: Sendable {
 
     private struct ScanContext: Sendable {
         let homeDirectory: URL
+        let codexHomeDirectory: URL
         let host: String
         let now: Date
         let codexAppServerPresent: Bool
@@ -130,12 +132,36 @@ public struct LocalAgentSessionScanner: Sendable {
             rollouts: rollouts,
             codexHomeDirectory: codexHomeDirectory,
             environment: environment)
+        let archivedSessionsDirectory = codexHomeDirectory
+            .appendingPathComponent("archived_sessions", isDirectory: true)
+            .standardizedFileURL
+        let visibleRollouts = rollouts.filter { rollout in
+            let metadata = threadMetadata[rollout.metadata.sessionID]
+            switch metadata?.archiveState ?? .unknown {
+            case .active:
+                break
+            case .archived:
+                return false
+            case .unknown:
+                guard now.timeIntervalSince(rollout.modifiedAt) <= Self.unknownArchiveStateRetention else {
+                    return false
+                }
+            }
+            guard rollout.metadata.isGuardian,
+                  let path = metadata?.rolloutPath,
+                  !path.isEmpty
+            else { return true }
+            return !Self.isDescendant(
+                URL(fileURLWithPath: path).standardizedFileURL,
+                of: archivedSessionsDirectory)
+        }
         return self.sessions(
             processes: processes,
             cwdByPID: cwdByPID,
-            rollouts: rollouts,
+            rollouts: visibleRollouts,
             context: ScanContext(
                 homeDirectory: homeDirectory,
+                codexHomeDirectory: codexHomeDirectory,
                 host: host,
                 now: now,
                 codexAppServerPresent: codexAppServerPresent,
@@ -277,10 +303,12 @@ public struct LocalAgentSessionScanner: Sendable {
             where context.includeFileOnlySessions && !matchedRolloutPaths.contains(rollout.url.path)
         {
             let threadMetadata = context.threadMetadata[rollout.metadata.sessionID]
-            let effectiveRollout = self.effectiveRollout(
+            guard let effectiveRollout = self.effectiveRollout(
                 rollout,
                 threadMetadata: threadMetadata,
+                codexHomeDirectory: context.codexHomeDirectory,
                 now: context.now)
+            else { continue }
             guard var session = CodexRolloutFirstLineParser.makeSession(
                 metadata: effectiveRollout.metadata,
                 transcriptURL: effectiveRollout.url,
@@ -312,20 +340,27 @@ public struct LocalAgentSessionScanner: Sendable {
     private func effectiveRollout(
         _ rollout: Rollout,
         threadMetadata: CodexThreadMetadata?,
-        now: Date) -> Rollout
+        codexHomeDirectory: URL,
+        now: Date) -> Rollout?
     {
-        guard rollout.metadata.isGuardian,
-              self.config.includeCodexGuardianParents,
-              let path = threadMetadata?.rolloutPath,
+        guard rollout.metadata.isGuardian else { return rollout }
+        guard self.config.includeCodexGuardianParents,
+              let threadMetadata,
+              threadMetadata.archiveState != .archived,
+              let path = threadMetadata.rolloutPath,
               !path.isEmpty
-        else { return rollout }
+        else { return nil }
 
         let url = URL(fileURLWithPath: path).standardizedFileURL
+        let archivedSessionsDirectory = codexHomeDirectory
+            .appendingPathComponent("archived_sessions", isDirectory: true)
+            .standardizedFileURL
+        guard !Self.isDescendant(url, of: archivedSessionsDirectory) else { return nil }
         guard let metadata = CodexRolloutFirstLineParser.read(from: url),
               !metadata.isSubagent,
               let modifiedAt = try? url.resourceValues(
                   forKeys: [.contentModificationDateKey]).contentModificationDate
-        else { return rollout }
+        else { return nil }
         return Rollout(
             url: url,
             modifiedAt: self.futureModificationDateClamp.clamp(
@@ -333,6 +368,11 @@ public struct LocalAgentSessionScanner: Sendable {
                 modifiedAt: modifiedAt,
                 now: now),
             metadata: metadata)
+    }
+
+    private static func isDescendant(_ url: URL, of directory: URL) -> Bool {
+        let directoryPath = directory.path.hasSuffix("/") ? directory.path : directory.path + "/"
+        return url.path == directory.path || url.path.hasPrefix(directoryPath)
     }
 
     private func processOutput(environment: [String: String]) async -> String {

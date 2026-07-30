@@ -28,6 +28,7 @@ AgentMicro-specific work:
 - A separate five-state task model instead of CodexBar’s `active`/`idle` session state.
 - Incremental Codex rollout reduction, current-turn timing, and explicit user-handoff detection.
 - Desktop unread-thread synchronization and optional read-only Accessibility evidence for exact visible selection, approval controls, and blocking error dialogs.
+- Tri-state Codex archive metadata that excludes archived threads before guardian recovery while bounding unknown state.
 - A 310-point task menu and six-slot animated status icon.
 - A first-launch five-color guide.
 - A separate bundle identity, version source, appcast, Ed25519 key, GitHub Release, and adaptive six-layer Icon Composer application icon.

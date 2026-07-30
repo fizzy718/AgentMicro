@@ -188,6 +188,11 @@ struct CodexSessionRolloutTests {
         try fileManager.setAttributes(
             [.modificationDate: now],
             ofItemAtPath: guardianURL.path)
+        try Self.createGuardianThreadDatabase(
+            at: codexHome.appendingPathComponent("state_5.sqlite"),
+            sessionID: parentID,
+            rolloutPath: parentURL.path,
+            includesArchivedColumn: false)
 
         let scanner = LocalAgentSessionScanner(config: SessionScanConfig(
             fileOnlyWindow: 60,
@@ -224,7 +229,103 @@ struct CodexSessionRolloutTests {
         #expect(guardianParentSessions.first?.id == parentID)
         #expect(guardianParentSessions.first?.transcriptPath.map {
             URL(fileURLWithPath: $0).resolvingSymlinksInPath().path
-        } == guardianURL.resolvingSymlinksInPath().path)
+        } == parentURL.resolvingSymlinksInPath().path)
+    }
+
+    @Test(arguments: [true, false])
+    func `scanner excludes archived guardian parents from current tasks`(
+        includesArchivedColumn: Bool) async throws
+    {
+        let fileManager = FileManager.default
+        let root = fileManager.temporaryDirectory
+            .appendingPathComponent("CodexSessionRolloutTests-archive-\(UUID().uuidString)", isDirectory: true)
+        defer { try? fileManager.removeItem(at: root) }
+        let now = Date()
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy/MM/dd"
+        let codexHome = root.appendingPathComponent("codex-home", isDirectory: true)
+        let sessionDirectory = codexHome
+            .appendingPathComponent("sessions", isDirectory: true)
+            .appendingPathComponent(formatter.string(from: now), isDirectory: true)
+        let archiveDirectory = codexHome.appendingPathComponent("archived_sessions", isDirectory: true)
+        try fileManager.createDirectory(at: sessionDirectory, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: archiveDirectory, withIntermediateDirectories: true)
+
+        let parentID = "019f-archived-parent"
+        let parentURL = archiveDirectory.appendingPathComponent("rollout-parent.jsonl")
+        let guardianURL = sessionDirectory.appendingPathComponent("rollout-guardian.jsonl")
+        try """
+        {"type":"session_meta","payload":{"id":"\(parentID)","session_id":"\(parentID)","cwd":"/repo",\
+        "originator":"Codex Desktop","source":"vscode"}}
+        """.write(to: parentURL, atomically: true, encoding: .utf8)
+        try """
+        {"type":"session_meta","payload":{"id":"019f-guardian","session_id":"\(parentID)","cwd":"/repo",\
+        "originator":"Codex Desktop","source":{"subagent":{"other":"guardian"}},"parent_thread_id":"\(parentID)"}}
+        """.write(to: guardianURL, atomically: true, encoding: .utf8)
+        try fileManager.setAttributes([.modificationDate: now], ofItemAtPath: parentURL.path)
+        try fileManager.setAttributes([.modificationDate: now], ofItemAtPath: guardianURL.path)
+        try Self.createGuardianThreadDatabase(
+            at: codexHome.appendingPathComponent("state_5.sqlite"),
+            sessionID: parentID,
+            rolloutPath: parentURL.path,
+            includesArchivedColumn: includesArchivedColumn)
+
+        let scanner = LocalAgentSessionScanner(config: SessionScanConfig(
+            fileOnlyWindow: 60,
+            maxProcessCount: 0,
+            maxCodexRolloutCount: 8,
+            maxClaudeTranscriptCountPerProject: 0,
+            includeCodexSubagents: false,
+            includeCodexGuardianParents: true))
+        let sessions = await scanner.scan(now: now, environment: [
+            "CODEX_HOME": codexHome.path,
+            "HOME": root.path,
+            "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+        ])
+
+        #expect(sessions.isEmpty)
+    }
+
+    @Test
+    func `scanner caps unknown archive state at two hours`() async throws {
+        let fileManager = FileManager.default
+        let root = fileManager.temporaryDirectory
+            .appendingPathComponent("CodexSessionRolloutTests-unknown-\(UUID().uuidString)", isDirectory: true)
+        defer { try? fileManager.removeItem(at: root) }
+        let now = Date()
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy/MM/dd"
+        let codexHome = root.appendingPathComponent("codex-home", isDirectory: true)
+        let sessionDirectory = codexHome
+            .appendingPathComponent("sessions", isDirectory: true)
+            .appendingPathComponent(formatter.string(from: now), isDirectory: true)
+        try fileManager.createDirectory(at: sessionDirectory, withIntermediateDirectories: true)
+
+        for (id, age) in [("recent-unknown", 60.0), ("stale-unknown", 2 * 60 * 60 + 1)] {
+            let url = sessionDirectory.appendingPathComponent("rollout-\(id).jsonl")
+            try """
+            {"type":"session_meta","payload":{"id":"\(id)","session_id":"\(id)","cwd":"/repo",\
+            "originator":"Codex Desktop","source":"vscode"}}
+            """.write(to: url, atomically: true, encoding: .utf8)
+            try fileManager.setAttributes(
+                [.modificationDate: now.addingTimeInterval(-age)],
+                ofItemAtPath: url.path)
+        }
+
+        let scanner = LocalAgentSessionScanner(config: SessionScanConfig(
+            fileOnlyWindow: 24 * 60 * 60,
+            maxProcessCount: 0,
+            maxCodexRolloutCount: 8,
+            maxClaudeTranscriptCountPerProject: 0))
+        let sessions = await scanner.scan(now: now, environment: [
+            "CODEX_HOME": codexHome.path,
+            "HOME": root.path,
+            "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+        ])
+
+        #expect(sessions.map(\.id) == ["recent-unknown"])
     }
 
     @Test
@@ -461,6 +562,45 @@ struct CodexSessionRolloutTests {
         let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
         sqlite3_bind_text(statement, 1, sessionID, -1, transient)
         sqlite3_bind_text(statement, 2, title, -1, transient)
+        guard sqlite3_step(statement) == SQLITE_DONE else { throw SQLiteFixtureError.exec }
+    }
+
+    private static func createGuardianThreadDatabase(
+        at url: URL,
+        sessionID: String,
+        rolloutPath: String,
+        includesArchivedColumn: Bool) throws
+    {
+        var database: OpaquePointer?
+        guard sqlite3_open(url.path, &database) == SQLITE_OK, let database else {
+            throw SQLiteFixtureError.open
+        }
+        defer { sqlite3_close(database) }
+        let archivedColumn = includesArchivedColumn ? ", archived INTEGER" : ""
+        guard sqlite3_exec(
+            database,
+            "CREATE TABLE threads (" +
+                "id TEXT PRIMARY KEY, title TEXT, agent_path TEXT, rollout_path TEXT\(archivedColumn));",
+            nil,
+            nil,
+            nil) == SQLITE_OK
+        else { throw SQLiteFixtureError.exec }
+        let archivedValue = includesArchivedColumn ? ", 1" : ""
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(
+            database,
+            "INSERT INTO threads (id, title, agent_path, rollout_path" +
+                (includesArchivedColumn ? ", archived" : "") +
+                ") VALUES (?1, 'Guardian parent', NULL, ?2\(archivedValue));",
+            -1,
+            &statement,
+            nil) == SQLITE_OK,
+            let statement
+        else { throw SQLiteFixtureError.exec }
+        defer { sqlite3_finalize(statement) }
+        let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+        sqlite3_bind_text(statement, 1, sessionID, -1, transient)
+        sqlite3_bind_text(statement, 2, rolloutPath, -1, transient)
         guard sqlite3_step(statement) == SQLITE_DONE else { throw SQLiteFixtureError.exec }
     }
 

@@ -36,6 +36,8 @@ A visible task is an observed Codex session, identified by host and session ID. 
 
 Normal subagents are hidden. A guardian/subagent may only help recover a still-active parent rollout and is not shown as its own user task.
 
+Codex thread archive state is `active`, `archived`, or `unknown`. Active threads remain eligible for the normal task-retention rules, archived threads are excluded before guardian recovery and state reduction, and unknown state is retained for at most two hours. A guardian can recover only a readable parent rollout outside `archived_sessions`; AgentMicro never scans `archived_sessions` as a task source.
+
 When multiple CLI processes share a directory and ownership is ambiguous, AgentMicro keeps rollout tasks separate but does not guess which PID belongs to which task.
 
 ## Visible State Model

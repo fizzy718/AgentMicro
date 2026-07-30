@@ -5,15 +5,28 @@ import CSQLite3
 #endif
 import Foundation
 
+public enum CodexThreadArchiveState: Equatable, Sendable {
+    case active
+    case archived
+    case unknown
+}
+
 public struct CodexThreadMetadata: Equatable, Sendable {
     public let title: String?
     public let agentPath: String?
     public let rolloutPath: String?
+    public let archiveState: CodexThreadArchiveState
 
-    public init(title: String?, agentPath: String?, rolloutPath: String? = nil) {
+    public init(
+        title: String?,
+        agentPath: String?,
+        rolloutPath: String? = nil,
+        archiveState: CodexThreadArchiveState = .unknown)
+    {
         self.title = title
         self.agentPath = agentPath
         self.rolloutPath = rolloutPath
+        self.archiveState = archiveState
     }
 }
 
@@ -74,15 +87,22 @@ public struct CodexThreadMetadataReader: Sendable {
         defer { sqlite3_close(database) }
         sqlite3_busy_timeout(database, 100)
 
-        let queries = [
-            "SELECT title, agent_path, rollout_path FROM threads WHERE id = ?1 LIMIT 1",
-            "SELECT title, NULL, rollout_path FROM threads WHERE id = ?1 LIMIT 1",
-            "SELECT title, agent_path, NULL FROM threads WHERE id = ?1 LIMIT 1",
-            "SELECT title, NULL, NULL FROM threads WHERE id = ?1 LIMIT 1",
+        let queries: [(sql: String, includesArchiveState: Bool)] = [
+            ("SELECT title, agent_path, rollout_path, archived FROM threads WHERE id = ?1 LIMIT 1", true),
+            ("SELECT title, NULL, rollout_path, archived FROM threads WHERE id = ?1 LIMIT 1", true),
+            ("SELECT title, agent_path, NULL, archived FROM threads WHERE id = ?1 LIMIT 1", true),
+            ("SELECT title, NULL, NULL, archived FROM threads WHERE id = ?1 LIMIT 1", true),
+            ("SELECT title, agent_path, rollout_path FROM threads WHERE id = ?1 LIMIT 1", false),
+            ("SELECT title, NULL, rollout_path FROM threads WHERE id = ?1 LIMIT 1", false),
+            ("SELECT title, agent_path, NULL FROM threads WHERE id = ?1 LIMIT 1", false),
+            ("SELECT title, NULL, NULL FROM threads WHERE id = ?1 LIMIT 1", false),
         ]
         var statement: OpaquePointer?
+        var includesArchiveState = false
         for query in queries where statement == nil {
-            if sqlite3_prepare_v2(database, query, -1, &statement, nil) != SQLITE_OK {
+            if sqlite3_prepare_v2(database, query.sql, -1, &statement, nil) == SQLITE_OK {
+                includesArchiveState = query.includesArchiveState
+            } else {
                 statement = nil
             }
         }
@@ -98,11 +118,23 @@ public struct CodexThreadMetadataReader: Sendable {
             let title = scopedIndexedNames[sessionID] ?? Self.string(statement, column: 0)
             let agentPath = Self.string(statement, column: 1)
             let rolloutPath = Self.string(statement, column: 2)
+            let archiveState: CodexThreadArchiveState = if includesArchiveState {
+                if sqlite3_column_type(statement, 3) == SQLITE_NULL {
+                    .unknown
+                } else if sqlite3_column_int(statement, 3) == 0 {
+                    .active
+                } else {
+                    .archived
+                }
+            } else {
+                .unknown
+            }
             if title != nil || agentPath != nil || rolloutPath != nil {
                 result[sessionID] = CodexThreadMetadata(
                     title: title,
                     agentPath: agentPath,
-                    rolloutPath: rolloutPath)
+                    rolloutPath: rolloutPath,
+                    archiveState: archiveState)
             }
         }
         return result
