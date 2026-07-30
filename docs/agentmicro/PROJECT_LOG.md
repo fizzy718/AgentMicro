@@ -340,6 +340,45 @@ Known limitations:
 
 - Final notarization, release-asset verification, and the 0.1.1-to-0.1.2 update test require the GitHub release workflow to finish successfully.
 
+### `release`: published AgentMicro 0.1.2
+
+Changes:
+
+- Published the signed universal `v0.1.2` release from source commit `3682fe9` through GitHub Actions run `30511528292`.
+- Published both `AgentMicro-macos-universal-0.1.2.dmg` for first installation and the Sparkle-signed ZIP for updates.
+- Updated the production appcast in commit `b03760d` with version 0.1.2, build 3, archive size, and Ed25519 signature.
+
+Impact:
+
+- New users can install through the standard drag-to-Applications DMG.
+- AgentMicro 0.1.1 can discover and authenticate 0.1.2 through its existing production update configuration.
+
+Validation:
+
+- Apple Notary Service accepted the application and DMG independently, and both stapled tickets validate.
+- The downloaded DMG and ZIP match the SHA-256 digests recorded by GitHub; the application is version 0.1.2 build 3 with arm64 and x86_64 slices.
+- The DMG contains `AgentMicro.app` and the `/Applications` drag target, while both the application and DMG pass signature verification.
+- The live appcast matches `main`, and its Ed25519 signature for the downloaded ZIP validates against the public key embedded in both 0.1.1 and 0.1.2.
+
+Known limitations:
+
+- The currently installed application was already 0.1.2, so validation did not destructively downgrade it solely to replay the interactive 0.1.1-to-0.1.2 replacement UI.
+
+### `docs`: adopted the macOS 27 light application icon
+
+Changes:
+
+- Recompiled the latest layered `AgentMicro.icon` source with Xcode Beta and exported its light fallback for GitHub rendering.
+- Replaced the legacy dark SVG above both public README titles with the current light application icon.
+
+Impact:
+
+- The repository landing page now matches the current macOS 27 application identity rather than showing the retired dark logo.
+
+Validation:
+
+- `make check` passes, including documentation links, repository resource checks, formatting, and lint.
+
 ## Future Entry Template
 
 ```markdown
