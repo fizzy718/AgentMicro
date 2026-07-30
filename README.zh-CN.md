@@ -77,7 +77,7 @@ AgentMicro 对外只使用五种状态：
 - macOS 14 Sonoma 或更高版本
 - 已产生本地会话的 Codex Desktop 或 Codex CLI
 
-正式签名和 Apple 公证的安装包将发布在 [GitHub Releases](https://github.com/fizzy718/AgentMicro/releases)。首次正式版本发布前，可以从源代码构建。
+正式签名和 Apple 公证的安装包发布在 [GitHub Releases](https://github.com/fizzy718/AgentMicro/releases)。优先下载 DMG：打开后将 `AgentMicro.app` 拖到 Applications 文件夹，再从 `/Applications` 启动。仅提供 ZIP 的旧版本，解压后手动移动到 `/Applications` 即可。
 
 ### 从源代码构建
 

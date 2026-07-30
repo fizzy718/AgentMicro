@@ -76,6 +76,11 @@ fi
 
 "$ROOT/Scripts/sign-and-notarize-agentmicro.sh"
 ARCHIVE="$ROOT/.build/agentmicro-release/$AGENTMICRO_VERSION/AgentMicro-macos-universal-$AGENTMICRO_VERSION.zip"
+DMG="$ROOT/.build/agentmicro-release/$AGENTMICRO_VERSION/AgentMicro-macos-universal-$AGENTMICRO_VERSION.dmg"
+if [[ ! -f "$ARCHIVE" || ! -f "$DMG" ]]; then
+  echo "ERROR: AgentMicro release packaging did not produce both ZIP and DMG artifacts." >&2
+  exit 1
+fi
 "$ROOT/Scripts/make_agentmicro_appcast.sh" "$ARCHIVE"
 
 if [[ "$PUBLISH" != true ]]; then
@@ -84,7 +89,7 @@ if [[ "$PUBLISH" != true ]]; then
 fi
 
 RELEASE_ARGS=(
-  release create "$TAG" "$ARCHIVE"
+  release create "$TAG" "$ARCHIVE" "$DMG"
   --repo "$AGENTMICRO_GITHUB_REPOSITORY"
   --title "AgentMicro $AGENTMICRO_VERSION"
 )
@@ -100,6 +105,19 @@ else
   RELEASE_ARGS+=(--generate-notes)
 fi
 gh "${RELEASE_ARGS[@]}"
+
+PUBLISHED_ASSETS="$(
+  gh release view "$TAG" \
+    --repo "$AGENTMICRO_GITHUB_REPOSITORY" \
+    --json assets \
+    --jq '.assets[].name'
+)"
+for expected_asset in "$(basename "$ARCHIVE")" "$(basename "$DMG")"; do
+  if ! /usr/bin/grep -Fxq "$expected_asset" <<<"$PUBLISHED_ASSETS"; then
+    echo "ERROR: Published release is missing expected asset: $expected_asset" >&2
+    exit 1
+  fi
+done
 
 git -C "$ROOT" add agentmicro-appcast.xml
 STAGED_FILES="$(git -C "$ROOT" diff --cached --name-only)"

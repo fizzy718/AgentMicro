@@ -63,7 +63,7 @@ V1 includes:
 - Optional Enhanced Status Detection for a selected Codex task and visible approval/error controls.
 - Configurable recent task count.
 - First-launch color guide and paged settings.
-- Launch at login, localization, and signed Sparkle updates.
+- Launch at login, localization, a notarized drag-to-install DMG, and signed Sparkle updates.
 
 V1 excludes:
 
@@ -99,4 +99,4 @@ AgentMicro:
 - Current-turn durations update once per second while the menu is open.
 - The first launch explains every color and does not reopen the guide by default.
 - The app works offline except for software updates.
-- Signed release builds install, launch, and update independently from CodexBar.
+- Signed release builds install from a drag-to-Applications DMG, launch, and update independently from CodexBar.

@@ -180,6 +180,9 @@ Language overrides are stored only in AgentMicro defaults and never modify globa
 - Include the compiled Icon Composer `Assets.car`, `AgentMicro.icns` fallback, and `CFBundleIconName`.
 - Embed Sparkle only in packaged builds.
 - Use an AgentMicro-specific bundle ID, feed, Ed25519 key, Developer ID signature, and notarization.
+- Publish both a ZIP for Sparkle and a styled DMG for first installation. The DMG places `AgentMicro.app`
+  opposite an Applications link, is signed with the same Developer ID identity, and receives its own
+  notarization ticket.
 - Development builds remain ad-hoc signed and cannot perform online updates.
 
 ## Acceptance Criteria
@@ -196,6 +199,8 @@ Language overrides are stored only in AgentMicro defaults and never modify globa
 - Working duration advances every second; stopped duration does not.
 - The first launch opens the localized Guide with all five colors and the default checked suppression option.
 - Every selectable language has a complete catalog.
-- The packaged app installs in `/Applications`, launches without a resource crash, shows the adaptive icon, and reports the correct version.
+- Opening the release DMG presents `AgentMicro.app` and an Applications drop target; dragging the app installs
+  it in `/Applications`.
+- The packaged app launches without a resource crash, shows the adaptive icon, and reports the correct version.
 - Signed releases pass code-signing, Gatekeeper, notarization, Sparkle signature, and cross-version update checks.
 - Offline operation remains functional except for update retrieval.

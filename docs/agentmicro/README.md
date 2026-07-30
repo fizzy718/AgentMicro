@@ -35,6 +35,8 @@ AgentMicro reads known local Codex process and session metadata. Optional Enhanc
 
 Explicitly archived Codex threads are removed from the current task menu. Unknown archive metadata is tolerated for up to two hours, while orphaned guardian records are not presented as user tasks.
 
+Signed releases publish a notarized drag-to-Applications DMG for first installation and retain the Ed25519-signed ZIP as the Sparkle update artifact.
+
 ## Development
 
 ```bash
