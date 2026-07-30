@@ -318,6 +318,28 @@ Known limitations:
 - Developer ID verification on the local beta macOS installation is not trustworthy: the same host reports equivalent trust or signature failures for Apple/Xcode and ChatGPT applications. Release acceptance therefore uses the clean GitHub runner and Apple Notary Service as the authoritative checks.
 - End-to-end automatic-update installation can first be exercised when a later signed release is available as the update target.
 
+### `release`: prepared AgentMicro 0.1.2
+
+Changes:
+
+- Advanced the public version to `0.1.2` and build number to `3`.
+- Added versioned release notes covering archived-task filtering and the drag-to-Applications DMG.
+- Kept the ZIP as the Sparkle update artifact while making the signed and notarized DMG the preferred first-install package.
+
+Impact:
+
+- Users receive a focused patch release with a cleaner current-task list and a standard macOS installation experience.
+- AgentMicro 0.1.1 becomes the first production build that can exercise a complete Sparkle update to a newer signed release.
+
+Validation:
+
+- `make check` passes, and all 732 test selections pass across 61 groups without failures or retries.
+- The protected GitHub release workflow remains responsible for Developer ID signing, Apple notarization, DMG and ZIP publication, and appcast generation.
+
+Known limitations:
+
+- Final notarization, release-asset verification, and the 0.1.1-to-0.1.2 update test require the GitHub release workflow to finish successfully.
+
 ## Future Entry Template
 
 ```markdown
