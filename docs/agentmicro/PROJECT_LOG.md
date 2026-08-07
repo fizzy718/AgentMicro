@@ -41,6 +41,20 @@ Known limitations:
 
 - Signing, notarization, release-asset verification, appcast publication, and the live update path remain pending until the GitHub release workflow completes from `main`.
 
+### `ci`: refreshed the generated documentation index for the 0.1.3 release
+
+Changes:
+
+- Regenerated `docs/llms.txt` after the AgentMicro canonical documentation URL changed.
+
+Impact:
+
+- The release workflow's source verification can proceed with a current generated documentation index.
+
+Validation:
+
+- `make check` passes, including the `llms index OK` gate and all SwiftFormat and SwiftLint checks.
+
 ## 2026-07-30
 
 ### `marketing`: prepared the Product Hunt launch surface
