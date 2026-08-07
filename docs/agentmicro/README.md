@@ -20,7 +20,7 @@ This directory is the product and engineering source of truth for AgentMicro. Th
 
 AgentMicro is a local-first macOS menu bar companion for observing multiple Codex Desktop and CLI tasks. It is derived from CodexBar but has a separate product boundary, application identity, release feed, and task-state model.
 
-The menu shows the most recently changed tasks, with working tasks first. Each row contains a state block, task title, project, current-turn duration, and an optional fast-mode lightning badge. The menu bar icon mirrors the first six rows as a 2×3 grid of horizontal rounded rectangles and breathes while work is active.
+The menu shows the most recently changed tasks, with working tasks first. Each row contains a state block, task title, project, current-turn duration, and an optional fast-mode lightning badge. The menu bar icon mirrors the first six rows as a 2×3 grid of horizontal rounded rectangles. Slots follow task order left to right across the top and right to left across the bottom; thinking, unread, needs-input, and error blocks breathe while idle blocks remain static.
 
 The five user-visible colors are:
 

@@ -18,7 +18,6 @@ enum AgentMicroStatusIcon {
     ]
     static let animationFramesPerSlot = 9
     static let animationFrameInterval: TimeInterval = 0.07
-    static let animationFrameCount = Self.maximumTrackedTasks * Self.animationFramesPerSlot
     static let blockSize = NSSize(width: 5.5, height: 4)
     static let horizontalStep: CGFloat = 6.5
     static let verticalStep: CGFloat = 5.5
@@ -27,6 +26,7 @@ enum AgentMicroStatusIcon {
         states: [CodexTaskState],
         animationPhase: Int?) -> NSImage
     {
+        let animatedSlotIndices = Self.animatedSlotIndices(for: states)
         let image = NSImage(size: NSSize(width: 19, height: 19), flipped: false) { bounds in
             let gridWidth = Self.blockSize.width + Self.horizontalStep * 2
             let originX = bounds.midX - gridWidth / 2
@@ -42,7 +42,10 @@ enum AgentMicroStatusIcon {
                 Self.drawBlock(
                     in: rect,
                     state: state,
-                    opacity: Self.opacity(forSlotAt: index, animationPhase: animationPhase))
+                    opacity: Self.opacity(
+                        forSlotAt: index,
+                        animatedSlotIndices: animatedSlotIndices,
+                        animationPhase: animationPhase))
             }
             return true
         }
@@ -51,10 +54,35 @@ enum AgentMicroStatusIcon {
         return image
     }
 
-    static func opacity(forSlotAt index: Int, animationPhase: Int?) -> CGFloat {
-        guard let animationPhase else { return 1 }
-        let normalizedPhase = animationPhase % Self.animationFrameCount
-        let activeSlot = normalizedPhase / Self.animationFramesPerSlot
+    static func animatedSlotIndices(for states: [CodexTaskState]) -> [Int] {
+        states
+            .prefix(self.maximumTrackedTasks)
+            .enumerated()
+            .compactMap { index, state in self.shouldAnimate(state) ? index : nil }
+    }
+
+    static func shouldAnimate(_ state: CodexTaskState) -> Bool {
+        switch state {
+        case .thinking, .unread, .requiresInput, .error:
+            true
+        case .idle, .unknown:
+            false
+        }
+    }
+
+    static func animationFrameCount(for states: [CodexTaskState]) -> Int {
+        max(1, self.animatedSlotIndices(for: states).count) * self.animationFramesPerSlot
+    }
+
+    static func opacity(
+        forSlotAt index: Int,
+        animatedSlotIndices: [Int],
+        animationPhase: Int?) -> CGFloat
+    {
+        guard let animationPhase, !animatedSlotIndices.isEmpty else { return 1 }
+        let animationFrameCount = animatedSlotIndices.count * Self.animationFramesPerSlot
+        let normalizedPhase = animationPhase % animationFrameCount
+        let activeSlot = animatedSlotIndices[normalizedPhase / Self.animationFramesPerSlot]
         guard index == activeSlot else { return 1 }
         let frame = normalizedPhase % Self.animationFramesPerSlot
         let progress = CGFloat(frame) / CGFloat(Self.animationFramesPerSlot - 1)

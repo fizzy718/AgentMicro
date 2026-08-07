@@ -175,7 +175,8 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
             preferences: self.settings.preferences,
             readSessionKeys: self.effectiveReadSessionKeys(for: self.tasks))
         let activeCount = rows.count(where: \.isActive)
-        let shouldAnimate = activeCount > 0 &&
+        let hasAnimatedSlot = !AgentMicroStatusIcon.animatedSlotIndices(for: rows.map(\.state)).isEmpty
+        let shouldAnimate = hasAnimatedSlot &&
             !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         self.setStatusAnimationEnabled(shouldAnimate)
         self.drawStatusItemImage(rows: rows)
@@ -265,9 +266,14 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
 
     @objc
     private func advanceStatusAnimation() {
+        let rows = AgentMicroMenuModel.rows(
+            from: self.tasks,
+            preferences: self.settings.preferences,
+            readSessionKeys: self.effectiveReadSessionKeys(for: self.tasks))
+        let states = rows.map(\.state)
         self.statusAnimationPhase = (self.statusAnimationPhase + 1) %
-            AgentMicroStatusIcon.animationFrameCount
-        self.drawStatusItemImage()
+            AgentMicroStatusIcon.animationFrameCount(for: states)
+        self.drawStatusItemImage(rows: rows)
     }
 
     private func addMenuFooter() {

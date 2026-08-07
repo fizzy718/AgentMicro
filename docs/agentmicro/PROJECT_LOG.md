@@ -2,6 +2,45 @@
 
 This log records the durable product and engineering decisions needed by international contributors.
 
+## 2026-08-07
+
+### `fix`: limited menu bar animation to activity and attention states
+
+Changes:
+
+- Kept the six icon slots aligned with menu task order from left to right across the top row, then right to left across the bottom row.
+- Filtered the breathing sequence so thinking, unread, needs-input, and error blocks animate while idle, unknown, and empty blocks remain static.
+- Added focused coverage for sparse attention slots and the two-row task mapping.
+
+Impact:
+
+- The icon distinguishes tasks with activity or required attention without animating neutral idle slots.
+
+Validation:
+
+- `AGENTMICRO_BUILD_ONLY=1 swift test --disable-automatic-resolution --filter AgentMicroMenuModelTests` passes all 18 focused tests.
+- `make check` passes with no SwiftFormat or SwiftLint findings.
+- `make test` passes all 732 test selections across 61 groups without failures or retries.
+
+### `release`: prepared AgentMicro 0.1.3
+
+Changes:
+
+- Advanced the public version to `0.1.3` and build number to `4`.
+- Added release notes for the attention-aware, task-ordered menu bar animation.
+
+Impact:
+
+- The next signed release will make activity and attention cues precise without animating idle task slots.
+
+Validation:
+
+- The focused AgentMicro menu model tests, `make check`, and the full sharded test suite pass before release preparation.
+
+Known limitations:
+
+- Signing, notarization, release-asset verification, appcast publication, and the live update path remain pending until the GitHub release workflow completes from `main`.
+
 ## 2026-07-30
 
 ### `marketing`: prepared the Product Hunt launch surface

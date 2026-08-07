@@ -314,7 +314,7 @@ struct AgentMicroMenuModelTests {
 
     @Test
     @MainActor
-    func `status logo follows a clockwise two-row loop`() {
+    func `status logo maps task order across the top then reverses across the bottom`() {
         #expect(AgentMicroStatusIcon.slotLayout == [
             AgentMicroIconSlot(column: 0, row: 0),
             AgentMicroIconSlot(column: 1, row: 0),
@@ -327,24 +327,46 @@ struct AgentMicroMenuModelTests {
 
     @Test
     @MainActor
-    func `status logo breathes each task color without changing the other blocks`() {
+    func `status logo breathes attention states in task order`() {
+        let states: [CodexTaskState] = [.thinking, .idle, .unread, .requiresInput, .error, .unknown]
+        let animatedSlotIndices = AgentMicroStatusIcon.animatedSlotIndices(for: states)
         let middleOfFirstPulse = AgentMicroStatusIcon.animationFramesPerSlot / 2
         let startOfSecondPulse = AgentMicroStatusIcon.animationFramesPerSlot
         let middleOfSecondPulse = startOfSecondPulse + middleOfFirstPulse
 
+        #expect(animatedSlotIndices == [0, 2, 3, 4])
+        #expect(AgentMicroStatusIcon.animationFrameCount(for: states) ==
+            4 * AgentMicroStatusIcon.animationFramesPerSlot)
+        #expect(AgentMicroStatusIcon.shouldAnimate(.thinking))
+        #expect(AgentMicroStatusIcon.shouldAnimate(.unread))
+        #expect(AgentMicroStatusIcon.shouldAnimate(.requiresInput))
+        #expect(AgentMicroStatusIcon.shouldAnimate(.error))
+        #expect(!AgentMicroStatusIcon.shouldAnimate(.idle))
+        #expect(!AgentMicroStatusIcon.shouldAnimate(.unknown))
         #expect(abs(AgentMicroStatusIcon.opacity(
             forSlotAt: 0,
+            animatedSlotIndices: animatedSlotIndices,
             animationPhase: middleOfFirstPulse) - 0.45) < 0.0001)
         #expect(AgentMicroStatusIcon.opacity(
             forSlotAt: 1,
+            animatedSlotIndices: animatedSlotIndices,
             animationPhase: middleOfFirstPulse) == 1)
         #expect(AgentMicroStatusIcon.opacity(
             forSlotAt: 0,
+            animatedSlotIndices: animatedSlotIndices,
             animationPhase: middleOfSecondPulse) == 1)
         #expect(abs(AgentMicroStatusIcon.opacity(
-            forSlotAt: 1,
+            forSlotAt: 2,
+            animatedSlotIndices: animatedSlotIndices,
             animationPhase: middleOfSecondPulse) - 0.45) < 0.0001)
-        #expect(AgentMicroStatusIcon.opacity(forSlotAt: 0, animationPhase: nil) == 1)
+        #expect(AgentMicroStatusIcon.opacity(
+            forSlotAt: 0,
+            animatedSlotIndices: animatedSlotIndices,
+            animationPhase: nil) == 1)
+        #expect(AgentMicroStatusIcon.opacity(
+            forSlotAt: 0,
+            animatedSlotIndices: [],
+            animationPhase: middleOfFirstPulse) == 1)
         #expect(AgentMicroStatusIcon.animationFrameInterval == 0.07)
     }
 
