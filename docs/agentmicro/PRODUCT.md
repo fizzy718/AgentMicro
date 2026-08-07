@@ -46,6 +46,7 @@ V1 observes and navigates. It does not approve actions, send answers, stop tasks
 ### Menu-bar first
 
 The menu bar icon and compact menu are the primary product surface. Information must remain understandable without opening a dashboard.
+The six icon slots preserve menu task order in a two-row snake, and animation identifies tasks that are running or need attention.
 
 ### Progressive enhancement
 
@@ -95,6 +96,7 @@ AgentMicro:
 
 - A user can distinguish idle, unread, thinking, needs-input, and error states at a glance.
 - Working tasks appear first, followed by the most recently changed tasks.
+- Thinking, unread, needs-input, and error blocks animate in the menu bar icon, following its two-row task order; idle blocks remain static.
 - A Desktop task opens the correct Codex conversation with one click.
 - Current-turn durations update once per second while the menu is open.
 - The first launch explains every color and does not reopen the guide by default.

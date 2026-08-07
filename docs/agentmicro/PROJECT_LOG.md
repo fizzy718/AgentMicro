@@ -2,6 +2,26 @@
 
 This log records the durable product and engineering decisions needed by international contributors.
 
+## 2026-08-07
+
+### `fix`: limited menu bar animation to activity and attention states
+
+Changes:
+
+- Kept the six icon slots aligned with menu task order from left to right across the top row, then right to left across the bottom row.
+- Filtered the breathing sequence so thinking, unread, needs-input, and error blocks animate while idle, unknown, and empty blocks remain static.
+- Added focused coverage for sparse attention slots and the two-row task mapping.
+
+Impact:
+
+- The icon distinguishes tasks with activity or required attention without animating neutral idle slots.
+
+Validation:
+
+- `AGENTMICRO_BUILD_ONLY=1 swift test --disable-automatic-resolution --filter AgentMicroMenuModelTests` passes all 18 focused tests.
+- `make check` passes with no SwiftFormat or SwiftLint findings.
+- `make test` passes all 732 test selections across 61 groups without failures or retries.
+
 ## 2026-07-30
 
 ### `marketing`: prepared the Product Hunt launch surface
