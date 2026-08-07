@@ -55,6 +55,27 @@ Validation:
 
 - `make check` passes, including the `llms index OK` gate and all SwiftFormat and SwiftLint checks.
 
+### `release`: published AgentMicro 0.1.3
+
+Changes:
+
+- Published the signed and notarized universal ZIP and DMG through GitHub Actions.
+- Added the `v0.1.3` Sparkle appcast entry with build `4` and its EdDSA signature.
+
+Impact:
+
+- Existing AgentMicro 0.1.1-and-later installations can discover and install the attention-aware icon update.
+
+Validation:
+
+- GitHub Actions run `31171993293` completed successfully, including source verification, signing, notarization, asset upload, and signing-material cleanup.
+- GitHub Release `v0.1.3` is public and marked latest with both universal ZIP and DMG assets.
+- The published appcast points to the 0.1.3 ZIP and contains build `4` plus a non-empty EdDSA signature.
+
+Known limitation:
+
+- The live Sparkle update prompt was not manually exercised after publication.
+
 ## 2026-07-30
 
 ### `marketing`: prepared the Product Hunt launch surface
