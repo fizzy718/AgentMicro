@@ -1,0 +1,66 @@
+name: Task state is incorrect
+description: Report an AgentMicro task-status mismatch without sharing private task content.
+title: "bug(state): "
+labels: ["bug", "state-detection"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping improve task-state detection. Do not include prompts, source code, credentials, unredacted rollout files, or private task titles.
+  - type: input
+    id: version
+    attributes:
+      label: AgentMicro version
+      placeholder: "For example, 1.0.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: codex_surface
+    attributes:
+      label: Codex surface
+      options:
+        - Codex Desktop
+        - Codex CLI
+        - Both
+    validations:
+      required: true
+  - type: dropdown
+    id: expected_state
+    attributes:
+      label: Expected task state
+      options:
+        - Idle
+        - Unread result
+        - Thinking
+        - Needs input
+        - Error
+    validations:
+      required: true
+  - type: dropdown
+    id: shown_state
+    attributes:
+      label: State shown by AgentMicro
+      options:
+        - Idle
+        - Unread result
+        - Thinking
+        - Needs input
+        - Error
+        - Task missing
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Safe reproduction steps
+      description: Use generic task names and describe only observable steps.
+      placeholder: "1. Start a task named Example A\n2. Wait for it to request approval\n3. AgentMicro continues to show Thinking"
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include macOS version, Codex version, and whether Enhanced Status Detection is enabled.
+    validations:
+      required: true

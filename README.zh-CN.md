@@ -7,15 +7,19 @@
 ### macOS 菜单栏里的 Codex 实时任务状态
 
 [![CI](https://github.com/fizzy718/AgentMicro/actions/workflows/ci.yml/badge.svg)](https://github.com/fizzy718/AgentMicro/actions/workflows/ci.yml)
+[![最新版本](https://img.shields.io/github/v/release/fizzy718/AgentMicro?display_name=tag&sort=semver&style=flat-square&label=release&color=6e5aff)](https://github.com/fizzy718/AgentMicro/releases/latest)
+[![下载量](https://img.shields.io/github/downloads/fizzy718/AgentMicro/total?style=flat-square&label=downloads&color=6e5aff)](https://github.com/fizzy718/AgentMicro/releases/latest)
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-0a0a0c?style=flat-square)](https://github.com/fizzy718/AgentMicro)
 [![Swift 6.2+](https://img.shields.io/badge/Swift-6.2%2B-f05138?style=flat-square)](https://swift.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6e5aff?style=flat-square)](LICENSE)
 
-[English](README.md)
+[网站](https://agentmicro.cc) · [下载](https://github.com/fizzy718/AgentMicro/releases/latest) · [English](README.md)
 
 </div>
 
 AgentMicro 是一个本地优先的 macOS 菜单栏应用，帮助同时运行多个 Codex 任务的用户快速了解：哪些任务仍在工作、哪些任务需要处理、哪些任务已经产生未读结果，以及如何一键返回对应的 Codex Desktop 会话。
+
+**开源、本地优先、只读观察：** AgentMicro 只在你的 Mac 上读取任务状态，不会上传 Prompt、源代码、回复或任务历史。
 
 AgentMicro 是基于优秀开源项目 [CodexBar](https://github.com/steipete/CodexBar) 开发的独立社区项目，与 OpenAI 或 CodexBar 维护者不存在隶属或官方背书关系。
 
@@ -78,6 +82,17 @@ AgentMicro 对外只使用五种状态：
 - 已产生本地会话的 Codex Desktop 或 Codex CLI
 
 正式签名和 Apple 公证的安装包发布在 [GitHub Releases](https://github.com/fizzy718/AgentMicro/releases)。优先下载 DMG：打开后将 `AgentMicro.app` 拖到 Applications 文件夹，再从 `/Applications` 启动。仅提供 ZIP 的旧版本，解压后手动移动到 `/Applications` 即可。
+
+### Homebrew
+
+也可以通过官方 Tap 安装同一份已签名并经 Apple 公证的正式版本：
+
+```bash
+brew install --cask fizzy718/tap/agentmicro
+```
+
+使用 `brew upgrade --cask fizzy718/tap/agentmicro` 更新。等 AgentMicro 被
+Homebrew Cask 主仓库收录后，即可使用更短的 `brew install --cask agentmicro`。
 
 ### 从源代码构建
 

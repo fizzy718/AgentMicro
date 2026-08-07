@@ -1,0 +1,9 @@
+services:
+  agentmicro-site:
+    build:
+      context: ../..
+      dockerfile: deploy/agentmicro/Dockerfile
+    container_name: agentmicro-site
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8089:80"

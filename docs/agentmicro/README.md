@@ -11,13 +11,16 @@ This directory is the product and engineering source of truth for AgentMicro. Th
 - [Capability map](CAPABILITY_MAP.md): what is reused from CodexBar and what was learned from neighboring projects.
 - [Backlog](BACKLOG.md): deferred ideas with entry conditions.
 - [Release guide](RELEASING.md): signing, notarization, GitHub Releases, appcast, and Sparkle.
+- [Product Hunt launch kit](product-hunt-launch.md): public listing copy, gallery brief, demo script, Maker Comment, and launch-day replies.
+- [Demo capture guide](demo-capture.md): exact macOS recording steps for the public product GIF.
+- [GitHub growth playbook](github-growth.md): repository, release, discussion, and directory-submission copy.
 - [Project log](PROJECT_LOG.md): durable record of product, architecture, implementation, documentation, and release changes.
 
 ## Current Product
 
 AgentMicro is a local-first macOS menu bar companion for observing multiple Codex Desktop and CLI tasks. It is derived from CodexBar but has a separate product boundary, application identity, release feed, and task-state model.
 
-The menu shows the most recently changed tasks, with working tasks first. Each row contains a state block, task title, project, current-turn duration, and an optional fast-mode lightning badge. The menu bar icon mirrors the first six rows as a 2×3 grid of horizontal rounded rectangles and breathes while work is active.
+The menu shows the most recently changed tasks, with working tasks first. Each row contains a state block, task title, project, current-turn duration, and an optional fast-mode lightning badge. The menu bar icon mirrors the first six rows as a 2×3 grid of horizontal rounded rectangles. Slots follow task order left to right across the top and right to left across the bottom; thinking, unread, needs-input, and error blocks breathe while idle blocks remain static.
 
 The five user-visible colors are:
 

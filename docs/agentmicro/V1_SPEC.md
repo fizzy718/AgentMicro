@@ -109,8 +109,9 @@ The duration is the current turn’s execution time, not time since last activit
 - The six blocks mirror the same first six tasks shown by menu ordering, even if the menu limit is greater.
 - Empty slots use a neutral system color.
 - Each block uses the same state-color source as its menu row.
-- While at least one task is working, colors breathe one slot at a time around the existing loop.
-- The icon is static when nothing is working or Reduce Motion is enabled.
+- Task slots follow menu order from left to right across the top row, then right to left across the bottom row.
+- Thinking, unread, needs-input, and error blocks breathe one at a time in task order because they indicate activity or require attention.
+- Idle, unknown, and empty blocks remain static. Reduce Motion disables all icon animation.
 - No numeric badge is attached to the icon.
 
 ## Application Icon
