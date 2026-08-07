@@ -22,6 +22,25 @@ Validation:
 - `make check` passes with no SwiftFormat or SwiftLint findings.
 - `make test` passes all 732 test selections across 61 groups without failures or retries.
 
+### `release`: prepared AgentMicro 0.1.3
+
+Changes:
+
+- Advanced the public version to `0.1.3` and build number to `4`.
+- Added release notes for the attention-aware, task-ordered menu bar animation.
+
+Impact:
+
+- The next signed release will make activity and attention cues precise without animating idle task slots.
+
+Validation:
+
+- The focused AgentMicro menu model tests, `make check`, and the full sharded test suite pass before release preparation.
+
+Known limitations:
+
+- Signing, notarization, release-asset verification, appcast publication, and the live update path remain pending until the GitHub release workflow completes from `main`.
+
 ## 2026-07-30
 
 ### `marketing`: prepared the Product Hunt launch surface
