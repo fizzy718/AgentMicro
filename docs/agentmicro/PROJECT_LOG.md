@@ -26,6 +26,30 @@ Known limitations:
 - Signing, notarization, release-asset verification, appcast publication, and live update-path verification remain
   pending until the release completes from `main`.
 
+### `release`: published AgentMicro 0.1.4
+
+Changes:
+
+- Published the signed and notarized universal ZIP and drag-to-Applications DMG through GitHub Actions.
+- Added the `v0.1.4` Sparkle appcast entry with build `5` and its dedicated EdDSA signature.
+
+Impact:
+
+- Existing AgentMicro 0.1.1-and-later installations can discover and install the resumed-task and resource-efficiency
+  update through the existing update feed.
+
+Validation:
+
+- GitHub Actions run `31276440826` completed successfully from source commit `8246c1aa`, including source checks,
+  Developer ID signing, application and DMG notarization, asset upload, and signing-material cleanup.
+- GitHub Release `v0.1.4` is public and contains the universal ZIP and DMG assets.
+- Appcast commit `bd25452e` points to the 0.1.4 ZIP, reports build `5`, matches the published archive size, and contains
+  a non-empty EdDSA signature.
+
+Known limitation:
+
+- The live Sparkle update prompt was not manually exercised after publication.
+
 ### `perf`: made task observation event-driven and bounded repeated work
 
 Changes:
