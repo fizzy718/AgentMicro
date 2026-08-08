@@ -9,7 +9,9 @@ Status: complete, with release hardening in `0.1.1`.
 Delivered:
 
 - Independent macOS menu bar application.
-- Codex Desktop and CLI session discovery.
+- Codex Desktop and CLI session discovery, including database-indexed rediscovery when old conversations resume.
+- Event-driven observation with non-overlapping 15/30-second safety scans, Codex-only process filtering, rollout
+  metadata caching, and bounded UI/Accessibility refresh work.
 - Incremental rollout reduction with structured/user-handoff and terminal-failure classification.
 - Five visible states: idle, unread, thinking, needs input, and error.
 - Working-first, recent-state-change ordering.
@@ -29,6 +31,7 @@ Delivered:
 | M1 — Task State Engine | Complete | Fixtures cover lifecycle, partial lines, truncation, malformed JSONL, and tool pairing. |
 | M2 — Productized menu | Complete | Menu, paged settings, onboarding, localization, icon, packaging, and updater tests pass. |
 | M3 — Real scenarios | Complete | Concurrent Desktop and CLI tasks remain independently visible and navigable. |
+| M3.1 — Runtime efficiency | Complete | Idle work is event-driven, fallback scans do not overlap, and hot UI paths reuse unchanged state. |
 | M4 — Release hardening | In progress | A notarized DMG installs cleanly, and an older signed build completes a Sparkle update to a newer build. |
 
 ## V1.1 — Attention Signals

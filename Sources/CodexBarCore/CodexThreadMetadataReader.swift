@@ -64,6 +64,54 @@ public struct CodexThreadMetadataReader: Sendable {
         self.metadata(for: sessionIDs, indexedNames: self.sessionIndexNames(for: sessionIDs))
     }
 
+    public func recentRolloutPaths(updatedSince: Date, limit: Int) -> [String] {
+        guard limit > 0 else { return [] }
+        #if canImport(SQLite3) || canImport(CSQLite3)
+        var database: OpaquePointer?
+        guard sqlite3_open_v2(self.databaseURL.path, &database, SQLITE_OPEN_READONLY, nil) == SQLITE_OK,
+              let database
+        else {
+            if database != nil {
+                sqlite3_close(database)
+            }
+            return []
+        }
+        defer { sqlite3_close(database) }
+        sqlite3_busy_timeout(database, 100)
+
+        let queries = [
+            "SELECT rollout_path FROM threads " +
+                "WHERE archived = 0 AND updated_at >= ?1 AND rollout_path <> '' " +
+                "ORDER BY updated_at DESC LIMIT ?2",
+            "SELECT rollout_path FROM threads " +
+                "WHERE updated_at >= ?1 AND rollout_path <> '' " +
+                "ORDER BY updated_at DESC LIMIT ?2",
+        ]
+        var statement: OpaquePointer?
+        for query in queries where statement == nil {
+            if sqlite3_prepare_v2(database, query, -1, &statement, nil) != SQLITE_OK {
+                statement = nil
+            }
+        }
+        guard let statement else { return [] }
+        defer { sqlite3_finalize(statement) }
+
+        sqlite3_bind_int64(statement, 1, Int64(updatedSince.timeIntervalSince1970.rounded(.down)))
+        sqlite3_bind_int(statement, 2, Int32(clamping: limit))
+        var paths: [String] = []
+        var seen = Set<String>()
+        while sqlite3_step(statement) == SQLITE_ROW {
+            guard let path = Self.string(statement, column: 0), seen.insert(path).inserted else {
+                continue
+            }
+            paths.append(path)
+        }
+        return paths
+        #else
+        return []
+        #endif
+    }
+
     func metadata(
         for sessionIDs: Set<String>,
         indexedNames: [String: String])

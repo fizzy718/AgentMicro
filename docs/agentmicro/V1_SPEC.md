@@ -34,6 +34,8 @@ Give macOS users an honest, glanceable view of concurrent Codex task state and a
 
 A visible task is an observed Codex session, identified by host and session ID. Desktop tasks may have no independent PID; rollout lifecycle is authoritative enough to keep them visible. AgentMicro does not assign a generic app-server PID to every Desktop task.
 
+Codex keeps a resumed conversation's rollout in its original creation-date directory. AgentMicro therefore combines bounded current-date directory discovery with recently updated, unarchived `rollout_path` entries from Codex's local thread database. Database timestamps select candidates only; the rollout file timestamp and structured events remain authoritative for retention and task state. Indexed paths must resolve to regular `rollout-*.jsonl` files inside the active `CODEX_HOME/sessions` tree. Duplicate directory and database candidates collapse to one session.
+
 Normal subagents are hidden. A guardian/subagent may only help recover a still-active parent rollout and is not shown as its own user task.
 
 Codex thread archive state is `active`, `archived`, or `unknown`. Active threads remain eligible for the normal task-retention rules, archived threads are excluded before guardian recovery and state reduction, and unknown state is retained for at most two hours. A guardian can recover only a readable parent rollout outside `archived_sessions`; AgentMicro never scans `archived_sessions` as a task source.
@@ -130,13 +132,25 @@ Desktop deep links are preferred because they identify the exact thread. If the 
 
 ## Refresh
 
-- Watch known Codex session directories, discovered rollout files, and Desktop unread state.
+- Watch known Codex session directories, discovered rollout files, the selected Codex thread database and its active SQLite sidecars, and Desktop unread state.
 - Debounce file changes by approximately 200 milliseconds.
-- Poll every 2 seconds while Codex Desktop is running, a task is working, or a task has an independent process.
-- Poll every 5 seconds otherwise.
+- Changes to an already known rollout or Desktop unread state run the incremental reducer without repeating process
+  and session discovery. Session-directory and thread-index changes coalesce discovery for up to 2 seconds.
+- Use watched changes as the primary refresh path. Poll every 15 seconds as a safety fallback while Codex Desktop is
+  running, a task is working, or a task has an independent process; poll every 30 seconds otherwise.
 - Opening the menu, clicking a task, and known rollout changes trigger immediate reconciliation plus a bounded burst.
 - Menu duration updates use a separate 1-second text timer and do not rescan sessions.
-- Scans are coalesced; a change during a scan requests one follow-up scan.
+- Event-triggered scans are coalesced; an event arriving during a scan requests at most one follow-up scan. A safety
+  poll that overlaps an existing scan is dropped instead of queuing continuous work.
+- AgentMicro filters the process snapshot to Codex candidates before parsing process dates, excludes Claude before
+  session correlation, and caches immutable rollout-header metadata across append-only updates.
+- The menu bar animation advances through five cached pre-rendered frames per attention slot every 250 milliseconds,
+  with timer tolerance for wakeup coalescing. It does not rebuild menu rows, reread local state, or recreate an image
+  on every tick.
+- The native menu rebuilds only when visible task content changes, when the initial scan completes, or when an explicit
+  presentation/settings event requires a rebuild. Duration text remains live while the menu is open.
+- Enhanced Status Detection reuses Accessibility evidence for one second and reads labels only from selected,
+  button, or alert elements while retaining the existing bounded tree traversal.
 
 ## Settings
 
@@ -188,7 +202,9 @@ Language overrides are stored only in AgentMicro defaults and never modify globa
 
 ## Acceptance Criteria
 
-- New local events normally appear within 3 seconds.
+- Watched local events normally appear within 3 seconds. If an event is missed, the safety poll recovers it within
+  15 seconds during active/Desktop operation or 30 seconds while otherwise idle.
+- Resuming an unarchived task from any older creation-date directory makes it visible within the normal refresh window; no fixed creation-age lookback applies.
 - Two concurrent tasks remain separate and sort correctly.
 - A Desktop completion opened through AgentMicro changes from green to white immediately, even if Codex's persisted unread set lags.
 - With Enhanced Status Detection enabled and trusted, uniquely selecting a completed task directly in Codex changes that completion from green to white.

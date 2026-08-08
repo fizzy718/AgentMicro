@@ -68,6 +68,13 @@ Backlog items are not commitments. Each item includes an entry condition so spec
 | --- | --- | --- | --- |
 | AM-704 | candidate | Homebrew Cask | Signed releases and update continuity are established. |
 
+## Runtime Efficiency
+
+| ID | Status | Idea | Entry condition |
+| --- | --- | --- | --- |
+| AM-801 | candidate | Replace periodic Accessibility tree reads with stable AX notifications or a dedicated off-main reader | Codex exposes stable observable elements and lifecycle behavior across supported macOS versions. |
+| AM-802 | candidate | Add a repeatable long-duration CPU, wakeup, and energy regression gate | A release-mode benchmark can run without Accessibility, Keychain, or user-session prompts and has stable host-normalized thresholds. |
+
 ## New Item Template
 
 ```markdown

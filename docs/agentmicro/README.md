@@ -34,7 +34,13 @@ The five user-visible colors are:
 
 Settings use a CodexBar-style sidebar with Guide, General, Task Display, and Updates pages. The Guide is opened automatically on first launch, explains all five colors, and includes a checked-by-default “Don’t show this guide on next launch” checkbox. All AgentMicro UI copy is available in the same 23 interface languages exposed by CodexBar.
 
-AgentMicro reads known local Codex process and session metadata. Optional Enhanced Status Detection can use macOS Accessibility, only after explicit opt-in, to recognize the uniquely selected Codex task and visible approval/error controls. Base mode never requires that permission, and the enhanced reader does not click or type. AgentMicro does not upload task titles, prompts, responses, source code, command output, or session files. Software updates use AgentMicro’s own signed Sparkle feed.
+AgentMicro reads known local Codex process and session metadata. Current-date directory discovery is supplemented by recently updated, unarchived rollout paths from Codex's local thread database, so resuming an old conversation is detected without scanning every historical directory. Optional Enhanced Status Detection can use macOS Accessibility, only after explicit opt-in, to recognize the uniquely selected Codex task and visible approval/error controls. Base mode never requires that permission, and the enhanced reader does not click or type. AgentMicro does not upload task titles, prompts, responses, source code, command output, or session files. Software updates use AgentMicro’s own signed Sparkle feed.
+
+Refresh is event-driven for known rollout, session-directory, unread-state, and thread-database changes. Non-overlapping
+15-second active and 30-second idle safety scans recover missed events. Process candidates, rollout headers, menu
+content, animation state, and optional Accessibility evidence are filtered, cached, or throttled so the menu bar app
+does not continuously redo unchanged work. Known rollout writes use incremental reduction; only new-session directory
+or thread-index events schedule a coalesced discovery scan.
 
 Explicitly archived Codex threads are removed from the current task menu. Unknown archive metadata is tolerated for up to two hours, while orphaned guardian records are not presented as user tasks.
 

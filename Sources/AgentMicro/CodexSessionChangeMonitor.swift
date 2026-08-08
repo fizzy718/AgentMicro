@@ -1,3 +1,4 @@
+import CodexBarCore
 import Darwin
 import Dispatch
 import Foundation
@@ -29,6 +30,14 @@ enum CodexSessionWatchPaths {
         var candidates = Set(transcriptPaths)
         candidates.insert(sessionsDirectory.path)
         candidates.insert(globalStateFile.path)
+        let databaseURL = CodexThreadMetadataReader(
+            codexHomeDirectory: codexHomeDirectory,
+            environment: environment).databaseURL
+        candidates.formUnion([
+            databaseURL.path,
+            databaseURL.path + "-shm",
+            databaseURL.path + "-wal",
+        ])
 
         let calendar = Calendar(identifier: .gregorian)
         let days = [now, calendar.date(byAdding: .day, value: -1, to: now)].compactMap(\.self)
@@ -45,19 +54,31 @@ enum CodexSessionWatchPaths {
 
         return Set(candidates.filter { fileManager.fileExists(atPath: $0) })
     }
+
+    static func requiresDiscovery(
+        for path: String,
+        transcriptPaths: [String],
+        environment: [String: String] = ProcessInfo.processInfo.environment) -> Bool
+    {
+        path != self.globalStateFileURL(environment: environment).path &&
+            !transcriptPaths.contains(path)
+    }
 }
 
 @MainActor
 final class CodexSessionChangeMonitor {
-    private let onChange: @MainActor () -> Void
+    private let onChange: @MainActor (_ requiresDiscovery: Bool) -> Void
     private var sources: [String: DispatchSourceFileSystemObject] = [:]
     private var pendingNotification: Task<Void, Never>?
+    private var transcriptPaths: [String] = []
+    private var pendingRequiresDiscovery = false
 
-    init(onChange: @escaping @MainActor () -> Void) {
+    init(onChange: @escaping @MainActor (_ requiresDiscovery: Bool) -> Void) {
         self.onChange = onChange
     }
 
     func update(transcriptPaths: [String], now: Date = Date()) {
+        self.transcriptPaths = transcriptPaths
         let desiredPaths = CodexSessionWatchPaths.existingPaths(
             transcriptPaths: transcriptPaths,
             now: now)
@@ -87,29 +108,37 @@ final class CodexSessionChangeMonitor {
     func stop() {
         self.pendingNotification?.cancel()
         self.pendingNotification = nil
+        self.pendingRequiresDiscovery = false
         self.stopSources()
     }
 
-    private func scheduleNotification() {
+    private func scheduleNotification(requiresDiscovery: Bool) {
+        self.pendingRequiresDiscovery = self.pendingRequiresDiscovery || requiresDiscovery
         guard self.pendingNotification == nil else { return }
         self.pendingNotification = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(200))
             guard !Task.isCancelled, let self else { return }
             self.pendingNotification = nil
-            self.onChange()
+            let pendingRequiresDiscovery = self.pendingRequiresDiscovery
+            self.pendingRequiresDiscovery = false
+            self.onChange(pendingRequiresDiscovery)
         }
     }
 
     private func sourceDidChange(at path: String) {
+        var requiresDiscovery = CodexSessionWatchPaths.requiresDiscovery(
+            for: path,
+            transcriptPaths: self.transcriptPaths)
         if let source = self.sources[path],
            source.data.contains(.delete) ||
            source.data.contains(.rename) ||
            source.data.contains(.revoke)
         {
+            requiresDiscovery = true
             source.cancel()
             self.sources.removeValue(forKey: path)
         }
-        self.scheduleNotification()
+        self.scheduleNotification(requiresDiscovery: requiresDiscovery)
     }
 
     private func stopSources() {

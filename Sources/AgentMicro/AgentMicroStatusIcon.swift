@@ -16,8 +16,9 @@ enum AgentMicroStatusIcon {
         AgentMicroIconSlot(column: 1, row: 1),
         AgentMicroIconSlot(column: 0, row: 1),
     ]
-    static let animationFramesPerSlot = 9
-    static let animationFrameInterval: TimeInterval = 0.07
+    static let animationFramesPerSlot = 5
+    static let animationFrameInterval: TimeInterval = 0.25
+    static let animationTimerTolerance: TimeInterval = 0.05
     static let blockSize = NSSize(width: 5.5, height: 4)
     static let horizontalStep: CGFloat = 6.5
     static let verticalStep: CGFloat = 5.5
@@ -49,9 +50,19 @@ enum AgentMicroStatusIcon {
             }
             return true
         }
+        image.cacheMode = .always
         image.isTemplate = false
         image.accessibilityDescription = AgentMicroLocalization.text("accessibility.taskStatus")
         return image
+    }
+
+    static func statusItemImages(states: [CodexTaskState], animated: Bool) -> [NSImage] {
+        guard animated else {
+            return [self.statusItemImage(states: states, animationPhase: nil)]
+        }
+        return (0..<self.animationFrameCount(for: states)).map { phase in
+            self.statusItemImage(states: states, animationPhase: phase)
+        }
     }
 
     static func animatedSlotIndices(for states: [CodexTaskState]) -> [Int] {

@@ -208,8 +208,19 @@ struct CodexEnhancedStatusTracker {
 @MainActor
 final class CodexEnhancedStatusReader {
     private static let maximumElementCount = 1000
+    nonisolated static let minimumScanInterval: TimeInterval = 1
+    private var lastScanAt: Date?
+    private var cachedSnapshot: CodexEnhancedStatusSnapshot?
 
-    func snapshot(for tasks: [CodexTaskObservation]) -> CodexEnhancedStatusSnapshot? {
+    func snapshot(
+        for tasks: [CodexTaskObservation],
+        now: Date = Date()) -> CodexEnhancedStatusSnapshot?
+    {
+        if Self.shouldReuseCachedSnapshot(lastScanAt: self.lastScanAt, now: now) {
+            return self.cachedSnapshot
+        }
+        self.lastScanAt = now
+        self.cachedSnapshot = nil
         guard AgentMicroAccessibilityAccess.isTrusted,
               let application = NSRunningApplication.runningApplications(
                   withBundleIdentifier: SessionWindowFocuser.codexApplicationBundleIdentifier)
@@ -227,11 +238,23 @@ final class CodexEnhancedStatusReader {
             windowTitle: evidence.windowTitle,
             selectedLabels: evidence.selectedLabels)
         guard selectedSessionKey != nil else { return nil }
-        return CodexEnhancedStatusSnapshot(
+        let snapshot = CodexEnhancedStatusSnapshot(
             selectedSessionKey: selectedSessionKey,
             stateOverride: CodexEnhancedStatusResolver.stateOverride(
                 buttonLabels: evidence.buttonLabels,
                 alertLabels: evidence.alertLabels))
+        self.cachedSnapshot = snapshot
+        return snapshot
+    }
+
+    func resetCache() {
+        self.lastScanAt = nil
+        self.cachedSnapshot = nil
+    }
+
+    nonisolated static func shouldReuseCachedSnapshot(lastScanAt: Date?, now: Date) -> Bool {
+        guard let lastScanAt else { return false }
+        return now.timeIntervalSince(lastScanAt) < self.minimumScanInterval
     }
 
     private struct AccessibilityEvidence {
@@ -261,8 +284,10 @@ final class CodexEnhancedStatusReader {
             let insideAlert = pending.insideAlert ||
                 role == kAXSheetRole ||
                 subrole == kAXDialogSubrole
-            let labels = self.labels(for: pending.element)
-            if self.boolAttribute(kAXSelectedAttribute, from: pending.element) == true {
+            let isSelected = self.boolAttribute(kAXSelectedAttribute, from: pending.element) == true
+            let shouldReadLabels = isSelected || role == kAXButtonRole || insideAlert
+            let labels = shouldReadLabels ? self.labels(for: pending.element) : []
+            if isSelected {
                 evidence.selectedLabels.append(contentsOf: labels)
             }
             if role == kAXButtonRole {

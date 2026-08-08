@@ -1,3 +1,4 @@
+import CodexBarCore
 import Foundation
 import Testing
 @testable import AgentMicro
@@ -9,13 +10,14 @@ struct AgentMicroRefreshPolicyTests {
         #expect(AgentMicroSessionPolicy.scannerConfiguration.includeCodexGuardianParents)
         #expect(AgentMicroSessionPolicy.scannerConfiguration.fileOnlyWindow == 24 * 60 * 60)
         #expect(AgentMicroSessionPolicy.scannerConfiguration.requireUnambiguousCodexProcessOwnership)
+        #expect(AgentMicroSessionPolicy.scannerConfiguration.providerScope == .codexOnly)
     }
 
     @Test
-    func `desktop app keeps polling responsive without assigning its PID to a task`() {
+    func `desktop app uses file events with a bounded safety poll`() {
         #expect(AgentMicroRefreshPolicy.interval(
             tasks: [],
-            isDesktopAppRunning: true) == .seconds(2))
+            isDesktopAppRunning: true) == .seconds(15))
     }
 
     @Test
@@ -25,10 +27,10 @@ struct AgentMicroRefreshPolicyTests {
 
         #expect(AgentMicroRefreshPolicy.interval(
             tasks: [working],
-            isDesktopAppRunning: false) == .seconds(2))
+            isDesktopAppRunning: false) == .seconds(15))
         #expect(AgentMicroRefreshPolicy.interval(
             tasks: [processBacked],
-            isDesktopAppRunning: false) == .seconds(2))
+            isDesktopAppRunning: false) == .seconds(15))
     }
 
     @Test
@@ -37,7 +39,21 @@ struct AgentMicroRefreshPolicyTests {
 
         #expect(AgentMicroRefreshPolicy.interval(
             tasks: [done],
-            isDesktopAppRunning: false) == .seconds(5))
+            isDesktopAppRunning: false) == .seconds(30))
+    }
+
+    @Test
+    func `overlapping safety polls are dropped while events request one follow up`() {
+        #expect(!AgentMicroRefreshPolicy.shouldQueueFollowUp(
+            whileRefreshIsRunning: true,
+            trigger: .polling))
+        #expect(AgentMicroRefreshPolicy.shouldQueueFollowUp(
+            whileRefreshIsRunning: true,
+            trigger: .event))
+        #expect(!AgentMicroRefreshPolicy.shouldQueueFollowUp(
+            whileRefreshIsRunning: false,
+            trigger: .event))
+        #expect(AgentMicroRefreshPolicy.discoveryEventDelay == .seconds(2))
     }
 
     @Test
@@ -123,19 +139,45 @@ struct AgentMicroRefreshPolicyTests {
         try Data().write(to: rollout)
         let globalState = root.appendingPathComponent(".codex-global-state.json")
         try Data("{}".utf8).write(to: globalState)
+        let database = root.appendingPathComponent("state_5.sqlite")
+        try Data().write(to: database)
+        let databaseWAL = URL(fileURLWithPath: database.path + "-wal")
+        try Data().write(to: databaseWAL)
 
+        let environment = [
+            "CODEX_HOME": root.path,
+            "HOME": root.deletingLastPathComponent().path,
+        ]
         let paths = CodexSessionWatchPaths.existingPaths(
             transcriptPaths: [rollout.path],
             now: now,
-            environment: [
-                "CODEX_HOME": root.path,
-                "HOME": root.deletingLastPathComponent().path,
-            ],
+            environment: environment,
             fileManager: fileManager)
 
         #expect(paths.contains(root.appendingPathComponent("sessions").path))
         #expect(paths.contains(dayDirectory.path))
         #expect(paths.contains(rollout.path))
         #expect(paths.contains(globalState.path))
+        let selectedDatabase = CodexThreadMetadataReader(
+            codexHomeDirectory: root,
+            environment: ["CODEX_HOME": root.path]).databaseURL.path
+        #expect(paths.contains(selectedDatabase))
+        #expect(paths.contains(selectedDatabase + "-wal"))
+        #expect(!CodexSessionWatchPaths.requiresDiscovery(
+            for: rollout.path,
+            transcriptPaths: [rollout.path],
+            environment: environment))
+        #expect(!CodexSessionWatchPaths.requiresDiscovery(
+            for: globalState.path,
+            transcriptPaths: [rollout.path],
+            environment: environment))
+        #expect(CodexSessionWatchPaths.requiresDiscovery(
+            for: selectedDatabase + "-wal",
+            transcriptPaths: [rollout.path],
+            environment: environment))
+        #expect(CodexSessionWatchPaths.requiresDiscovery(
+            for: dayDirectory.path,
+            transcriptPaths: [rollout.path],
+            environment: environment))
     }
 }
