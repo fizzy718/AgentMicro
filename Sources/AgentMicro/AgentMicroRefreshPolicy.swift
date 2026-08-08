@@ -1,13 +1,26 @@
 import Foundation
 
+enum AgentMicroRefreshTrigger: Equatable, Sendable {
+    case polling
+    case event
+}
+
 enum AgentMicroRefreshPolicy {
-    static let activeInterval: Duration = .seconds(2)
-    static let idleInterval: Duration = .seconds(5)
+    static let activeInterval: Duration = .seconds(15)
+    static let idleInterval: Duration = .seconds(30)
+    static let discoveryEventDelay: Duration = .seconds(2)
     static let reconciliationDelays: [Duration] = [
         .milliseconds(150),
         .milliseconds(350),
         .milliseconds(800),
     ]
+
+    static func shouldQueueFollowUp(
+        whileRefreshIsRunning: Bool,
+        trigger: AgentMicroRefreshTrigger) -> Bool
+    {
+        whileRefreshIsRunning && trigger == .event
+    }
 
     static func interval(
         tasks: [CodexTaskObservation],

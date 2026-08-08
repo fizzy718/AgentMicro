@@ -4,6 +4,14 @@ import Foundation
 
 @MainActor
 final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+    private struct MenuContentFingerprint: Equatable {
+        let sessionKey: String
+        let title: String
+        let subtitle: String
+        let state: CodexTaskState
+        let usesFastModel: Bool
+    }
+
     private let scanner = LocalAgentSessionScanner(config: AgentMicroSessionPolicy.scannerConfiguration)
     private let taskStateEngine = CodexTaskStateEngine()
     private let settings = AgentMicroSettings()
@@ -24,15 +32,21 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     private var reconciliationTask: Task<Void, Never>?
     private var reconciliationRequestedWhileRunning = false
     private var reconciliationBurstTask: Task<Void, Never>?
+    private var discoveryRefreshTask: Task<Void, Never>?
     private var pollingTask: Task<Void, Never>?
     private var statusAnimationTimer: Timer?
     private var menuDurationTimer: Timer?
     private var menuOutsideClickMonitor: Any?
     private var applicationResignObserver: NSObjectProtocol?
     private var statusAnimationPhase = 0
+    private var statusAnimationStates: [CodexTaskState] = []
+    private var statusAnimationFrames: [NSImage] = []
+    private var renderedStatusTooltip: String?
+    private var renderedMenuFingerprint: [MenuContentFingerprint]?
+    private var renderedMenuWasInitialScanComplete: Bool?
     private var isMenuOpen = false
-    private lazy var sessionChangeMonitor = CodexSessionChangeMonitor { [weak self] in
-        self?.sessionFilesDidChange()
+    private lazy var sessionChangeMonitor = CodexSessionChangeMonitor { [weak self] requiresDiscovery in
+        self?.sessionFilesDidChange(requiresDiscovery: requiresDiscovery)
     }
 
     func applicationDidFinishLaunching(_: Notification) {
@@ -43,7 +57,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
             self.settingsWindowController?.refreshLocalization()
             self.reconcileKnownSessions()
             self.updateStatusItem()
-            self.rebuildMenu()
+            self.rebuildMenu(force: true)
         }
         self.configureStatusItem()
         self.rebuildMenu()
@@ -60,6 +74,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         self.refreshTask?.cancel()
         self.reconciliationTask?.cancel()
         self.reconciliationBurstTask?.cancel()
+        self.discoveryRefreshTask?.cancel()
         self.pollingTask?.cancel()
         self.statusAnimationTimer?.invalidate()
         self.menuDurationTimer?.invalidate()
@@ -69,6 +84,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
 
     func menuWillOpen(_: NSMenu) {
         self.isMenuOpen = true
+        self.rebuildMenu(force: true)
         self.startMenuDismissalMonitoring()
         self.startMenuDurationTimerIfNeeded()
         self.reconcileKnownSessions()
@@ -133,7 +149,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         self.pollingTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 guard let self else { return }
-                self.refresh()
+                self.refresh(trigger: .polling)
                 let interval = AgentMicroRefreshPolicy.interval(
                     tasks: self.tasks,
                     isDesktopAppRunning: !NSRunningApplication.runningApplications(
@@ -143,9 +159,14 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         }
     }
 
-    private func refresh() {
+    private func refresh(trigger: AgentMicroRefreshTrigger = .event) {
         guard self.refreshTask == nil else {
-            self.refreshRequestedWhileRunning = true
+            if AgentMicroRefreshPolicy.shouldQueueFollowUp(
+                whileRefreshIsRunning: true,
+                trigger: trigger)
+            {
+                self.refreshRequestedWhileRunning = true
+            }
             return
         }
         let scanner = self.scanner
@@ -164,7 +185,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
             self.applyTasks(tasks)
             if self.refreshRequestedWhileRunning {
                 self.refreshRequestedWhileRunning = false
-                self.refresh()
+                self.refresh(trigger: .event)
             }
         }
     }
@@ -175,13 +196,11 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
             preferences: self.settings.preferences,
             readSessionKeys: self.effectiveReadSessionKeys(for: self.tasks))
         let activeCount = rows.count(where: \.isActive)
-        let hasAnimatedSlot = !AgentMicroStatusIcon.animatedSlotIndices(for: rows.map(\.state)).isEmpty
+        let states = rows.map(\.state)
+        let hasAnimatedSlot = !AgentMicroStatusIcon.animatedSlotIndices(for: states).isEmpty
         let shouldAnimate = hasAnimatedSlot &&
             !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        self.setStatusAnimationEnabled(shouldAnimate)
-        self.drawStatusItemImage(rows: rows)
-        self.statusItem?.button?.title = ""
-        self.statusItem?.button?.toolTip = if rows.isEmpty {
+        let tooltip = if rows.isEmpty {
             AgentMicroLocalization.text("status.tooltip.none")
         } else if activeCount > 0 {
             AgentMicroLocalization.text(
@@ -193,16 +212,45 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         } else {
             AgentMicroLocalization.text("status.tooltip.recent.other", arguments: rows.count)
         }
+        let needsAnimationFrames = states != self.statusAnimationStates
+            || self.statusAnimationFrames.isEmpty
+            || shouldAnimate != (self.statusAnimationFrames.count > 1)
+            || tooltip != self.renderedStatusTooltip
+        guard needsAnimationFrames else { return }
+        self.renderedStatusTooltip = tooltip
+        self.statusAnimationStates = states
+        self.statusAnimationPhase = 0
+        self.statusAnimationFrames = AgentMicroStatusIcon.statusItemImages(
+            states: states,
+            animated: shouldAnimate)
+        self.setStatusAnimationEnabled(shouldAnimate)
+        self.drawStatusItemImage()
+        self.statusItem?.button?.title = ""
+        self.statusItem?.button?.toolTip = tooltip
     }
 
-    private func rebuildMenu(now: Date = Date()) {
-        self.menu.removeAllItems()
-
+    private func rebuildMenu(now: Date = Date(), force: Bool = false) {
         let rows = AgentMicroMenuModel.rows(
             from: self.tasks,
             preferences: self.settings.preferences,
             readSessionKeys: self.effectiveReadSessionKeys(for: self.tasks, now: now),
             now: now)
+        let fingerprint = rows.map {
+            MenuContentFingerprint(
+                sessionKey: $0.sessionKey,
+                title: $0.title,
+                subtitle: $0.subtitle,
+                state: $0.state,
+                usesFastModel: $0.usesFastModel)
+        }
+        guard force
+            || fingerprint != self.renderedMenuFingerprint
+            || self.renderedMenuWasInitialScanComplete != self.hasCompletedInitialScan
+        else { return }
+        self.renderedMenuFingerprint = fingerprint
+        self.renderedMenuWasInitialScanComplete = self.hasCompletedInitialScan
+        self.menu.removeAllItems()
+
         let activeCount = rows.count(where: \.isActive)
         let headline = activeCount > 0
             ? AgentMicroLocalization.text("menu.headline.active", arguments: activeCount)
@@ -244,6 +292,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
                 selector: #selector(self.advanceStatusAnimation),
                 userInfo: nil,
                 repeats: true)
+            timer.tolerance = AgentMicroStatusIcon.animationTimerTolerance
             RunLoop.main.add(timer, forMode: .common)
             self.statusAnimationTimer = timer
             return
@@ -254,26 +303,20 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         self.statusAnimationPhase = 0
     }
 
-    private func drawStatusItemImage(rows: [AgentMicroMenuRow]? = nil) {
-        let currentRows = rows ?? AgentMicroMenuModel.rows(
-            from: self.tasks,
-            preferences: self.settings.preferences,
-            readSessionKeys: self.effectiveReadSessionKeys(for: self.tasks))
-        self.statusItem?.button?.image = AgentMicroStatusIcon.statusItemImage(
-            states: currentRows.map(\.state),
-            animationPhase: self.statusAnimationTimer == nil ? nil : self.statusAnimationPhase)
+    private func drawStatusItemImage() {
+        guard !self.statusAnimationFrames.isEmpty else { return }
+        let frameIndex = self.statusAnimationTimer == nil
+            ? 0
+            : self.statusAnimationPhase % self.statusAnimationFrames.count
+        self.statusItem?.button?.image = self.statusAnimationFrames[frameIndex]
     }
 
     @objc
     private func advanceStatusAnimation() {
-        let rows = AgentMicroMenuModel.rows(
-            from: self.tasks,
-            preferences: self.settings.preferences,
-            readSessionKeys: self.effectiveReadSessionKeys(for: self.tasks))
-        let states = rows.map(\.state)
+        guard !self.statusAnimationFrames.isEmpty else { return }
         self.statusAnimationPhase = (self.statusAnimationPhase + 1) %
-            AgentMicroStatusIcon.animationFrameCount(for: states)
-        self.drawStatusItemImage(rows: rows)
+            self.statusAnimationFrames.count
+        self.drawStatusItemImage()
     }
 
     private func addMenuFooter() {
@@ -417,7 +460,7 @@ extension AgentMicroAppDelegate {
             .enhancedStatusDetection,
             AgentMicroAccessibilityAccess.isTrusted
         {
-            self.enhancedStatusReader.snapshot(for: tasks)
+            self.enhancedStatusReader.snapshot(for: tasks, now: now)
         } else {
             nil
         }
@@ -425,6 +468,7 @@ extension AgentMicroAppDelegate {
             !AgentMicroAccessibilityAccess.isTrusted
         {
             self.enhancedStatusTracker.reset()
+            self.enhancedStatusReader.resetCache()
         }
         if let selectedSessionKey = enhancedSnapshot?.selectedSessionKey,
            let selectedTask = tasks.first(where: { $0.sessionKey == selectedSessionKey })
@@ -467,10 +511,16 @@ extension AgentMicroAppDelegate {
             now: now)
     }
 
-    private func sessionFilesDidChange() {
+    private func sessionFilesDidChange(requiresDiscovery: Bool) {
         self.reconcileKnownSessions()
-        self.refresh()
         self.scheduleReconciliationBurst()
+        guard requiresDiscovery, self.discoveryRefreshTask == nil else { return }
+        self.discoveryRefreshTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(for: AgentMicroRefreshPolicy.discoveryEventDelay)
+            guard !Task.isCancelled, let self else { return }
+            self.discoveryRefreshTask = nil
+            self.refresh(trigger: .event)
+        }
     }
 
     private func scheduleReconciliationBurst() {

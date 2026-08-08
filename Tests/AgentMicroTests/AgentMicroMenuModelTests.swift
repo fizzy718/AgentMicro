@@ -367,7 +367,11 @@ struct AgentMicroMenuModelTests {
             forSlotAt: 0,
             animatedSlotIndices: [],
             animationPhase: middleOfFirstPulse) == 1)
-        #expect(AgentMicroStatusIcon.animationFrameInterval == 0.07)
+        #expect(AgentMicroStatusIcon.animationFrameInterval == 0.25)
+        #expect(AgentMicroStatusIcon.animationTimerTolerance == 0.05)
+        #expect(AgentMicroStatusIcon.statusItemImages(states: states, animated: false).count == 1)
+        #expect(AgentMicroStatusIcon.statusItemImages(states: states, animated: true).count ==
+            4 * AgentMicroStatusIcon.animationFramesPerSlot)
     }
 
     @Test

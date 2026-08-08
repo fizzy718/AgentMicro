@@ -9,6 +9,50 @@ import Testing
 
 struct CodexSessionRolloutTests {
     @Test
+    func `rollout metadata cache survives appends and reparses truncation`() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("CodexRolloutMetadataCacheTests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let url = root.appendingPathComponent("rollout-cache.jsonl")
+        let first =
+            "{\"type\":\"session_meta\",\"payload\":{\"id\":\"a-very-long-session-identifier\",\"cwd\":\"/repo\"}}\n"
+        try first.write(to: url, atomically: true, encoding: .utf8)
+        let cache = CodexRolloutMetadataCache(maximumEntryCount: 4)
+
+        #expect(cache.metadata(for: url)?.sessionID == "a-very-long-session-identifier")
+        let handle = try FileHandle(forWritingTo: url)
+        try handle.seekToEnd()
+        try handle.write(contentsOf: Data("{\"type\":\"event_msg\"}\n".utf8))
+        try handle.close()
+        #expect(cache.metadata(for: url)?.sessionID == "a-very-long-session-identifier")
+
+        let replacement = "{\"type\":\"session_meta\",\"payload\":{\"id\":\"new\",\"cwd\":\"/repo\"}}\n"
+        try replacement.write(to: url, atomically: false, encoding: .utf8)
+        #expect(cache.metadata(for: url)?.sessionID == "new")
+    }
+
+    @Test
+    func `codex only scanner excludes Claude before session correlation`() async {
+        let scanner = LocalAgentSessionScanner(
+            config: SessionScanConfig(providerScope: .codexOnly),
+            processOutputProvider: { _ in
+                """
+                201 1 Tue Jul 28 09:03:00 2026 /usr/local/bin/codex exec
+                202 1 Tue Jul 28 09:03:00 2026 /usr/local/bin/claude
+                """
+            },
+            cwdProvider: { _, _ in [201: "/codex", 202: "/claude"] })
+
+        let sessions = await scanner.scan(
+            environment: ["HOME": "/tmp", "PATH": "/usr/bin:/bin"],
+            includeFileOnlySessions: false)
+
+        #expect(sessions.map(\.provider) == [.codex])
+        #expect(sessions.map(\.pid) == [201])
+    }
+
+    @Test
     func `first rollout line maps to file only agent session`() throws {
         let url = try AgentSessionParserTests.fixtureURL("agent-session-rollout", extension: "jsonl")
         let metadata = try #require(CodexRolloutFirstLineParser.read(from: url))
@@ -132,6 +176,94 @@ struct CodexSessionRolloutTests {
                 "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
             ])
         #expect(rescanned.first(where: { $0.id == "bounded-rollout-2" })?.lastActivityAt == now)
+    }
+
+    @Test
+    func `local scanner discovers a resumed rollout from an old creation directory`() async throws {
+        let fileManager = FileManager.default
+        let root = fileManager.temporaryDirectory
+            .appendingPathComponent("CodexSessionRolloutTests-resumed-\(UUID().uuidString)", isDirectory: true)
+        defer { try? fileManager.removeItem(at: root) }
+        let now = Date(timeIntervalSince1970: 1_785_240_000)
+        let codexHome = root.appendingPathComponent("codex-home", isDirectory: true)
+        let oldDirectory = codexHome
+            .appendingPathComponent("sessions/2026/06/01", isDirectory: true)
+        try fileManager.createDirectory(at: oldDirectory, withIntermediateDirectories: true)
+        let rolloutURL = oldDirectory.appendingPathComponent("rollout-resumed.jsonl")
+        try """
+        {"type":"session_meta","payload":{"id":"resumed","session_id":"resumed","cwd":"/repo",\
+        "originator":"Codex Desktop","source":"vscode"}}
+
+        """.write(to: rolloutURL, atomically: true, encoding: .utf8)
+        try fileManager.setAttributes([.modificationDate: now], ofItemAtPath: rolloutURL.path)
+        try Self.createRecentThreadDatabase(
+            at: codexHome.appendingPathComponent("state_5.sqlite"),
+            rows: [
+                (id: "resumed", path: rolloutURL.path, updatedAt: now, archived: false),
+            ])
+        let scanner = LocalAgentSessionScanner(config: SessionScanConfig(
+            fileOnlyWindow: 24 * 60 * 60,
+            maxProcessCount: 0,
+            maxCodexRolloutCount: 8,
+            maxClaudeTranscriptCountPerProject: 0))
+
+        let sessions = await scanner.scan(now: now, environment: [
+            "CODEX_HOME": codexHome.path,
+            "HOME": root.path,
+            "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+        ])
+
+        #expect(sessions.map(\.id) == ["resumed"])
+        #expect(sessions.first?.lastActivityAt == now)
+        #expect(sessions.first?.transcriptPath == rolloutURL.standardizedFileURL.path)
+    }
+
+    @Test
+    func `indexed rollout discovery rejects archived stale and escaping paths`() async throws {
+        let fileManager = FileManager.default
+        let root = fileManager.temporaryDirectory
+            .appendingPathComponent("CodexSessionRolloutTests-index-guard-\(UUID().uuidString)", isDirectory: true)
+        defer { try? fileManager.removeItem(at: root) }
+        let now = Date(timeIntervalSince1970: 1_785_240_000)
+        let codexHome = root.appendingPathComponent("codex-home", isDirectory: true)
+        let oldDirectory = codexHome
+            .appendingPathComponent("sessions/2026/06/01", isDirectory: true)
+        try fileManager.createDirectory(at: oldDirectory, withIntermediateDirectories: true)
+        let archivedURL = oldDirectory.appendingPathComponent("rollout-archived.jsonl")
+        let staleURL = oldDirectory.appendingPathComponent("rollout-stale.jsonl")
+        let escapingURL = root.appendingPathComponent("rollout-escaping.jsonl")
+        for (id, url, modifiedAt) in [
+            ("archived", archivedURL, now),
+            ("stale", staleURL, now.addingTimeInterval(-3601)),
+            ("escaping", escapingURL, now),
+        ] {
+            try """
+            {"type":"session_meta","payload":{"id":"\(id)","session_id":"\(id)","cwd":"/repo",\
+            "originator":"Codex Desktop","source":"vscode"}}
+
+            """.write(to: url, atomically: true, encoding: .utf8)
+            try fileManager.setAttributes([.modificationDate: modifiedAt], ofItemAtPath: url.path)
+        }
+        try Self.createRecentThreadDatabase(
+            at: codexHome.appendingPathComponent("state_5.sqlite"),
+            rows: [
+                (id: "archived", path: archivedURL.path, updatedAt: now, archived: true),
+                (id: "stale", path: staleURL.path, updatedAt: now, archived: false),
+                (id: "escaping", path: escapingURL.path, updatedAt: now, archived: false),
+            ])
+        let scanner = LocalAgentSessionScanner(config: SessionScanConfig(
+            fileOnlyWindow: 60 * 60,
+            maxProcessCount: 0,
+            maxCodexRolloutCount: 8,
+            maxClaudeTranscriptCountPerProject: 0))
+
+        let sessions = await scanner.scan(now: now, environment: [
+            "CODEX_HOME": codexHome.path,
+            "HOME": root.path,
+            "PATH": "/usr/bin:/bin:/usr/sbin:/sbin",
+        ])
+
+        #expect(sessions.isEmpty)
     }
 
     @Test
@@ -602,6 +734,47 @@ struct CodexSessionRolloutTests {
         sqlite3_bind_text(statement, 1, sessionID, -1, transient)
         sqlite3_bind_text(statement, 2, rolloutPath, -1, transient)
         guard sqlite3_step(statement) == SQLITE_DONE else { throw SQLiteFixtureError.exec }
+    }
+
+    private static func createRecentThreadDatabase(
+        at url: URL,
+        rows: [(id: String, path: String, updatedAt: Date, archived: Bool)]) throws
+    {
+        var database: OpaquePointer?
+        guard sqlite3_open(url.path, &database) == SQLITE_OK, let database else {
+            throw SQLiteFixtureError.open
+        }
+        defer { sqlite3_close(database) }
+        guard sqlite3_exec(
+            database,
+            "CREATE TABLE threads (" +
+                "id TEXT PRIMARY KEY, title TEXT, agent_path TEXT, rollout_path TEXT, " +
+                "archived INTEGER, updated_at INTEGER);",
+            nil,
+            nil,
+            nil) == SQLITE_OK
+        else { throw SQLiteFixtureError.exec }
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(
+            database,
+            "INSERT INTO threads VALUES (?1, ?2, NULL, ?3, ?4, ?5);",
+            -1,
+            &statement,
+            nil) == SQLITE_OK,
+            let statement
+        else { throw SQLiteFixtureError.exec }
+        defer { sqlite3_finalize(statement) }
+        let transient = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+        for row in rows {
+            sqlite3_reset(statement)
+            sqlite3_clear_bindings(statement)
+            sqlite3_bind_text(statement, 1, row.id, -1, transient)
+            sqlite3_bind_text(statement, 2, row.id, -1, transient)
+            sqlite3_bind_text(statement, 3, row.path, -1, transient)
+            sqlite3_bind_int(statement, 4, row.archived ? 1 : 0)
+            sqlite3_bind_int64(statement, 5, Int64(row.updatedAt.timeIntervalSince1970))
+            guard sqlite3_step(statement) == SQLITE_DONE else { throw SQLiteFixtureError.exec }
+        }
     }
 
     private enum SQLiteFixtureError: Error {

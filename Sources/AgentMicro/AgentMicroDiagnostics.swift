@@ -7,7 +7,8 @@ enum AgentMicroSessionPolicy {
             fileOnlyWindow: 24 * 60 * 60,
             includeCodexSubagents: false,
             includeCodexGuardianParents: true,
-            requireUnambiguousCodexProcessOwnership: true)
+            requireUnambiguousCodexProcessOwnership: true,
+            providerScope: .codexOnly)
     }
 }
 
