@@ -61,6 +61,11 @@ public struct AgentSession: Codable, Equatable, Sendable, Identifiable {
 }
 
 public struct SessionScanConfig: Equatable, Sendable {
+    public enum ProviderScope: Equatable, Sendable {
+        case all
+        case codexOnly
+    }
+
     public var activeWindow: TimeInterval
     public var fileOnlyWindow: TimeInterval
     public var maxProcessCount: Int
@@ -73,6 +78,7 @@ public struct SessionScanConfig: Equatable, Sendable {
     public var includeCodexSubagents: Bool
     public var includeCodexGuardianParents: Bool
     public var requireUnambiguousCodexProcessOwnership: Bool
+    public var providerScope: ProviderScope
 
     public init(
         activeWindow: TimeInterval = 120,
@@ -86,7 +92,8 @@ public struct SessionScanConfig: Equatable, Sendable {
         adaptiveDirectoryScanBudget: TimeInterval = 0.15,
         includeCodexSubagents: Bool = true,
         includeCodexGuardianParents: Bool = false,
-        requireUnambiguousCodexProcessOwnership: Bool = false)
+        requireUnambiguousCodexProcessOwnership: Bool = false,
+        providerScope: ProviderScope = .all)
     {
         self.activeWindow = activeWindow
         self.fileOnlyWindow = fileOnlyWindow
@@ -100,6 +107,7 @@ public struct SessionScanConfig: Equatable, Sendable {
         self.includeCodexSubagents = includeCodexSubagents
         self.includeCodexGuardianParents = includeCodexGuardianParents
         self.requireUnambiguousCodexProcessOwnership = requireUnambiguousCodexProcessOwnership
+        self.providerScope = providerScope
     }
 
     public func state(lastActivityAt: Date?, now: Date, hasLiveProcess: Bool) -> AgentSession.State {
@@ -203,10 +211,28 @@ public struct AgentProcessRecord: Equatable, Sendable {
 
 public enum AgentPSOutputParser {
     public static func parse(_ output: String) -> [AgentProcessRecord] {
+        self.parse(lines: output.split(whereSeparator: \ .isNewline))
+    }
+
+    public static func parseAgentCandidates(
+        _ output: String,
+        includeClaude: Bool = true) -> [AgentProcessRecord]
+    {
+        let candidateLines = output.split(whereSeparator: \ .isNewline).filter { rawLine in
+            let lowercased = rawLine.lowercased()
+            return lowercased.contains("codex") ||
+                (includeClaude &&
+                    (lowercased.contains("claude") || lowercased.contains("disclaimer")))
+        }
+        return self.parse(lines: candidateLines)
+    }
+
+    private static func parse<S: Sequence>(lines: S) -> [AgentProcessRecord]
+    where S.Element: StringProtocol {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "EEE MMM d HH:mm:ss yyyy"
-        return output.split(whereSeparator: \ .isNewline).compactMap { rawLine -> AgentProcessRecord? in
+        return lines.compactMap { rawLine -> AgentProcessRecord? in
             let fields = rawLine.split(maxSplits: 7, omittingEmptySubsequences: true, whereSeparator: \ .isWhitespace)
             guard fields.count == 8,
                   let pid = Int32(fields[0]),

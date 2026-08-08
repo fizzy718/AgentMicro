@@ -2,6 +2,101 @@
 
 This log records the durable product and engineering decisions needed by international contributors.
 
+## 2026-08-09
+
+### `release`: prepared AgentMicro 0.1.4
+
+Changes:
+
+- Advanced the public version to `0.1.4` and build number to `5`.
+- Added versioned release notes covering resumed old-task rediscovery and bounded background resource use.
+
+Impact:
+
+- The next signed release will restore visibility for resumed tasks created outside the current scan window while
+  substantially reducing CPU and wakeups during active Codex writes.
+
+Validation:
+
+- The focused AgentMicro and scanner suites, `make check`, the full 732-selection sharded suite, and Release-mode
+  runtime sampling pass before release preparation.
+
+Known limitations:
+
+- Signing, notarization, release-asset verification, appcast publication, and live update-path verification remain
+  pending until the release completes from `main`.
+
+### `perf`: made task observation event-driven and bounded repeated work
+
+Changes:
+
+- Replaced 2/5-second fallback polling with 15/30-second safety intervals while preserving immediate debounced file,
+  unread-state, and thread-database event reconciliation.
+- Dropped overlapping safety polls while retaining one coalesced follow-up for real events.
+- Split watched changes into incremental known-rollout/unread reconciliation and 2-second-coalesced discovery for
+  session-directory or thread-index changes, preventing active JSONL writes from launching repeated full scans.
+- Filtered the full process snapshot to agent candidates before date parsing, selected Codex-only scanning for
+  AgentMicro, and cached immutable rollout first-line metadata across append-only updates.
+- Pre-rendered and cached five-frame status animation sequences, reduced status-bar redraws from about 14 to 4 per
+  second with wakeup tolerance, skipped unchanged native-menu reconstruction, and preserved the initial empty-scan
+  transition and explicit presentation/settings rebuilds.
+- Skipped status-item image and tooltip assignment entirely when their rendered content is unchanged.
+- Throttled optional Accessibility snapshots to one per second and limited label extraction to selected, button, and
+  alert elements while keeping bounded traversal and read-only behavior.
+
+Impact:
+
+- AgentMicro no longer schedules the next full scan immediately when a slower scan overlaps a safety tick.
+- Stable tasks avoid repeated rollout-header reads, menu-model/state-store work, image creation, and unnecessary
+  Accessibility label reads, reducing background CPU and wakeups without weakening watched-event responsiveness.
+
+Validation:
+
+- `AGENTMICRO_BUILD_ONLY=1 swift test --disable-automatic-resolution --filter AgentMicro` passes all 88 tests.
+- `swift test --disable-automatic-resolution --filter
+  'AgentSessionParserTests|CodexSessionRolloutTests|CodexThreadMetadataReaderTests'` passes all 35 focused tests.
+- `make check` passes with no formatting, lint, documentation, or release-pipeline findings.
+- `make test` passes all 732 test selections across 61 groups with no failures, retries, or timeouts.
+- A 25-second Release-mode sample spanning active rollout writes and a safety-scan window reports 0.7–4.2% AgentMicro
+  CPU in non-initial samples, down from the pre-change 30–74% range on the same host and workload. Steady resident
+  memory is approximately 30 MB versus the previous 24–25 MB; the bounded increase holds pre-rendered animation
+  frames.
+- A 5-second stack sample confirms that the main run loop is sleeping for the overwhelming majority of samples and
+  that known-rollout writes no longer continuously invoke full session discovery.
+
+Known limitations:
+
+- The Accessibility tree remains a bounded main-actor compatibility path when Enhanced Status Detection is enabled;
+  a notification-driven or dedicated-reader design needs cross-version evidence before adoption.
+- Stable host-normalized long-duration energy thresholds are not yet part of CI; this follow-up remains in the backlog.
+
+### `fix`: rediscovered resumed tasks from old creation-date directories
+
+Changes:
+
+- Supplemented the bounded current-date session scan with recently updated, unarchived rollout paths from Codex's local thread database.
+- Kept rollout modification time and structured events authoritative while rejecting non-rollout, non-regular, archived, stale, and path-escaping indexed candidates.
+- Added the selected Codex state database to the change monitor and deduplicated database and directory candidates.
+- Added focused coverage for recent-path queries, old-directory resume discovery, archived/stale/escaping candidates, and database watching.
+
+Impact:
+
+- A Codex conversation can resume from any older creation-date directory and reappear in AgentMicro without a fixed historical lookback or application restart.
+- Discovery remains bounded and local instead of recursively scanning the entire session archive on every refresh.
+
+Validation:
+
+- `swift test --disable-automatic-resolution --filter CodexSessionRolloutTests` passes all 17 focused tests.
+- `swift test --disable-automatic-resolution --filter CodexThreadMetadataReaderTests` passes all 9 focused tests.
+- `AGENTMICRO_BUILD_ONLY=1 swift test --disable-automatic-resolution --filter AgentMicroRefreshPolicyTests` passes all 8 focused tests.
+- `make check` passes with no formatting, lint, documentation, or release-pipeline findings.
+- A local redacted `AgentMicro --diagnose-once` scan rediscovered the previously omitted July 23 `multica` rollout after it was updated on August 9.
+- `make test` was run, but the existing live-power-state adaptive timer tests reject their expected timer advance while this host reports low-power mode; both failures reproduce without the scanner tests and are outside this change.
+
+Known limitations:
+
+- Codex's local thread database remains an undocumented compatibility surface; current-date directory discovery remains the fallback when the index is unavailable or incompatible.
+
 ## 2026-08-07
 
 ### `fix`: limited menu bar animation to activity and attention states

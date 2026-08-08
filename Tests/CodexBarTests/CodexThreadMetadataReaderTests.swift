@@ -47,6 +47,23 @@ struct CodexThreadMetadataReaderTests {
     }
 
     @Test
+    func `reader lists only recently updated unarchived rollout paths`() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("codex-thread-recent-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let databaseURL = root.appendingPathComponent("state_5.sqlite")
+        try Self.createRecentDatabase(at: databaseURL)
+        let reader = CodexThreadMetadataReader(databaseURL: databaseURL)
+
+        let paths = reader.recentRolloutPaths(
+            updatedSince: Date(timeIntervalSince1970: 200),
+            limit: 8)
+
+        #expect(paths == ["/tmp/recent.jsonl"])
+    }
+
+    @Test
     func `reader honors configured sqlite home before the environment`() throws {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("codex-thread-metadata-config-\(UUID().uuidString)", isDirectory: true)
@@ -221,6 +238,27 @@ struct CodexThreadMetadataReaderTests {
             archived INTEGER);
         INSERT INTO threads VALUES ('active', 'Active', NULL, '/tmp/active.jsonl', 0);
         INSERT INTO threads VALUES ('archived', 'Archived', NULL, '/tmp/archived.jsonl', 1);
+        """
+        guard sqlite3_exec(database, sql, nil, nil, nil) == SQLITE_OK else {
+            throw SQLiteError.exec
+        }
+    }
+
+    private static func createRecentDatabase(at url: URL) throws {
+        var database: OpaquePointer?
+        guard sqlite3_open(url.path, &database) == SQLITE_OK, let database else {
+            throw SQLiteError.open
+        }
+        defer { sqlite3_close(database) }
+        let sql = """
+        CREATE TABLE threads (
+            id TEXT PRIMARY KEY,
+            rollout_path TEXT,
+            archived INTEGER,
+            updated_at INTEGER);
+        INSERT INTO threads VALUES ('recent', '/tmp/recent.jsonl', 0, 300);
+        INSERT INTO threads VALUES ('old', '/tmp/old.jsonl', 0, 100);
+        INSERT INTO threads VALUES ('archived', '/tmp/archived.jsonl', 1, 400);
         """
         guard sqlite3_exec(database, sql, nil, nil, nil) == SQLITE_OK else {
             throw SQLiteError.exec

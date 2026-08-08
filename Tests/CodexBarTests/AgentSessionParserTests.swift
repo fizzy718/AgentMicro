@@ -19,6 +19,21 @@ struct AgentSessionParserTests {
     }
 
     @Test
+    func `candidate parser skips unrelated processes before parsing dates`() {
+        let output = """
+        1 0 invalid date fields that never parse /sbin/launchd
+        201 1 Tue Jul 28 09:03:00 2026 /usr/local/bin/codex exec
+        202 1 Tue Jul 28 09:03:00 2026 /usr/local/bin/claude
+        """
+
+        let codexOnly = AgentPSOutputParser.parseAgentCandidates(output, includeClaude: false)
+        let allAgents = AgentPSOutputParser.parseAgentCandidates(output)
+
+        #expect(codexOnly.map(\.pid) == [201])
+        #expect(allAgents.map(\.pid) == [201, 202])
+    }
+
+    @Test
     func `ps parser excludes Codex sandbox helpers while keeping real CLI tasks`() {
         let records = [
             AgentProcessRecord(

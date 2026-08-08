@@ -4,6 +4,21 @@ import Testing
 
 struct CodexEnhancedStatusTests {
     @Test
+    func `enhanced tree scans reuse a snapshot within the throttle window`() {
+        let scannedAt = Date(timeIntervalSince1970: 100)
+
+        #expect(CodexEnhancedStatusReader.shouldReuseCachedSnapshot(
+            lastScanAt: scannedAt,
+            now: scannedAt.addingTimeInterval(0.5)))
+        #expect(!CodexEnhancedStatusReader.shouldReuseCachedSnapshot(
+            lastScanAt: scannedAt,
+            now: scannedAt.addingTimeInterval(1)))
+        #expect(!CodexEnhancedStatusReader.shouldReuseCachedSnapshot(
+            lastScanAt: nil,
+            now: scannedAt))
+    }
+
+    @Test
     func `focused title resolves one exact task and rejects ambiguous projects`() {
         let target = CodexTaskStateTestSupport.observation(
             state: .unread,

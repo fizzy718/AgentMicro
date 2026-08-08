@@ -18,7 +18,9 @@ These projects are references, not automatically enabled AgentMicro providers.
 Capabilities reused or adapted:
 
 - macOS menu bar lifecycle, native menu presentation, and window activation.
-- Local Codex session and process discovery.
+- Local Codex session and process discovery, with bounded directory scanning plus database-indexed recovery of recently updated rollouts from old creation-date directories.
+- Candidate-first process parsing and reusable append-safe rollout-header metadata caching; AgentMicro selects the
+  Codex-only provider scope before session correlation while the shared scanner retains its multi-provider default.
 - Launch at login and application-level language overrides.
 - Sparkle framework integration and nested signing patterns.
 - A CodexBar-style settings sidebar and native macOS visual hierarchy.
@@ -30,6 +32,8 @@ AgentMicro-specific work:
 - Desktop unread-thread synchronization and optional read-only Accessibility evidence for exact visible selection, approval controls, and blocking error dialogs.
 - Tri-state Codex archive metadata that excludes archived threads before guardian recovery while bounding unknown state.
 - A 310-point task menu and six-slot status icon whose snake-ordered animation covers running and attention states.
+- Event-driven refresh with non-overlapping safety polls, content-fingerprinted menu rebuilds, cached animation state,
+  and throttled selective Accessibility label reads.
 - A first-launch five-color guide.
 - A separate bundle identity, version source, appcast, Ed25519 key, GitHub Release, and adaptive six-layer Icon Composer application icon.
 
@@ -106,7 +110,7 @@ The complete evidence model is maintained in [Codex Micro Functional Model](CODE
 ```text
 Codex process + rollout
         ↓
-CodexBar discovery
+CodexBar directory + local thread-index discovery
         ↓
 abtop-informed state reducer
         ↓

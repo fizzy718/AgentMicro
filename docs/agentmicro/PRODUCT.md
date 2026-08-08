@@ -39,6 +39,9 @@ Read state is completion-specific evidence, not a permanent task attribute. An e
 
 Task observation happens on the user’s Mac. AgentMicro does not require a hosted task backend.
 
+Local observation must also remain lightweight. Known filesystem and database changes drive refreshes; bounded safety
+polls exist only to recover missed events and must not keep the scanner continuously busy.
+
 ### Read-only first
 
 V1 observes and navigates. It does not approve actions, send answers, stop tasks, or mutate Codex state.
@@ -57,6 +60,7 @@ Desktop deep links, unread synchronization, optional Accessibility-backed status
 V1 includes:
 
 - Local Codex Desktop and CLI task discovery.
+- Dynamic rediscovery of recently active Codex threads when an old conversation is resumed.
 - Five visible task states.
 - Current-turn duration and fast-mode indication.
 - Project and task naming controls.
@@ -96,6 +100,9 @@ AgentMicro:
 
 - A user can distinguish idle, unread, thinking, needs-input, and error states at a glance.
 - Working tasks appear first, followed by the most recently changed tasks.
+- Resuming an unarchived task from an older creation-date directory makes it visible without restarting AgentMicro.
+- Normal idle operation does not continuously scan the process table, rollout headers, menu model, or Accessibility
+  tree; safety scans remain bounded and non-overlapping.
 - Thinking, unread, needs-input, and error blocks animate in the menu bar icon, following its two-row task order; idle blocks remain static.
 - A Desktop task opens the correct Codex conversation with one click.
 - Current-turn durations update once per second while the menu is open.

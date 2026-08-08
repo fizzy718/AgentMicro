@@ -20,6 +20,62 @@ final class FutureModificationDateClamp: @unchecked Sendable {
     }
 }
 
+final class CodexRolloutMetadataCache: @unchecked Sendable {
+    private struct Entry {
+        let fileNumber: UInt64?
+        var fileSize: UInt64
+        let metadata: CodexRolloutMetadata
+        var lastAccess: UInt64
+    }
+
+    private let lock = NSLock()
+    private var entries: [String: Entry] = [:]
+    private var accessCounter: UInt64 = 0
+    private let maximumEntryCount: Int
+
+    init(maximumEntryCount: Int = 256) {
+        self.maximumEntryCount = max(1, maximumEntryCount)
+    }
+
+    func metadata(for url: URL, fileManager: FileManager = .default) -> CodexRolloutMetadata? {
+        let path = url.standardizedFileURL.path
+        guard let attributes = try? fileManager.attributesOfItem(atPath: path),
+              let fileSize = (attributes[.size] as? NSNumber)?.uint64Value
+        else { return nil }
+        let fileNumber = (attributes[.systemFileNumber] as? NSNumber)?.uint64Value
+
+        if let cached = self.lock.withLock({ () -> CodexRolloutMetadata? in
+            guard var entry = self.entries[path],
+                  entry.fileNumber == fileNumber,
+                  fileSize >= entry.fileSize
+            else { return nil }
+            self.accessCounter &+= 1
+            entry.fileSize = fileSize
+            entry.lastAccess = self.accessCounter
+            self.entries[path] = entry
+            return entry.metadata
+        }) {
+            return cached
+        }
+
+        guard let metadata = CodexRolloutFirstLineParser.read(from: url) else { return nil }
+        self.lock.withLock {
+            self.accessCounter &+= 1
+            self.entries[path] = Entry(
+                fileNumber: fileNumber,
+                fileSize: fileSize,
+                metadata: metadata,
+                lastAccess: self.accessCounter)
+            if self.entries.count > self.maximumEntryCount,
+               let oldest = self.entries.min(by: { $0.value.lastAccess < $1.value.lastAccess })?.key
+            {
+                self.entries.removeValue(forKey: oldest)
+            }
+        }
+        return metadata
+    }
+}
+
 public struct LocalAgentSessionScanner: Sendable {
     typealias ProcessOutputProvider = @Sendable ([String: String]) async -> String
     typealias CWDProvider = @Sendable ([Int32], [String: String]) async -> [Int32: String]
@@ -43,6 +99,7 @@ public struct LocalAgentSessionScanner: Sendable {
 
     public let config: SessionScanConfig
     private let futureModificationDateClamp = FutureModificationDateClamp()
+    private let rolloutMetadataCache = CodexRolloutMetadataCache()
     private let processOutputProvider: ProcessOutputProvider?
     private let cwdProvider: CWDProvider?
     private let didVisitDirectoryEntry: (@Sendable () -> Void)?
@@ -77,9 +134,14 @@ public struct LocalAgentSessionScanner: Sendable {
         } else {
             await self.processOutput(environment: environment)
         }
-        let allProcesses = AgentPSOutputParser.parse(processOutput)
+        let allProcesses = AgentPSOutputParser.parseAgentCandidates(
+            processOutput,
+            includeClaude: self.config.providerScope == .all)
         let processes = Array(AgentSessionCorrelation.newestProcessesFirst(
             AgentPSOutputParser.agentProcesses(from: allProcesses))
+            .filter { process in
+                self.config.providerScope == .all || AgentPSOutputParser.provider(for: process) == .codex
+            }
             .prefix(max(0, self.config.maxProcessCount)))
         guard Self.shouldScanSessionMetadata(
             hasAgentProcesses: !processes.isEmpty,
@@ -123,6 +185,7 @@ public struct LocalAgentSessionScanner: Sendable {
             self.codexRollouts(
                 now: now,
                 codexHomeDirectory: codexHomeDirectory,
+                environment: environment,
                 matchingCWDs: includeFileOnlySessions ? nil : codexCWDs,
                 directoryBudget: &directoryBudget)
         } else {
@@ -223,7 +286,9 @@ public struct LocalAgentSessionScanner: Sendable {
     {
         var sessions: [AgentSession] = []
         var matchedRolloutPaths = Set<String>()
-        let claudeProcesses = processes.filter { AgentPSOutputParser.provider(for: $0) == .claude }
+        let claudeProcesses = self.config.providerScope == .all
+            ? processes.filter { AgentPSOutputParser.provider(for: $0) == .claude }
+            : []
         let claudeCWDs = Set(claudeProcesses.compactMap { cwdByPID[$0.pid] })
         var claudeTranscriptsByCWD: [String: [ClaudeSessionProjectMapper.Transcript]] = [:]
         for cwd in claudeCWDs {
@@ -356,7 +421,7 @@ public struct LocalAgentSessionScanner: Sendable {
             .appendingPathComponent("archived_sessions", isDirectory: true)
             .standardizedFileURL
         guard !Self.isDescendant(url, of: archivedSessionsDirectory) else { return nil }
-        guard let metadata = CodexRolloutFirstLineParser.read(from: url),
+        guard let metadata = self.rolloutMetadataCache.metadata(for: url),
               !metadata.isSubagent,
               let modifiedAt = try? url.resourceValues(
                   forKeys: [.contentModificationDateKey]).contentModificationDate
@@ -418,6 +483,7 @@ public struct LocalAgentSessionScanner: Sendable {
     private func codexRollouts(
         now: Date,
         codexHomeDirectory: URL,
+        environment: [String: String],
         matchingCWDs: [String]?,
         directoryBudget: inout DirectoryMetadataScanBudget) -> [Rollout]
     {
@@ -429,7 +495,7 @@ public struct LocalAgentSessionScanner: Sendable {
         formatter.dateFormat = "yyyy/MM/dd"
         let fileManager = FileManager.default
 
-        let candidates = days.flatMap { day -> [(url: URL, modifiedAt: Date)] in
+        let datedCandidates = days.flatMap { day -> [(url: URL, modifiedAt: Date)] in
             let directory = root.appendingPathComponent(formatter.string(from: day), isDirectory: true)
             return directoryBudget.files(in: directory, fileManager: fileManager).compactMap { file in
                 guard file.lastPathComponent.hasPrefix("rollout-"), file.pathExtension == "jsonl",
@@ -441,13 +507,43 @@ public struct LocalAgentSessionScanner: Sendable {
                     modifiedAt: modifiedAt,
                     now: now))
             }
-        }.sorted { $0.modifiedAt > $1.modifiedAt }
+        }
+        let reader = CodexThreadMetadataReader(
+            codexHomeDirectory: codexHomeDirectory,
+            environment: environment)
+        let indexedPaths = reader.recentRolloutPaths(
+            updatedSince: now.addingTimeInterval(-self.config.fileOnlyWindow),
+            limit: self.config.maxCodexRolloutCount)
+        let resolvedRoot = root.resolvingSymlinksInPath()
+        let indexedCandidates = indexedPaths.compactMap { path -> (url: URL, modifiedAt: Date)? in
+            guard (path as NSString).isAbsolutePath else { return nil }
+            let url = URL(fileURLWithPath: path).standardizedFileURL
+            let resolvedURL = url.resolvingSymlinksInPath()
+            guard Self.isDescendant(resolvedURL, of: resolvedRoot),
+                  url.lastPathComponent.hasPrefix("rollout-"),
+                  url.pathExtension == "jsonl",
+                  let values = try? url.resourceValues(forKeys: [
+                      .contentModificationDateKey,
+                      .isRegularFileKey,
+                  ]),
+                  values.isRegularFile == true,
+                  let modifiedAt = values.contentModificationDate
+            else { return nil }
+            return (url, self.futureModificationDateClamp.clamp(
+                url: url,
+                modifiedAt: modifiedAt,
+                now: now))
+        }
+        var seenCandidatePaths = Set<String>()
+        let candidates = (datedCandidates + indexedCandidates)
+            .sorted { $0.modifiedAt > $1.modifiedAt }
+            .filter { seenCandidatePaths.insert($0.url.standardizedFileURL.path).inserted }
 
         var remainingCWDs = matchingCWDs ?? []
         var rollouts: [Rollout] = []
         for candidate in candidates.prefix(max(0, self.config.maxCodexRolloutCount)) {
             guard directoryBudget.hasTimeRemaining() else { break }
-            guard let metadata = CodexRolloutFirstLineParser.read(from: candidate.url) else { continue }
+            guard let metadata = self.rolloutMetadataCache.metadata(for: candidate.url) else { continue }
             guard self.config.includeCodexSubagents ||
                 !metadata.isSubagent ||
                 (self.config.includeCodexGuardianParents && metadata.isGuardian)
