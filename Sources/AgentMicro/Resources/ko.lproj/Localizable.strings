@@ -19,6 +19,15 @@
 "menu.footer.settings" = "설정…";
 "menu.headline.active" = "AgentMicro — %d개 실행 중";
 "menu.scanning" = "Codex 작업 검색 중…";
+"menu.usage.loading" = "주간 사용량 불러오는 중…";
+"menu.usage.unavailable" = "주간 사용량을 사용할 수 없음";
+"menu.usage.weeklyFormat" = "주간 %.0f%% 사용";
+"menu.usage.resetsInFormat" = "%@ 후 재설정";
+"menu.usage.lastsUntilReset" = "재설정까지 유지";
+"menu.usage.runsOutInFormat" = "%@ 후 소진";
+"menu.usage.deficitFormat" = "%d%% 부족";
+"menu.usage.reserveFormat" = "%d%% 여유";
+"menu.usage.onPace" = "정상 속도";
 
 "settings.error.launchAtLogin" = "로그인 항목을 업데이트할 수 없습니다: %@";
 "settings.general" = "일반";
@@ -59,3 +68,13 @@
 "updates.unavailable.feed" = "업데이트 피드가 아직 구성되지 않았습니다.";
 "updates.unavailable.signature" = "업데이트에는 Developer ID로 서명된 릴리스 빌드가 필요합니다.";
 "updates.version" = "버전 %@";
+"settings.codexData.title" = "Codex 데이터 접근";
+"settings.codexData.choose" = "Codex 데이터 폴더 선택…";
+"settings.codexData.notAuthorized" = "승인되지 않음";
+"settings.codexData.description" = "Codex 데이터 폴더(일반적으로 ~/.codex)를 선택하세요. AgentMicro는 읽기 전용으로 접근하며 권한을 로컬에 저장합니다.";
+"settings.codexData.invalidFolder" = "선택한 폴더에 Codex 세션 데이터가 없는 것 같습니다.";
+"settings.codexData.accessFailed" = "AgentMicro가 이 폴더에 대한 읽기 전용 접근 권한을 얻지 못했습니다.";
+"settings.codexData.panelMessage" = "홈 폴더에서 숨겨진 .codex 폴더를 선택하세요.";
+"settings.codexData.authorize" = "승인";
+"updates.appStore" = "이 버전의 업데이트는 Mac App Store를 통해 제공됩니다.";
+"settings.privacyPolicy" = "개인정보 처리방침";

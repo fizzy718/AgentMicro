@@ -71,12 +71,19 @@ final class AgentMicroSettingsSelection {
 final class AgentMicroSettingsWindowController: NSWindowController, NSWindowDelegate {
     private let selection: AgentMicroSettingsSelection
 
-    init(settings: AgentMicroSettings, updater: AgentMicroUpdaterProviding) {
+    init(
+        settings: AgentMicroSettings,
+        updater: AgentMicroUpdaterProviding,
+        codexDataAccess: AgentMicroCodexDataAccess,
+        onCodexDataAccessChanged: @escaping @MainActor () -> Void)
+    {
         let selection = AgentMicroSettingsSelection()
         self.selection = selection
         let rootView = AgentMicroSettingsView(
             settings: settings,
             updater: updater,
+            codexDataAccess: codexDataAccess,
+            onCodexDataAccessChanged: onCodexDataAccessChanged,
             selection: selection)
         let hostingController = NSHostingController(rootView: rootView)
         let window = NSWindow(contentViewController: hostingController)
@@ -114,6 +121,8 @@ final class AgentMicroSettingsWindowController: NSWindowController, NSWindowDele
 private struct AgentMicroSettingsView: View {
     @Bindable var settings: AgentMicroSettings
     let updater: AgentMicroUpdaterProviding
+    @Bindable var codexDataAccess: AgentMicroCodexDataAccess
+    let onCodexDataAccessChanged: @MainActor () -> Void
     @Bindable var selection: AgentMicroSettingsSelection
 
     private var version: String {
@@ -178,6 +187,30 @@ private struct AgentMicroSettingsView: View {
 
     private var generalPane: some View {
         Form {
+            #if ENABLE_AGENTMICRO_APP_STORE
+            Section(AgentMicroLocalization.text("settings.codexData.title")) {
+                Text(
+                    self.codexDataAccess.displayPath ??
+                        AgentMicroLocalization.text("settings.codexData.notAuthorized"))
+                    .font(.caption)
+                    .foregroundStyle(self.codexDataAccess.requiresSelection ? .orange : .secondary)
+                    .textSelection(.enabled)
+                Button(AgentMicroLocalization.text("settings.codexData.choose")) {
+                    if self.codexDataAccess.chooseDirectory() {
+                        self.onCodexDataAccessChanged()
+                    }
+                }
+                if let error = self.codexDataAccess.lastError {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                }
+                Text(AgentMicroLocalization.text("settings.codexData.description"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            #endif
+
             Section {
                 Picker(
                     AgentMicroLocalization.text("language.title"),
@@ -235,6 +268,9 @@ private struct AgentMicroSettingsView: View {
                 Text(AgentMicroLocalization.text("settings.privacy"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                Link(
+                    AgentMicroLocalization.text("settings.privacyPolicy"),
+                    destination: URL(string: "https://agentmicro.cc/privacy.html")!)
             }
         }
         .formStyle(.grouped)
@@ -284,6 +320,16 @@ private struct AgentMicroSettingsView: View {
     private var updatesPane: some View {
         Form {
             Section {
+                #if ENABLE_AGENTMICRO_APP_STORE
+                LabeledContent(
+                    AgentMicroLocalization.text("updates.version", arguments: self.version))
+                {
+                    EmptyView()
+                }
+                Text(AgentMicroLocalization.text("updates.appStore"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                #else
                 Toggle(
                     AgentMicroLocalization.text("updates.automatic"),
                     isOn: self.$settings.autoUpdateEnabled)
@@ -302,6 +348,7 @@ private struct AgentMicroSettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                #endif
             }
         }
         .formStyle(.grouped)

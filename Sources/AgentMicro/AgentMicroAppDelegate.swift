@@ -12,6 +12,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         let usesFastModel: Bool
     }
 
+    private let codexDataAccess = AgentMicroCodexDataAccess()
     private let scanner = LocalAgentSessionScanner(config: AgentMicroSessionPolicy.scannerConfiguration)
     private let taskStateEngine = CodexTaskStateEngine()
     private let settings = AgentMicroSettings()
@@ -25,7 +26,8 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     private var viewedTurnTracker = AgentMicroViewedTurnTracker()
     private let enhancedStatusReader = CodexEnhancedStatusReader()
     private var enhancedStatusTracker = CodexEnhancedStatusTracker()
-    private let codexUnreadThreadStateReader = CodexUnreadThreadStateReader()
+    private lazy var codexUnreadThreadStateReader = CodexUnreadThreadStateReader(
+        environment: self.codexDataAccess.scanEnvironment)
     private var hasCompletedInitialScan = false
     private var refreshTask: Task<Void, Never>?
     private var refreshRequestedWhileRunning = false
@@ -34,6 +36,9 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     private var reconciliationBurstTask: Task<Void, Never>?
     private var discoveryRefreshTask: Task<Void, Never>?
     private var pollingTask: Task<Void, Never>?
+    private var usageRefreshTask: Task<Void, Never>?
+    private var usageSnapshot: UsageSnapshot?
+    private var usageLastAttemptAt: Date?
     private var statusAnimationTimer: Timer?
     private var menuDurationTimer: Timer?
     private var menuOutsideClickMonitor: Any?
@@ -62,7 +67,14 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         self.configureStatusItem()
         self.rebuildMenu()
         self.startPolling()
-        if CommandLine.arguments.contains("--show-settings") {
+        self.refreshUsageIfNeeded()
+        if self.codexDataAccess.requiresSelection {
+            self.presentSettings(pane: .general)
+            Task { @MainActor [weak self] in
+                await Task.yield()
+                self?.chooseCodexDataDirectory()
+            }
+        } else if CommandLine.arguments.contains("--show-settings") {
             self.showSettings()
         } else if self.settings.shouldPresentGuideOnLaunch {
             self.settings.markGuidePresented()
@@ -76,6 +88,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         self.reconciliationBurstTask?.cancel()
         self.discoveryRefreshTask?.cancel()
         self.pollingTask?.cancel()
+        self.usageRefreshTask?.cancel()
         self.statusAnimationTimer?.invalidate()
         self.menuDurationTimer?.invalidate()
         self.stopMenuDismissalMonitoring()
@@ -89,6 +102,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         self.startMenuDurationTimerIfNeeded()
         self.reconcileKnownSessions()
         self.refresh()
+        self.refreshUsageIfNeeded()
         self.scheduleReconciliationBurst()
     }
 
@@ -160,6 +174,11 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     }
 
     private func refresh(trigger: AgentMicroRefreshTrigger = .event) {
+        guard !self.codexDataAccess.requiresSelection else {
+            self.hasCompletedInitialScan = true
+            self.rebuildMenu()
+            return
+        }
         guard self.refreshTask == nil else {
             if AgentMicroRefreshPolicy.shouldQueueFollowUp(
                 whileRefreshIsRunning: true,
@@ -171,14 +190,18 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         }
         let scanner = self.scanner
         let taskStateEngine = self.taskStateEngine
+        let environment = self.codexDataAccess.scanEnvironment
         self.refreshTask = Task { @MainActor [weak self] in
-            let scannedSessions = await scanner.scan()
+            let scannedSessions = await scanner.scan(
+                environment: environment,
+                includeProcessSessions: !AgentMicroDistribution.isAppStore)
             let codexSessions = scannedSessions.filter { $0.provider == .codex }
             let tasks = await taskStateEngine.observe(
                 sessions: codexSessions)
             guard !Task.isCancelled, let self else { return }
             self.sessionChangeMonitor.update(
-                transcriptPaths: scannedSessions.compactMap(\.transcriptPath))
+                transcriptPaths: scannedSessions.compactMap(\.transcriptPath),
+                environment: environment)
             self.knownSessions = codexSessions
             self.hasCompletedInitialScan = true
             self.refreshTask = nil
@@ -261,6 +284,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         self.menu.addItem(headlineItem)
         self.menu.addItem(.separator())
         self.addTaskRows(rows)
+        self.addUsageSection()
         self.addMenuFooter()
     }
 
@@ -370,7 +394,39 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     private func refreshFromMenu() {
         self.reconcileKnownSessions()
         self.refresh()
+        self.refreshUsageIfNeeded(force: true)
         self.scheduleReconciliationBurst()
+    }
+
+    private func addUsageSection() {
+        #if !ENABLE_AGENTMICRO_APP_STORE
+        self.menu.addItem(.separator())
+        let state = AgentMicroUsageModel.state(
+            snapshot: self.usageSnapshot,
+            isLoading: self.usageRefreshTask != nil)
+        let item = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        item.isEnabled = false
+        item.view = AgentMicroUsageMenuItemView(state: state)
+        self.menu.addItem(item)
+        #endif
+    }
+
+    private func refreshUsageIfNeeded(force: Bool = false, now: Date = Date()) {
+        #if !ENABLE_AGENTMICRO_APP_STORE
+        guard self.usageRefreshTask == nil else { return }
+        guard force || AgentMicroUsageModel.shouldRefresh(lastAttemptAt: self.usageLastAttemptAt, now: now) else {
+            return
+        }
+        self.usageLastAttemptAt = now
+        self.usageRefreshTask = Task { @MainActor [weak self] in
+            let snapshot = try? await UsageFetcher().loadLatestUsage()
+            guard !Task.isCancelled, let self else { return }
+            self.usageSnapshot = snapshot
+            self.usageRefreshTask = nil
+            self.rebuildMenu(force: true)
+        }
+        self.rebuildMenu(force: true)
+        #endif
     }
 
     @objc
@@ -383,7 +439,11 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         if self.settingsWindowController == nil {
             self.settingsWindowController = AgentMicroSettingsWindowController(
                 settings: self.settings,
-                updater: self.updater)
+                updater: self.updater,
+                codexDataAccess: self.codexDataAccess,
+                onCodexDataAccessChanged: { [weak self] in
+                    self?.codexDataAccessDidChange()
+                })
         }
         self.settingsWindowController?.present(pane: pane)
     }
@@ -396,6 +456,20 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     @objc
     private func checkForUpdates() {
         self.updater.checkForUpdates(nil)
+    }
+
+    private func chooseCodexDataDirectory() {
+        guard self.codexDataAccess.chooseDirectory() else { return }
+        self.codexDataAccessDidChange()
+    }
+
+    private func codexDataAccessDidChange() {
+        self.codexUnreadThreadStateReader = CodexUnreadThreadStateReader(
+            environment: self.codexDataAccess.scanEnvironment)
+        self.hasCompletedInitialScan = false
+        self.knownSessions = []
+        self.tasks = []
+        self.refresh()
     }
 }
 

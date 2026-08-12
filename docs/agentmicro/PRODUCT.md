@@ -55,6 +55,14 @@ The six icon slots preserve menu task order in a two-row snake, and animation id
 
 Desktop deep links, unread synchronization, optional Accessibility-backed status detection, and signed updates enhance the experience, but failure of one optional integration must not block task observation.
 
+### Distribution-aware capability
+
+AgentMicro has two release channels with the same read-only task model. The direct-download build can correlate local
+Codex processes and updates through its signed Sparkle feed. The Mac App Store build is sandboxed, asks the user to
+grant read-only access to the Codex data folder, derives task state from authorized rollout and thread metadata, and
+receives updates only from the Mac App Store. Channel-specific platform restrictions must be visible rather than
+silently overstating equivalent process or terminal integration.
+
 ## Product Boundary
 
 V1 includes:
@@ -66,14 +74,17 @@ V1 includes:
 - Project and task naming controls.
 - One-click return to Codex Desktop conversations.
 - Optional Enhanced Status Detection for a selected Codex task and visible approval/error controls.
+- A compact weekly Codex quota card in the direct-download menu, including consumed percentage, reset countdown,
+  pace variance, projected exhaustion, and quota markers.
 - Configurable recent task count.
 - First-launch color guide and paged settings.
-- Launch at login, localization, a notarized drag-to-install DMG, and signed Sparkle updates.
+- Launch at login and localization.
+- A notarized drag-to-install DMG with signed Sparkle updates, plus a separately sandboxed Mac App Store edition.
 
 V1 excludes:
 
 - Other agent providers.
-- Token, spend, and quota monitoring.
+- Per-task token accounting, spend monitoring, usage history, and multiple-account management.
 - Task approval or command execution.
 - Remote synchronization.
 - Full transcript browsing.
@@ -87,12 +98,16 @@ An observed task is owned by Codex and read by AgentMicro from bounded local met
 
 AgentMicro:
 
-- Reads only known Codex process and local session locations.
+- Reads only known Codex process and local session locations. The Mac App Store edition requires explicit read-only
+  folder authorization and does not scan the process table.
 - Does not require Full Disk Access.
 - Does not require Accessibility permission; Enhanced Status Detection requests it only after the user enables that option.
 - Does not read Keychain credentials.
 - Does not upload prompts, responses, source code, command output, or session files.
-- Uses network access only for the optional AgentMicro update feed.
+- The direct-download edition may launch Codex CLI's read-only app-server to request the signed-in account's weekly
+  quota. Codex may contact OpenAI using its own existing login; AgentMicro does not read or store the credential.
+- Otherwise uses network access only for the optional AgentMicro update feed. The Mac App Store edition contains
+  neither the updater nor the CLI-backed quota surface.
 - Offers a project-only display mode for shared-screen privacy.
 - When Enhanced Status Detection is enabled, reads visible Codex accessibility labels locally and never clicks, types, approves, or sends content.
 
@@ -106,6 +121,10 @@ AgentMicro:
 - Thinking, unread, needs-input, and error blocks animate in the menu bar icon, following its two-row task order; idle blocks remain static.
 - A Desktop task opens the correct Codex conversation with one click.
 - Current-turn durations update once per second while the menu is open.
+- The direct-download menu shows weekly Codex quota consumption, reset timing, pace against elapsed time, projected
+  exhaustion, and warning markers below the task rows without displacing the task-focused surface.
 - The first launch explains every color and does not reopen the guide by default.
-- The app works offline except for software updates.
-- Signed release builds install from a drag-to-Applications DMG, launch, and update independently from CodexBar.
+- Task observation and navigation work offline; weekly quota and software updates degrade independently when their
+  upstream services are unavailable.
+- Signed direct releases install from a drag-to-Applications DMG and update independently from CodexBar.
+- The sandboxed edition can be signed, packaged, and submitted through App Store Connect without Sparkle.

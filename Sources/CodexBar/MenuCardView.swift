@@ -1,5 +1,6 @@
 import AppKit
 import CodexBarCore
+import CodexBarUI
 import SwiftUI
 
 /// SwiftUI card used inside the NSMenu to mirror Apple's rich menu panels.
@@ -503,80 +504,28 @@ private struct MetricRow: View {
     @Environment(\.menuItemHighlighted) private var isHighlighted
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(self.title)
-                .font(.body)
-                .fontWeight(.medium)
-            if let statusText = self.metric.statusText {
-                Text(statusText)
-                    .font(.footnote)
-                    .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
-                    .lineLimit(1)
-            } else {
-                UsageProgressBar(
-                    percent: self.metric.percent,
-                    tint: self.progressColor,
-                    accessibilityLabel: self.metric.percentStyle.accessibilityLabel,
-                    pacePercent: self.metric.pacePercent,
-                    paceOnTop: self.metric.paceOnTop,
-                    warningMarkerPercents: self.metric.warningMarkerPercents,
-                    workdayMarkerPercents: self.metric.workdayMarkerPercents)
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(alignment: .firstTextBaseline) {
-                        Text(self.metric.percentLabel)
-                            .font(.footnote)
-                            .lineLimit(1)
-                        Spacer()
-                        if let rightLabel = self.metric.resetText {
-                            Text(rightLabel)
-                                .font(.footnote)
-                                .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
-                                .lineLimit(1)
-                        }
-                    }
-                    if self.metric.detailLeftText != nil || self.metric.detailRightText != nil {
-                        HStack(alignment: .firstTextBaseline) {
-                            if let detailLeft = self.metric.detailLeftText {
-                                Text(detailLeft)
-                                    .font(.footnote)
-                                    .foregroundStyle(MenuHighlightStyle.primary(self.isHighlighted))
-                                    .lineLimit(1)
-                            }
-                            Spacer()
-                            if let detailRight = self.metric.detailRightText {
-                                Text(detailRight)
-                                    .font(.footnote)
-                                    .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
-                                    .lineLimit(1)
-                            }
-                        }
-                    }
-                    if let sessionEquivalentDetail = self.metric.sessionEquivalentDetail {
-                        Text(sessionEquivalentDetail.verdictText)
-                            .font(.footnote)
-                            .foregroundStyle(MenuHighlightStyle.primary(self.isHighlighted))
-                            .lineLimit(1)
-                            .accessibilityLabel(sessionEquivalentDetail.verdictAccessibilityLabel)
-                        Text(sessionEquivalentDetail.numberText)
-                            .font(.footnote)
-                            .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
-                            .lineLimit(1)
-                            .accessibilityLabel(sessionEquivalentDetail.numberAccessibilityLabel)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                if let detail = self.metric.detailText {
-                    Text(detail)
-                        .font(.footnote)
-                        .foregroundStyle(MenuHighlightStyle.secondary(self.isHighlighted))
-                        .lineLimit(1)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(self.metric.cardStyle ? 10 : 0)
-        .background(self.metric.cardStyle ? Color.secondary.opacity(self.isHighlighted ? 0.2 : 0.08) : Color.clear)
-        .clipShape(RoundedRectangle(cornerRadius: self.metric.cardStyle ? 10 : 0))
+        UsageMetricView(
+            presentation: UsageMetricPresentation(
+                title: self.title,
+                percent: self.metric.percent,
+                percentLabel: self.metric.percentLabel,
+                resetText: self.metric.resetText,
+                statusText: self.metric.statusText,
+                detailLeftText: self.metric.detailLeftText,
+                detailRightText: self.metric.detailRightText,
+                detailText: self.metric.detailText,
+                pacePercent: self.metric.pacePercent,
+                paceOnTop: self.metric.paceOnTop,
+                warningMarkerPercents: self.metric.warningMarkerPercents,
+                workdayMarkerPercents: self.metric.workdayMarkerPercents,
+                accessibilityLabel: self.metric.percentStyle.accessibilityLabel,
+                cardStyle: self.metric.cardStyle,
+                supplementalLines: [
+                    self.metric.sessionEquivalentDetail?.verdictText,
+                    self.metric.sessionEquivalentDetail?.numberText,
+                ].compactMap(\.self)),
+            tint: self.progressColor,
+            isHighlighted: self.isHighlighted)
     }
 }
 

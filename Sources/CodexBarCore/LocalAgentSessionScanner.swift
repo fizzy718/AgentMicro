@@ -127,9 +127,12 @@ public struct LocalAgentSessionScanner: Sendable {
     public func scan(
         now: Date = Date(),
         environment: [String: String] = ProcessInfo.processInfo.environment,
+        includeProcessSessions: Bool = true,
         includeFileOnlySessions: Bool = true) async -> [AgentSession]
     {
-        let processOutput = if let processOutputProvider = self.processOutputProvider {
+        let processOutput = if !includeProcessSessions {
+            ""
+        } else if let processOutputProvider = self.processOutputProvider {
             await processOutputProvider(environment)
         } else {
             await self.processOutput(environment: environment)

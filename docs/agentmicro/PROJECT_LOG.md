@@ -2,7 +2,99 @@
 
 This log records the durable product and engineering decisions needed by international contributors.
 
+## 2026-08-11
+
+### `feature`: added the complete weekly Codex usage block to the direct-download menu
+
+Changes:
+
+- Reused CodexBar's read-only Codex CLI app-server `UsageFetcher`, `UsagePace`, and quota-warning thresholds, and
+  projected its weekly rate window into a small AgentMicro-specific presentation model.
+- Extracted CodexBar's metric row and progress/pace/warning marker renderer into a shared `CodexBarUI` library target;
+  CodexBar and AgentMicro now import the same component.
+- Added consumed percentage, localized reset countdown, deficit/reserve pace, projected exhaustion or reset survival,
+  and progress markers below the task rows and above the footer actions, with explicit loading and unavailable states
+  in all 23 interface languages.
+- Matched the card typography to AgentMicro task rows: 13-point semibold headline, 11-point secondary metadata,
+  aligned baselines, and a shorter loading/unavailable row.
+- Throttled automatic attempts to five minutes while keeping menu Refresh as an explicit forced attempt.
+- Compiled the surface out of the Mac App Store variant because its sandbox does not permit launching Codex CLI.
+
+Impact:
+
+- Direct-download users can see the complete compact weekly Codex allowance forecast without leaving the task-focused
+  menu.
+- Usage-fetch failures remain isolated from task observation, navigation, and state colors.
+
+Validation:
+
+- Added focused projection, clamping, state, refresh-policy, and localization coverage.
+- `AGENTMICRO_BUILD_ONLY=1 swift test --disable-automatic-resolution --filter AgentMicroUsageModelTests` passes.
+- `AGENTMICRO_BUILD_ONLY=1 swift test --disable-automatic-resolution --filter AgentMicroLocalizationTests` passes.
+- The direct and Mac App Store AgentMicro targets compile, `make check` passes, and `make test` passes all 733
+  discovered selections across 62 groups without retries.
+
+Known limitations:
+
+- The first version shows only the standard weekly lane, not session, model-specific, token-history, spend, or
+  multiple-account details.
+- The Mac App Store edition omits the card until a supported sandbox-compatible Codex usage API exists.
+
 ## 2026-08-09
+
+### `distribution`: prepared a Mac App Store build path
+
+Changes:
+
+- Added a compile-time Mac App Store variant that removes Sparkle, avoids sandbox-incompatible process-tool scans,
+  and keeps rollout-backed Desktop and CLI state observation.
+- Added first-launch and General-settings authorization for a user-selected Codex data folder, persisted as a
+  read-only security-scoped bookmark.
+- Added App Sandbox entitlements, a privacy manifest with required-reason declarations, localized authorization and
+  store-update copy in all 23 interface languages, and profile-derived application/team signing entitlements.
+- Added universal App Store package, validation, and upload automation while leaving the Developer ID/Sparkle chain
+  intact.
+
+Impact:
+
+- AgentMicro can be packaged for Mac App Store submission without a prohibited independent updater or unrestricted
+  home-directory access.
+- Store users retain the five-state rollout reducer after explicitly authorizing their local Codex data directory.
+  The sandboxed edition does not promise live PID ownership or CLI terminal routing.
+
+Validation:
+
+- `AGENTMICRO_BUILD_ONLY=1 AGENTMICRO_APP_STORE=1 swift build -c debug --product AgentMicro
+  --disable-automatic-resolution` succeeds with Xcode 26.6.
+- The ad-hoc arm64 sandbox package passes strict code-signature verification, contains the expected two sandbox
+  entitlements and valid privacy manifest, and has no Sparkle linkage.
+- The App Store variant passes all 88 focused AgentMicro tests.
+- `make check` passes, including SwiftFormat, strict SwiftLint, localization, script, documentation, and release
+  checks.
+- `make test` passes all 732 discovered selections across 61 groups with no failures or retries.
+- The packaged App Store settings UI, Codex-folder authorization panel, Store-managed updates copy, and four
+  1280-by-800 submission screenshots were inspected locally without granting access to real Codex data.
+- Registered the production App ID `com.agentmicro.macos`, created dedicated Mac App Distribution and Mac Installer
+  Distribution identities plus the `AgentMicro Mac App Store` profile, and verified all three identities locally.
+- The distribution-signed universal `0.1.4 (5)` app passes strict code-signature verification with the expected
+  sandbox/read-only entitlements; its signed installer package passes `pkgutil --check-signature` with the Apple
+  certificate chain.
+- Apple validation exposed two package-only import requirements: the SwiftPM resource bundle needed its own bundle
+  identifier/version metadata, and the embedded provisioning profile needed quarantine attributes removed after it
+  was copied. The packaging script now handles both before signing.
+- The corrected `0.1.4 (5)` package passed Apple validation, uploaded as delivery
+  `cc762605-70cf-46e8-bf75-2f2c8a800c4b`, and completed server-side processing as App-Store-eligible with no
+  non-exempt encryption.
+- Created App Store Connect app `6799531205`, published the no-data-collected privacy label, configured a free public
+  release in all 175 storefronts, set the age rating to 4+, attached build 5, and submitted review submission
+  `89764bec-4f2e-45ea-978f-1a8fe62c5a8c`.
+- Deployed the dedicated policy page to the production site and verified
+  `https://agentmicro.cc/privacy.html` returns the AgentMicro privacy policy over HTTPS.
+
+Known limitations:
+
+- App Store publication is pending Apple's review; App Store Connect currently reports version `0.1.4` as waiting
+  for review and is configured to release automatically after approval.
 
 ### `release`: prepared AgentMicro 0.1.4
 
@@ -194,6 +286,14 @@ Validation:
 Known limitation:
 
 - The live Sparkle update prompt was not manually exercised after publication.
+
+## 2026-07-31
+
+### `marketing`: prepared first authentic Product Hunt media assets
+
+- Exported a 240×240 Product Hunt thumbnail from the real AgentMicro application icon.
+- Prepared a gallery-ready version of the existing sanitized menu screenshot; remaining gallery images and the optional demo video must remain real release-build captures with fictitious task data.
+- Produced a non-destructive English-localized variant of the menu screenshot for the English Product Hunt gallery, retaining the observed task states, project labels, and elapsed times.
 
 ## 2026-07-30
 

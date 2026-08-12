@@ -19,6 +19,15 @@
 "menu.footer.settings" = "Réglages…";
 "menu.headline.active" = "AgentMicro — %d actives";
 "menu.scanning" = "Recherche des tâches Codex…";
+"menu.usage.loading" = "Chargement de l’utilisation hebdomadaire…";
+"menu.usage.unavailable" = "Utilisation hebdomadaire indisponible";
+"menu.usage.weeklyFormat" = "Hebdomadaire : %.0f%% utilisé";
+"menu.usage.resetsInFormat" = "Réinitialisé dans %@";
+"menu.usage.lastsUntilReset" = "Dure jusqu'à la réinitialisation";
+"menu.usage.runsOutInFormat" = "S'épuise dans %@";
+"menu.usage.deficitFormat" = "%d%% en déficit";
+"menu.usage.reserveFormat" = "%d%% en réserve";
+"menu.usage.onPace" = "Au rythme";
 
 "settings.error.launchAtLogin" = "Impossible de mettre à jour l’ouverture de session : %@";
 "settings.general" = "Général";
@@ -59,3 +68,13 @@
 "updates.unavailable.feed" = "La source de mises à jour n’est pas encore configurée.";
 "updates.unavailable.signature" = "Les mises à jour nécessitent une version signée avec Developer ID.";
 "updates.version" = "Version %@";
+"settings.codexData.title" = "Accès aux données Codex";
+"settings.codexData.choose" = "Choisir le dossier de données Codex…";
+"settings.codexData.notAuthorized" = "Non autorisé";
+"settings.codexData.description" = "Sélectionnez le dossier de données Codex (généralement ~/.codex). AgentMicro reçoit un accès en lecture seule et enregistre l’autorisation localement.";
+"settings.codexData.invalidFolder" = "Le dossier sélectionné ne semble pas contenir de données de sessions Codex.";
+"settings.codexData.accessFailed" = "AgentMicro n’a pas pu obtenir un accès en lecture seule à ce dossier.";
+"settings.codexData.panelMessage" = "Sélectionnez le dossier masqué .codex dans votre dossier de départ.";
+"settings.codexData.authorize" = "Autoriser";
+"updates.appStore" = "Les mises à jour de cette édition sont fournies par le Mac App Store.";
+"settings.privacyPolicy" = "Politique de confidentialité";

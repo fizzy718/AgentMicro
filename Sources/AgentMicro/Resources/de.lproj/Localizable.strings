@@ -19,6 +19,15 @@
 "menu.footer.settings" = "Einstellungen…";
 "menu.headline.active" = "AgentMicro — %d aktiv";
 "menu.scanning" = "Codex-Aufgaben werden gesucht…";
+"menu.usage.loading" = "Wöchentliche Nutzung wird geladen…";
+"menu.usage.unavailable" = "Wöchentliche Nutzung nicht verfügbar";
+"menu.usage.weeklyFormat" = "Wöchentlich %.0f%% genutzt";
+"menu.usage.resetsInFormat" = "Zurückgesetzt in %@";
+"menu.usage.lastsUntilReset" = "Hält bis zum Zurücksetzen an";
+"menu.usage.runsOutInFormat" = "Läuft in %@ aus";
+"menu.usage.deficitFormat" = "%d%% im Defizit";
+"menu.usage.reserveFormat" = "%d%% in Reserve";
+"menu.usage.onPace" = "Auf Tempo";
 
 "settings.error.launchAtLogin" = "Anmeldeobjekt konnte nicht aktualisiert werden: %@";
 "settings.general" = "Allgemein";
@@ -59,3 +68,13 @@
 "updates.unavailable.feed" = "Der Update-Feed wurde noch nicht konfiguriert.";
 "updates.unavailable.signature" = "Updates erfordern einen mit Developer ID signierten Release-Build.";
 "updates.version" = "Version %@";
+"settings.codexData.title" = "Zugriff auf Codex-Daten";
+"settings.codexData.choose" = "Codex-Datenordner auswählen…";
+"settings.codexData.notAuthorized" = "Nicht autorisiert";
+"settings.codexData.description" = "Wähle den Codex-Datenordner (normalerweise ~/.codex). AgentMicro erhält Lesezugriff und speichert die Berechtigung lokal.";
+"settings.codexData.invalidFolder" = "Der ausgewählte Ordner scheint keine Codex-Sitzungsdaten zu enthalten.";
+"settings.codexData.accessFailed" = "AgentMicro konnte keinen Lesezugriff auf diesen Ordner erhalten.";
+"settings.codexData.panelMessage" = "Wähle den ausgeblendeten Ordner .codex in deinem Benutzerordner.";
+"settings.codexData.authorize" = "Autorisieren";
+"updates.appStore" = "Updates für diese Version werden über den Mac App Store bereitgestellt.";
+"settings.privacyPolicy" = "Datenschutzrichtlinie";

@@ -4,6 +4,8 @@ import PackageDescription
 
 let agentMicroBuildOnly =
     ProcessInfo.processInfo.environment["AGENTMICRO_BUILD_ONLY"] == "1"
+let agentMicroAppStore =
+    ProcessInfo.processInfo.environment["AGENTMICRO_APP_STORE"] == "1"
 let sweetCookieKitPath = "../SweetCookieKit"
 let useLocalSweetCookieKit =
     ProcessInfo.processInfo.environment["CODEXBAR_USE_LOCAL_SWEETCOOKIEKIT"] == "1"
@@ -50,13 +52,17 @@ let package = Package(
     }(),
     dependencies: {
         if agentMicroBuildOnly {
-            return [
-                .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.3"),
+            var dependencies: [Package.Dependency] = [
                 .package(url: "https://github.com/steipete/Commander", from: "0.2.1"),
                 .package(url: "https://github.com/apple/swift-crypto.git", from: "3.0.0"),
                 .package(url: "https://github.com/apple/swift-log", from: "1.13.2"),
                 sweetCookieKitDependency,
             ]
+            if !agentMicroAppStore {
+                dependencies.append(
+                    .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.3"))
+            }
+            return dependencies
         }
         return [
             .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.9.3"),
@@ -122,6 +128,13 @@ let package = Package(
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
                 ]),
+            .target(
+                name: "CodexBarUI",
+                dependencies: ["CodexBarCore"],
+                path: "Sources/CodexBarUI",
+                swiftSettings: [
+                    .enableUpcomingFeature("StrictConcurrency"),
+                ]),
             .executableTarget(
                 name: "AdaptiveReplayCLI",
                 dependencies: ["AdaptiveReplayKit"],
@@ -163,18 +176,20 @@ let package = Package(
         targets.append(contentsOf: [
             .executableTarget(
                 name: "AgentMicro",
-                dependencies: [
-                    "CodexBarCore",
+                dependencies: ["CodexBarCore", "CodexBarUI"] + (agentMicroAppStore ? [] : [
                     .product(name: "Sparkle", package: "Sparkle"),
-                ],
+                ]),
                 path: "Sources/AgentMicro",
                 resources: [
                     .process("Resources"),
                 ],
                 swiftSettings: [
                     .enableUpcomingFeature("StrictConcurrency"),
+                ] + (agentMicroAppStore ? [
+                    .define("ENABLE_AGENTMICRO_APP_STORE"),
+                ] : [
                     .define("ENABLE_AGENTMICRO_SPARKLE"),
-                ]),
+                ])),
             .testTarget(
                 name: "AgentMicroTests",
                 dependencies: ["AgentMicro", "CodexBarCore"],
@@ -205,6 +220,7 @@ let package = Package(
                         .product(name: "Vortex", package: "Vortex"),
                         "AdaptiveRefreshCore",
                         "CodexBarCore",
+                        "CodexBarUI",
                     ],
                     path: "Sources/CodexBar",
                     resources: [
