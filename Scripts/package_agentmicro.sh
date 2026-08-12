@@ -11,7 +11,12 @@ case "$CONFIGURATION" in
 esac
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-APP_FINAL="$ROOT/AgentMicro.app"
+APP_STORE_MODE="${AGENTMICRO_APP_STORE:-0}"
+if [[ "$APP_STORE_MODE" == "1" ]]; then
+  APP_FINAL="$ROOT/AgentMicro-AppStore.app"
+else
+  APP_FINAL="$ROOT/AgentMicro.app"
+fi
 APP_STAGE="$ROOT/.build/package-agentmicro/AgentMicro.app"
 source "$ROOT/agentmicro-version.env"
 VERSION="${AGENTMICRO_VERSION:-0.1.0}"
@@ -21,6 +26,8 @@ FEED_URL="${AGENTMICRO_FEED_URL:-}"
 PUBLIC_ED_KEY="${AGENTMICRO_PUBLIC_ED_KEY:-}"
 SIGNING_MODE="${AGENTMICRO_SIGNING:-adhoc}"
 SIGNING_IDENTITY="${AGENTMICRO_SIGNING_IDENTITY:-}"
+PROVISIONING_PROFILE="${AGENTMICRO_APP_STORE_PROVISIONING_PROFILE:-}"
+APP_STORE_ENTITLEMENTS="${AGENTMICRO_APP_STORE_ENTITLEMENTS:-}"
 
 cd "$ROOT"
 
@@ -32,8 +39,26 @@ case "$SIGNING_MODE" in
       exit 1
     fi
     ;;
+  app-store)
+    if [[ "$APP_STORE_MODE" != "1" ]]; then
+      echo "ERROR: app-store signing requires AGENTMICRO_APP_STORE=1" >&2
+      exit 1
+    fi
+    if [[ -z "$SIGNING_IDENTITY" || -z "$PROVISIONING_PROFILE" ]]; then
+      echo "ERROR: App Store signing identity and provisioning profile are required" >&2
+      exit 1
+    fi
+    if [[ ! -f "$PROVISIONING_PROFILE" ]]; then
+      echo "ERROR: App Store provisioning profile is missing" >&2
+      exit 1
+    fi
+    if [[ -n "$APP_STORE_ENTITLEMENTS" && ! -f "$APP_STORE_ENTITLEMENTS" ]]; then
+      echo "ERROR: AGENTMICRO_APP_STORE_ENTITLEMENTS does not exist" >&2
+      exit 1
+    fi
+    ;;
   *)
-    echo "ERROR: Unsupported AGENTMICRO_SIGNING: $SIGNING_MODE (expected adhoc or identity)" >&2
+    echo "ERROR: Unsupported AGENTMICRO_SIGNING: $SIGNING_MODE (expected adhoc, identity, or app-store)" >&2
     exit 1
     ;;
 esac
@@ -47,13 +72,13 @@ PRODUCT_STAGE_ROOT="$ROOT/.build/package-agentmicro-products/$CONFIGURATION"
 rm -rf "$PRODUCT_STAGE_ROOT"
 PREFERRED_BIN_DIR=""
 for ARCH in "${ARCH_LIST[@]}"; do
-  AGENTMICRO_BUILD_ONLY=1 swift build \
+  AGENTMICRO_BUILD_ONLY=1 AGENTMICRO_APP_STORE="$APP_STORE_MODE" swift build \
     -c "$CONFIGURATION" \
     --arch "$ARCH" \
     --product AgentMicro \
     --disable-automatic-resolution
   BIN_DIR="$(
-    AGENTMICRO_BUILD_ONLY=1 swift build \
+    AGENTMICRO_BUILD_ONLY=1 AGENTMICRO_APP_STORE="$APP_STORE_MODE" swift build \
       -c "$CONFIGURATION" \
       --arch "$ARCH" \
       --disable-automatic-resolution \
@@ -104,19 +129,39 @@ if [[ ! -d "$RESOURCE_BUNDLE" ]]; then
   exit 1
 fi
 cp -R "$RESOURCE_BUNDLE" "$APP_STAGE/Contents/Resources/"
+PACKAGED_RESOURCE_INFO="$APP_STAGE/Contents/Resources/CodexBar_AgentMicro.bundle/Info.plist"
+/usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string ${BUNDLE_ID}.resources" \
+  "$PACKAGED_RESOURCE_INFO" 2>/dev/null ||
+  /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier ${BUNDLE_ID}.resources" \
+    "$PACKAGED_RESOURCE_INFO"
+/usr/libexec/PlistBuddy -c "Add :CFBundlePackageType string BNDL" \
+  "$PACKAGED_RESOURCE_INFO" 2>/dev/null ||
+  /usr/libexec/PlistBuddy -c "Set :CFBundlePackageType BNDL" "$PACKAGED_RESOURCE_INFO"
+/usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string ${VERSION}" \
+  "$PACKAGED_RESOURCE_INFO" 2>/dev/null ||
+  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${VERSION}" \
+    "$PACKAGED_RESOURCE_INFO"
+/usr/libexec/PlistBuddy -c "Add :CFBundleVersion string ${BUILD_NUMBER}" \
+  "$PACKAGED_RESOURCE_INFO" 2>/dev/null ||
+  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_NUMBER}" "$PACKAGED_RESOURCE_INFO"
+plutil -lint "$PACKAGED_RESOURCE_INFO"
+cp "$ROOT/Config/AgentMicro-PrivacyInfo.xcprivacy" \
+  "$APP_STAGE/Contents/Resources/PrivacyInfo.xcprivacy"
 "$ROOT/Scripts/build_agentmicro_icon.sh" \
   "$ROOT/AgentMicro.icon" \
   "$APP_STAGE/Contents/Resources/AgentMicro.icns"
-SPARKLE_FRAMEWORK="$PREFERRED_BIN_DIR/Sparkle.framework"
-if [[ ! -d "$SPARKLE_FRAMEWORK" ]]; then
-  echo "ERROR: Sparkle framework not found at $SPARKLE_FRAMEWORK" >&2
-  exit 1
-fi
-cp -R "$SPARKLE_FRAMEWORK" "$APP_STAGE/Contents/Frameworks/"
-if ! otool -l "$APP_STAGE/Contents/MacOS/AgentMicro" |
-  grep -Fq "@executable_path/../Frameworks"; then
-  install_name_tool -add_rpath "@executable_path/../Frameworks" \
-    "$APP_STAGE/Contents/MacOS/AgentMicro"
+if [[ "$APP_STORE_MODE" != "1" ]]; then
+  SPARKLE_FRAMEWORK="$PREFERRED_BIN_DIR/Sparkle.framework"
+  if [[ ! -d "$SPARKLE_FRAMEWORK" ]]; then
+    echo "ERROR: Sparkle framework not found at $SPARKLE_FRAMEWORK" >&2
+    exit 1
+  fi
+  cp -R "$SPARKLE_FRAMEWORK" "$APP_STAGE/Contents/Frameworks/"
+  if ! otool -l "$APP_STAGE/Contents/MacOS/AgentMicro" |
+    grep -Fq "@executable_path/../Frameworks"; then
+    install_name_tool -add_rpath "@executable_path/../Frameworks" \
+      "$APP_STAGE/Contents/MacOS/AgentMicro"
+  fi
 fi
 
 if [[ -n "$FEED_URL" || -n "$PUBLIC_ED_KEY" ]]; then
@@ -180,13 +225,14 @@ cat > "$APP_STAGE/Contents/Info.plist" <<PLIST
     <key>LSUIElement</key><true/>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSHumanReadableCopyright</key><string>AgentMicro contributors. MIT License.</string>
+    <key>ITSAppUsesNonExemptEncryption</key><false/>
     <key>AgentMicroBuildTimestamp</key><string>${BUILD_TIMESTAMP}</string>
     <key>AgentMicroGitCommit</key><string>${GIT_COMMIT}</string>
 </dict>
 </plist>
 PLIST
 
-if [[ -n "$FEED_URL" ]]; then
+if [[ -n "$FEED_URL" && "$APP_STORE_MODE" != "1" ]]; then
   /usr/libexec/PlistBuddy -c "Add :SUFeedURL string $FEED_URL" \
     "$APP_STAGE/Contents/Info.plist"
   /usr/libexec/PlistBuddy -c "Add :SUPublicEDKey string $PUBLIC_ED_KEY" \
@@ -201,15 +247,54 @@ xattr -cr "$APP_STAGE"
 source "$ROOT/Scripts/sparkle_signing_paths.sh"
 if [[ "$SIGNING_MODE" == "identity" ]]; then
   CODESIGN_ARGS=(--force --timestamp --options runtime --sign "$SIGNING_IDENTITY")
+elif [[ "$SIGNING_MODE" == "app-store" ]]; then
+  cp "$PROVISIONING_PROFILE" "$APP_STAGE/Contents/embedded.provisionprofile"
+  if [[ -z "$APP_STORE_ENTITLEMENTS" ]]; then
+    PROFILE_PLIST="$ROOT/.build/package-agentmicro/profile.plist"
+    APP_STORE_ENTITLEMENTS="$ROOT/.build/package-agentmicro/app-store.entitlements"
+    security cms -D -i "$PROVISIONING_PROFILE" > "$PROFILE_PLIST"
+    /usr/libexec/PlistBuddy -x -c "Print :Entitlements" "$PROFILE_PLIST" > "$APP_STORE_ENTITLEMENTS"
+    /usr/libexec/PlistBuddy -c "Set :com.apple.security.app-sandbox true" \
+      "$APP_STORE_ENTITLEMENTS" 2>/dev/null ||
+      /usr/libexec/PlistBuddy -c "Add :com.apple.security.app-sandbox bool true" \
+        "$APP_STORE_ENTITLEMENTS"
+    /usr/libexec/PlistBuddy -c "Set :com.apple.security.files.user-selected.read-only true" \
+      "$APP_STORE_ENTITLEMENTS" 2>/dev/null ||
+      /usr/libexec/PlistBuddy -c "Add :com.apple.security.files.user-selected.read-only bool true" \
+        "$APP_STORE_ENTITLEMENTS"
+    PROFILE_APP_IDENTIFIER="$(/usr/libexec/PlistBuddy -c \
+      "Print :com.apple.application-identifier" "$APP_STORE_ENTITLEMENTS")"
+    if [[ "$PROFILE_APP_IDENTIFIER" != *".$BUNDLE_ID" ]]; then
+      echo "ERROR: Provisioning profile does not match bundle ID $BUNDLE_ID" >&2
+      exit 1
+    fi
+  fi
+  plutil -lint "$APP_STORE_ENTITLEMENTS"
+  CODESIGN_ARGS=(--force --timestamp --sign "$SIGNING_IDENTITY" --entitlements "$APP_STORE_ENTITLEMENTS")
 else
-  CODESIGN_ARGS=(--force --sign -)
+  if [[ "$APP_STORE_MODE" == "1" ]]; then
+    CODESIGN_ARGS=(
+      --force
+      --sign -
+      --entitlements "$ROOT/Config/AgentMicro-AppStore.entitlements"
+    )
+  else
+    CODESIGN_ARGS=(--force --sign -)
+  fi
 fi
 
-SPARKLE="$APP_STAGE/Contents/Frameworks/Sparkle.framework"
-SPARKLE_SIGNING_TARGETS="$(codexbar_sparkle_signing_targets "$SPARKLE")"
-while IFS= read -r SIGNING_TARGET; do
-  codesign "${CODESIGN_ARGS[@]}" "$SIGNING_TARGET"
-done <<<"$SPARKLE_SIGNING_TARGETS"
+# Inputs copied from Downloads or the developer portal can retain quarantine
+# attributes. App Store server-side import rejects any quarantined payload file,
+# including the embedded provisioning profile, so clear them after all copying.
+xattr -cr "$APP_STAGE"
+
+if [[ "$APP_STORE_MODE" != "1" ]]; then
+  SPARKLE="$APP_STAGE/Contents/Frameworks/Sparkle.framework"
+  SPARKLE_SIGNING_TARGETS="$(codexbar_sparkle_signing_targets "$SPARKLE")"
+  while IFS= read -r SIGNING_TARGET; do
+    codesign "${CODESIGN_ARGS[@]}" "$SIGNING_TARGET"
+  done <<<"$SPARKLE_SIGNING_TARGETS"
+fi
 codesign "${CODESIGN_ARGS[@]}" "$APP_STAGE"
 codesign --verify --deep --strict --verbose=2 "$APP_STAGE"
 

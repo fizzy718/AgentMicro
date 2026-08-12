@@ -16,12 +16,15 @@ Delivered:
 - Five visible states: idle, unread, thinking, needs input, and error.
 - Working-first, recent-state-change ordering.
 - Configurable 1–20 task menu and fixed six-slot menu bar icon with attention-aware, task-ordered animation.
+- Direct-download weekly Codex quota card below the task list, backed by CodexBar's read-only CLI app-server fetcher,
+  pace/threshold calculations, and shared usage-metric UI.
 - Project/title display modes, second-level current-turn duration, and fast-mode badge.
 - Desktop unread synchronization, explicit-view closure, optional Enhanced Status Detection, and one-click thread deep links.
 - CodexBar-style paged settings and first-launch five-color guide.
 - System language plus 23 selectable languages.
 - Adaptive six-layer Icon Composer application icon with Default, Dark, Clear, and Tinted appearances.
 - Launch at login, a notarized drag-to-Applications DMG, and independent signed Sparkle updates.
+- A sandboxed Mac App Store variant with explicit read-only Codex-folder authorization and store-delivered updates.
 
 ### V1 Milestones
 
@@ -33,6 +36,7 @@ Delivered:
 | M3 — Real scenarios | Complete | Concurrent Desktop and CLI tasks remain independently visible and navigable. |
 | M3.1 — Runtime efficiency | Complete | Idle work is event-driven, fallback scans do not overlap, and hot UI paths reuse unchanged state. |
 | M4 — Release hardening | In progress | A notarized DMG installs cleanly, and an older signed build completes a Sparkle update to a newer build. |
+| M5 — Mac App Store | In progress | A distribution-signed universal package passes App Store Connect processing and App Review with accurate sandbox limitations and metadata. |
 
 ## V1.1 — Attention Signals
 
@@ -68,13 +72,14 @@ Candidates:
 
 V2 must not infer control authority from read-only rollout files.
 
-## V2.5 — Usage and Limits
+## V2.5 — Advanced Usage and Limits
 
 Entry condition: usage data can be added without obscuring the task-focused product.
 
 Candidates:
 
-- Optional Codex usage and quota summary.
+- Optional session-window and model-specific limit details beyond the shipped weekly summary.
+- Local token/cost history with explicit retention and estimation labels.
 - Reuse of proven CodexBar provider infrastructure behind a separate view.
 - No provider claims until the provider is actually wired to AgentMicro.
 
@@ -95,3 +100,4 @@ Candidates:
 - Do not expand to other agents before Codex behavior is reliable.
 - Do not add task control without a supported upstream API.
 - Keep AgentMicro release identity, feed, and assets separate from CodexBar.
+- Keep direct and App Store update mechanisms mutually exclusive in their packaged binaries.

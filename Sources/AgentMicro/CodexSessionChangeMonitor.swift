@@ -71,17 +71,24 @@ final class CodexSessionChangeMonitor {
     private var sources: [String: DispatchSourceFileSystemObject] = [:]
     private var pendingNotification: Task<Void, Never>?
     private var transcriptPaths: [String] = []
+    private var environment = ProcessInfo.processInfo.environment
     private var pendingRequiresDiscovery = false
 
     init(onChange: @escaping @MainActor (_ requiresDiscovery: Bool) -> Void) {
         self.onChange = onChange
     }
 
-    func update(transcriptPaths: [String], now: Date = Date()) {
+    func update(
+        transcriptPaths: [String],
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        now: Date = Date())
+    {
         self.transcriptPaths = transcriptPaths
+        self.environment = environment
         let desiredPaths = CodexSessionWatchPaths.existingPaths(
             transcriptPaths: transcriptPaths,
-            now: now)
+            now: now,
+            environment: environment)
         guard desiredPaths != Set(self.sources.keys) else { return }
 
         self.stopSources()
@@ -128,7 +135,8 @@ final class CodexSessionChangeMonitor {
     private func sourceDidChange(at path: String) {
         var requiresDiscovery = CodexSessionWatchPaths.requiresDiscovery(
             for: path,
-            transcriptPaths: self.transcriptPaths)
+            transcriptPaths: self.transcriptPaths,
+            environment: self.environment)
         if let source = self.sources[path],
            source.data.contains(.delete) ||
            source.data.contains(.rename) ||

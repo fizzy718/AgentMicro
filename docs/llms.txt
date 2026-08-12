@@ -5,6 +5,7 @@ A tiny macOS menu bar app that tracks AI coding-provider usage windows, credits,
 Canonical documentation:
 - CodexBar — every AI coding limit, in your menu bar: https://codexbar.app/ - A tiny macOS menu bar app that tracks AI coding-provider usage windows, credits, costs, and resets across 63 providers — Codex, OpenAI, Claude, Cursor, Gemini, Copilot, LiteLLM, and more.
 - AgentMicro — Live Codex task status in your macOS menu bar: https://codexbar.app/agentmicro/index.html - AgentMicro keeps the live state of your Codex tasks in the macOS menu bar.
+- AgentMicro Privacy Policy: https://codexbar.app/agentmicro/privacy.html - AgentMicro privacy policy.
 
 Source: https://github.com/steipete/CodexBar
 
