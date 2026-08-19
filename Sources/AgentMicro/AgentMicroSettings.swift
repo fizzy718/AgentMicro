@@ -111,6 +111,7 @@ struct AgentMicroPreferences: Equatable, Sendable {
     var taskNameMode: AgentMicroTaskNameMode = .taskTitleAndProject
     var showRecentlyCompleted = true
     var taskDisplayLimit = AgentMicroSettings.defaultTaskDisplayLimit
+    var showTaskCPU = true
 }
 
 enum AgentMicroLaunchAtLoginManager {
@@ -181,6 +182,7 @@ final class AgentMicroSettings {
         static let showRecentlyCompleted = "agentMicro.showRecentlyCompleted"
         static let taskDisplayLimit = "agentMicro.taskDisplayLimit"
         static let enhancedStatusDetection = "agentMicro.enhancedStatusDetection"
+        static let showTaskCPU = "agentMicro.showTaskCPU"
         static let readSessionActivity = "agentMicro.readSessionActivity"
     }
 
@@ -244,6 +246,13 @@ final class AgentMicroSettings {
         }
     }
 
+    var showTaskCPU: Bool {
+        didSet {
+            self.defaults.set(self.showTaskCPU, forKey: Key.showTaskCPU)
+            self.notifyChange()
+        }
+    }
+
     private(set) var launchAtLogin: Bool
     private(set) var launchAtLoginError: String?
     private(set) var hasPresentedGuide: Bool
@@ -287,6 +296,11 @@ final class AgentMicroSettings {
             max(Self.minimumTaskDisplayLimit, savedTaskDisplayLimit))
         self.enhancedStatusDetection =
             defaults.object(forKey: Key.enhancedStatusDetection) as? Bool ?? false
+        #if ENABLE_AGENTMICRO_APP_STORE
+        self.showTaskCPU = false
+        #else
+        self.showTaskCPU = defaults.object(forKey: Key.showTaskCPU) as? Bool ?? true
+        #endif
         self.readSessionActivity = defaults.dictionary(forKey: Key.readSessionActivity)?
             .compactMapValues { ($0 as? NSNumber)?.doubleValue } ?? [:]
         self.launchAtLogin = launchAtLoginStatus()
@@ -301,7 +315,8 @@ final class AgentMicroSettings {
         AgentMicroPreferences(
             taskNameMode: self.taskNameMode,
             showRecentlyCompleted: self.showRecentlyCompleted,
-            taskDisplayLimit: self.taskDisplayLimit)
+            taskDisplayLimit: self.taskDisplayLimit,
+            showTaskCPU: self.showTaskCPU)
     }
 
     func setLaunchAtLogin(_ enabled: Bool) {

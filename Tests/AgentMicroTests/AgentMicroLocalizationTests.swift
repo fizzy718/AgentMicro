@@ -12,6 +12,18 @@ struct AgentMicroLocalizationTests {
         #expect(
             AgentMicroLocalization.text("guide.title", localeIdentifier: "en") ==
                 "Usage Guide")
+        #expect(
+            AgentMicroLocalization.text(
+                "menu.usage.weeklyFormat",
+                localeIdentifier: "en",
+                arguments: 43.0) ==
+                "Weekly 43% used")
+        #expect(
+            AgentMicroLocalization.text(
+                "menu.usage.deficitFormat",
+                localeIdentifier: "en",
+                arguments: 29) ==
+                "29% in deficit")
     }
 
     @Test
@@ -23,6 +35,18 @@ struct AgentMicroLocalizationTests {
         #expect(
             AgentMicroLocalization.text("guide.title", localeIdentifier: "zh-Hans") ==
                 "使用指南")
+        #expect(
+            AgentMicroLocalization.text(
+                "menu.usage.weeklyFormat",
+                localeIdentifier: "zh-Hans",
+                arguments: 43.0) ==
+                "每周已用 43%")
+        #expect(
+            AgentMicroLocalization.text(
+                "menu.usage.runsOutInFormat",
+                localeIdentifier: "zh-Hans",
+                arguments: "1d 11h") ==
+                "预计 1d 11h 后耗尽")
     }
 
     @Test

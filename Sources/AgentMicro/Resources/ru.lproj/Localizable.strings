@@ -19,6 +19,18 @@
 "menu.footer.settings" = "Настройки…";
 "menu.headline.active" = "AgentMicro — активно: %d";
 "menu.scanning" = "Поиск задач Codex…";
+"menu.usage.loading" = "Загрузка недельного использования…";
+"menu.usage.unavailable" = "Недельное использование недоступно";
+"menu.usage.weeklyFormat" = "За неделю использовано %.0f%%";
+"menu.usage.resetsInFormat" = "Сбрасывается через %@";
+"menu.usage.lastsUntilReset" = "Действует до сброса";
+"menu.usage.runsOutInFormat" = "Закончится через %@";
+"menu.usage.deficitFormat" = "%d%% в дефиците";
+"menu.usage.reserveFormat" = "%d%% в резерве";
+"menu.usage.onPace" = "В темпе";
+"menu.search.projects" = "Поиск проектов, задач или чатов";
+"menu.search.close" = "Закрыть поиск";
+"menu.search.noResults" = "Нет подходящих результатов";
 
 "settings.error.launchAtLogin" = "Не удалось обновить объект входа: %@";
 "settings.general" = "Основные";
@@ -51,6 +63,8 @@
 "status.tooltip.recent.other" = "AgentMicro — недавних задач Codex: %d";
 "task.fallbackTitle" = "Задача Codex";
 "task.fastMode" = "Быстрый режим";
+"task.cpu.shared" = "CPU общий";
+"settings.showTaskCPU" = "Показывать загрузку CPU задач";
 
 "updates.automatic" = "Автоматически проверять обновления";
 "updates.check" = "Проверить наличие обновлений…";
@@ -59,3 +73,13 @@
 "updates.unavailable.feed" = "Источник обновлений ещё не настроен.";
 "updates.unavailable.signature" = "Для обновлений нужна сборка, подписанная Developer ID.";
 "updates.version" = "Версия %@";
+"settings.codexData.title" = "Доступ к данным Codex";
+"settings.codexData.choose" = "Выбрать папку данных Codex…";
+"settings.codexData.notAuthorized" = "Не авторизовано";
+"settings.codexData.description" = "Выберите папку данных Codex (обычно ~/.codex). AgentMicro получает доступ только для чтения и сохраняет разрешение локально.";
+"settings.codexData.invalidFolder" = "Похоже, выбранная папка не содержит данных сеансов Codex.";
+"settings.codexData.accessFailed" = "AgentMicro не удалось получить доступ к этой папке только для чтения.";
+"settings.codexData.panelMessage" = "Выберите скрытую папку .codex в домашней папке.";
+"settings.codexData.authorize" = "Разрешить";
+"updates.appStore" = "Обновления этой версии предоставляются через Mac App Store.";
+"settings.privacyPolicy" = "Политика конфиденциальности";

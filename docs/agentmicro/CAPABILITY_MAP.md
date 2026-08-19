@@ -23,7 +23,14 @@ Capabilities reused or adapted:
   Codex-only provider scope before session correlation while the shared scanner retains its multi-provider default.
 - Launch at login and application-level language overrides.
 - Sparkle framework integration and nested signing patterns.
+- A channel-specific distribution seam: Developer ID packages keep Sparkle and bounded process correlation, while
+  the Mac App Store target removes Sparkle, disables process-tool launches, persists a user-selected read-only Codex
+  folder bookmark, and signs with sandbox entitlements from its distribution profile.
 - A CodexBar-style settings sidebar and native macOS visual hierarchy.
+- The CodexBar `UsageFetcher`, `UsageSnapshot.secondary`, `UsagePace`, and quota-warning thresholds for a throttled,
+  read-only weekly Codex quota card in the direct-download menu.
+- A new shared `CodexBarUI` library target containing the usage metric view and progress/pace/warning marker renderer;
+  both the CodexBar weekly row and AgentMicro card import this target instead of maintaining duplicate UI logic.
 
 AgentMicro-specific work:
 
@@ -32,12 +39,22 @@ AgentMicro-specific work:
 - Desktop unread-thread synchronization and optional read-only Accessibility evidence for exact visible selection, approval controls, and blocking error dialogs.
 - Tri-state Codex archive metadata that excludes archived threads before guardian recovery while bounding unknown state.
 - A 310-point task menu and six-slot status icon whose snake-ordered animation covers running and attention states.
+- A native header search interaction that immediately matches project/task metadata and asynchronously searches a
+  bounded, transient cache of user/assistant text from already observed Codex rollouts. The AppKit field editor is
+  retained during result/usage refreshes, defers queries while an input method has marked text, and applies an
+  AgentMicro-specific relevance rank before normal task priority. Its transcript parser admits only user/assistant
+  message roles and gates short conversation queries while leaving metadata search immediate.
+- A direct-download-only `/bin/ps` sampler that totals correlated CLI root processes and descendants while the menu is
+  open. Desktop CPU remains explicitly shared because neither CodexBar nor Codex exposes per-thread attribution.
 - Event-driven refresh with non-overlapping safety polls, content-fingerprinted menu rebuilds, cached animation state,
   and throttled selective Accessibility label reads.
 - A first-launch five-color guide.
 - A separate bundle identity, version source, appcast, Ed25519 key, GitHub Release, and adaptive six-layer Icon Composer application icon.
+- App Store privacy-manifest, provisioning-profile, installer-signing, validation, and upload automation without
+  changing the direct-download release chain.
 
-The inherited provider implementations remain in the repository baseline but are not connected to the AgentMicro product surface.
+Except for the direct-download Codex weekly quota pipeline and shared metric UI, inherited provider implementations remain in the
+repository baseline and are not connected to the AgentMicro product surface.
 
 ## abtop
 
@@ -88,9 +105,10 @@ Limits:
 
 - Its active/waiting/missing status describes data-source presence, not task lifecycle.
 - Electron should not become an AgentMicro V1 runtime dependency.
-- Usage and multi-device support would obscure the focused task product.
+- Full usage history and multi-device support would obscure the focused task product.
 
-Decision: consider usage in V2.5 and the Agent/Hub/SSE protocol in V3.
+Decision: use CodexBar's native Codex fetcher for the compact shipped weekly summary; consider token-monitor's deeper
+history ideas in V2.5 and the Agent/Hub/SSE protocol in V3.
 
 ## State-Synchronization References
 
@@ -119,7 +137,7 @@ AgentMicro task model
 native menu + Codex focus
 ```
 
-Future stages may separately learn from cc-switch history/resume and token-monitor usage/sync.
+Future stages may separately learn from cc-switch history/resume and token-monitor history/sync.
 
 ## Licensing
 

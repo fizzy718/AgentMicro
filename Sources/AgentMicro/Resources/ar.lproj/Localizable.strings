@@ -19,6 +19,18 @@
 "menu.footer.settings" = "الإعدادات…";
 "menu.headline.active" = "AgentMicro — %d قيد التشغيل";
 "menu.scanning" = "جارٍ البحث عن مهام Codex…";
+"menu.usage.loading" = "جارٍ تحميل الاستخدام الأسبوعي…";
+"menu.usage.unavailable" = "الاستخدام الأسبوعي غير متاح";
+"menu.usage.weeklyFormat" = "الاستخدام الأسبوعي %.0f%%";
+"menu.usage.resetsInFormat" = "إعادة التعيين في %@";
+"menu.usage.lastsUntilReset" = "يستمر حتى إعادة التعيين";
+"menu.usage.runsOutInFormat" = "ينفد في %@";
+"menu.usage.deficitFormat" = "%d%% في العجز";
+"menu.usage.reserveFormat" = "%d%% في الاحتياط";
+"menu.usage.onPace" = "على الوتيرة";
+"menu.search.projects" = "بحث المشاريع أو المهام أو الدردشات";
+"menu.search.close" = "إغلاق البحث";
+"menu.search.noResults" = "لا توجد نتائج مطابقة";
 
 "settings.error.launchAtLogin" = "تعذر تحديث عنصر تسجيل الدخول: %@";
 "settings.general" = "عام";
@@ -51,6 +63,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d من مهام Codex الحديثة";
 "task.fallbackTitle" = "مهمة Codex";
 "task.fastMode" = "الوضع السريع";
+"task.cpu.shared" = "CPU مشترك";
+"settings.showTaskCPU" = "إظهار استخدام CPU للمهام";
 
 "updates.automatic" = "التحقق تلقائيًا من التحديثات";
 "updates.check" = "التحقق من التحديثات…";
@@ -59,3 +73,13 @@
 "updates.unavailable.feed" = "لم تتم تهيئة مصدر التحديثات بعد.";
 "updates.unavailable.signature" = "تتطلب التحديثات إصدارًا موقعًا باستخدام Developer ID.";
 "updates.version" = "الإصدار %@";
+"settings.codexData.title" = "الوصول إلى بيانات Codex";
+"settings.codexData.choose" = "اختيار مجلد بيانات Codex…";
+"settings.codexData.notAuthorized" = "غير مصرح";
+"settings.codexData.description" = "اختر مجلد بيانات Codex (عادةً ~/.codex). يحصل AgentMicro على وصول للقراءة فقط ويحفظ الإذن محليًا.";
+"settings.codexData.invalidFolder" = "لا يبدو أن المجلد المحدد يحتوي على بيانات جلسات Codex.";
+"settings.codexData.accessFailed" = "تعذر على AgentMicro الحصول على وصول للقراءة فقط إلى هذا المجلد.";
+"settings.codexData.panelMessage" = "اختر مجلد .codex المخفي في مجلدك الرئيسي.";
+"settings.codexData.authorize" = "تخويل";
+"updates.appStore" = "تتوفر تحديثات هذا الإصدار عبر Mac App Store.";
+"settings.privacyPolicy" = "سياسة الخصوصية";

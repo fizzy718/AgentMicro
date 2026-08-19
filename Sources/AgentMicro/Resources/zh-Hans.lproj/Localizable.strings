@@ -19,6 +19,18 @@
 "menu.footer.settings" = "设置…";
 "menu.headline.active" = "AgentMicro — %d 个运行中";
 "menu.scanning" = "正在扫描 Codex 任务…";
+"menu.usage.loading" = "正在读取每周用量…";
+"menu.usage.unavailable" = "每周用量暂不可用";
+"menu.usage.weeklyFormat" = "每周已用 %.0f%%";
+"menu.usage.resetsInFormat" = "%@后重置";
+"menu.usage.lastsUntilReset" = "持续到重置";
+"menu.usage.runsOutInFormat" = "预计 %@ 后耗尽";
+"menu.usage.deficitFormat" = "超额 %d%%";
+"menu.usage.reserveFormat" = "余量 %d%%";
+"menu.usage.onPace" = "节奏正常";
+"menu.search.projects" = "搜索项目、任务或聊天内容";
+"menu.search.close" = "关闭搜索";
+"menu.search.noResults" = "没有匹配结果";
 
 "settings.error.launchAtLogin" = "无法更新登录项：%@";
 "settings.general" = "通用";
@@ -51,6 +63,8 @@
 "status.tooltip.recent.other" = "AgentMicro — 最近 %d 个 Codex 任务";
 "task.fallbackTitle" = "Codex 任务";
 "task.fastMode" = "快速模式";
+"task.cpu.shared" = "CPU 共享";
+"settings.showTaskCPU" = "显示任务 CPU 占用";
 
 "updates.automatic" = "自动检查更新";
 "updates.check" = "检查更新…";
@@ -59,3 +73,13 @@
 "updates.unavailable.feed" = "尚未配置软件更新源。";
 "updates.unavailable.signature" = "软件更新需要使用 Developer ID 签名的正式版本。";
 "updates.version" = "版本 %@";
+"settings.codexData.title" = "Codex 数据访问";
+"settings.codexData.choose" = "选择 Codex 数据文件夹…";
+"settings.codexData.notAuthorized" = "尚未授权";
+"settings.codexData.description" = "请选择 Codex 数据文件夹（通常为 ~/.codex）。AgentMicro 仅获得只读权限，并在本地保存此授权。";
+"settings.codexData.invalidFolder" = "所选文件夹似乎不包含 Codex 会话数据。";
+"settings.codexData.accessFailed" = "AgentMicro 无法获得此文件夹的只读权限。";
+"settings.codexData.panelMessage" = "请选择个人目录中隐藏的 .codex 文件夹。";
+"settings.codexData.authorize" = "授权";
+"updates.appStore" = "此版本通过 Mac App Store 获取更新。";
+"settings.privacyPolicy" = "隐私政策";

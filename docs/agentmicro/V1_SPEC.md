@@ -23,10 +23,15 @@ Give macOS users an honest, glanceable view of concurrent Codex task state and a
 - CLI sessions with ambiguous PID ownership.
 - Local Codex metadata formats that are not documented public APIs.
 
+The direct-download edition may use bounded `ps`/`lsof` correlation for CLI ownership. The Mac App Store edition does
+not launch those tools inside its sandbox; it observes Desktop and CLI rollout files under a user-authorized Codex
+data folder. Consequently, file-backed state remains available while live PID ownership and CLI terminal routing are
+not promised in the store edition.
+
 ### Excluded
 
 - Claude, OpenCode, and other agents.
-- Token, spend, and account limits.
+- Per-task token accounting, spend history, and multiple-account management.
 - Task approval, answering, stopping, retrying, or resuming from AgentMicro.
 - Remote synchronization and transcript browsing.
 
@@ -98,9 +103,28 @@ Current action is an internal diagnostic aid derived from bounded rollout events
   - Project on the second line when the selected naming mode requires it.
   - Current-turn duration on the right.
   - A lightning badge after the duration when Codex fast mode is enabled.
+  - Direct-download edition only: a 10-point secondary CPU label at the right of the second line. CLI tasks aggregate
+    the root process and descendants; Desktop tasks display localized `CPU shared` because one app process hosts
+    multiple conversations. IDE/unknown sessions and CLI sessions without a correlated PID omit the label.
 - There is no separate unread dot on the right.
 - Hover highlighting belongs to only one row and text must not become accidentally selected.
 - Clicking a Desktop row opens `codex://threads/<session-id>`, with window focus and app activation as fallback.
+- The header shows a trailing search button. Activating it replaces the header title with a focused input. Project and
+  task-title matches appear immediately; an asynchronous, transient in-memory index also matches user/assistant text
+  from up to the most recent 8 MiB of each observed rollout. System, developer, tool, and reasoning content is never
+  indexed, and matched snippets are not displayed. Conversation matching requires at least three non-whitespace Latin
+  characters or two Chinese characters; shorter queries continue to match project and task metadata.
+  Matching is case/diacritic-insensitive and occurs before the configured row limit. Escape, the close button, or
+  closing the menu ends the search and discards its visible result set. Background task/usage refreshes replace only
+  the result region, preserving the field editor and current results. Marked text from macOS input methods is not
+  submitted until composition commits; Escape first belongs to an active composition rather than closing search.
+  Results rank exact task title, exact project, title/project prefix, title/project substring, then conversation-only
+  matches; normal working/recent ordering breaks ties within the same relevance level.
+- Direct-download edition only: a noninteractive weekly Codex usage card appears below the task rows. It uses the
+  shared CodexBar usage-metric component and shows consumed percentage, a filled usage bar, localized relative reset
+  timing, elapsed-time pace (deficit/reserve/on pace), projected exhaustion or reset survival, and warning/pace
+  markers when the source fields are available. Its 13-point semibold title matches task rows; reset and forecast
+  metadata use 11-point secondary text. Loading and unavailable states collapse to a single compact row.
 - Footer actions: Refresh, Settings, optional Check for Updates, and Quit.
 
 The duration is the current turn’s execution time, not time since last activity. It updates every second while a working task is visible in an open menu. Stopped tasks keep a frozen duration.
@@ -139,16 +163,23 @@ Desktop deep links are preferred because they identify the exact thread. If the 
 - Use watched changes as the primary refresh path. Poll every 15 seconds as a safety fallback while Codex Desktop is
   running, a task is working, or a task has an independent process; poll every 30 seconds otherwise.
 - Opening the menu, clicking a task, and known rollout changes trigger immediate reconciliation plus a bounded burst.
+- Weekly quota uses the shared CodexBar `UsageFetcher` against Codex CLI's read-only, untrusted app-server. It loads
+  at launch, refreshes on menu open only when the last attempt is at least five minutes old, and refreshes
+  unconditionally with the menu Refresh action. A failed fetch keeps task observation operational and shows the
+  unavailable state. It is compiled out of the Mac App Store edition because that sandbox cannot launch the CLI.
 - Menu duration updates use a separate 1-second text timer and do not rescan sessions.
 - Event-triggered scans are coalesced; an event arriving during a scan requests at most one follow-up scan. A safety
   poll that overlaps an existing scan is dropped instead of queuing continuous work.
 - AgentMicro filters the process snapshot to Codex candidates before parsing process dates, excludes Claude before
   session correlation, and caches immutable rollout-header metadata across append-only updates.
-- The menu bar animation advances through five cached pre-rendered frames per attention slot every 250 milliseconds,
-  with timer tolerance for wakeup coalescing. It does not rebuild menu rows, reread local state, or recreate an image
-  on every tick.
+- The menu bar animation advances through 21 cached pre-rendered frames per attention slot every 50 milliseconds,
+  with a narrow timer tolerance. It does not rebuild menu rows, reread local state, or recreate an image on every tick.
 - The native menu rebuilds only when visible task content changes, when the initial scan completes, or when an explicit
   presentation/settings event requires a rebuild. Duration text remains live while the menu is open.
+- Direct-download task CPU sampling runs every two seconds only while the menu is open and the setting is enabled. It
+  reads one `/bin/ps` snapshot, recursively totals each CLI task process tree, smooths readings with a 0.35 exponential
+  weight, updates existing row labels without rebuilding the menu, and discards readings when the menu closes. Values
+  may exceed 100% on multicore systems. The Mac App Store edition never launches the sampler.
 - Enhanced Status Detection reuses Accessibility evidence for one second and reads labels only from selected,
   button, or alert elements while retaining the existing bounded tree traversal.
 
@@ -167,6 +198,9 @@ The Guide explains the complete white, green, blue, orange, and red state semant
 
 ### General
 
+- Mac App Store edition only: current read-only Codex data-folder authorization and a system folder chooser to grant
+  or replace it. The selected folder must contain recognizable Codex session state, and the security-scoped bookmark
+  is stored locally.
 - Interface language: Follow System by default, or one of 23 languages aligned with CodexBar.
 - Launch AgentMicro at login.
 - Enhanced Status Detection: disabled by default; enabling it explicitly requests Accessibility permission and explains the read-only scope.
@@ -177,14 +211,15 @@ The Guide explains the complete white, green, blue, orange, and red state semant
 - Naming mode.
 - Task count from 1 to 20, with direct numeric entry and stepper.
 - Show recently completed tasks; enabled by default with a fixed 24-hour retention.
+- Direct-download edition only: show task CPU usage; enabled by default.
 
 ### Updates
 
-- Automatically check for updates; enabled by default.
-- The preference remains editable and persistent even in a development build where Sparkle is unavailable.
-- Show `version (build)`.
-- Manual Check for Updates is enabled only when a signed updater is available.
-- Explain whether feed, public key, or Developer ID signing is missing.
+- Direct-download edition: automatically check for updates is enabled by default, the preference remains editable in
+  development builds, manual checking requires a signed updater, and unavailable builds explain missing feed, key,
+  or Developer ID signing.
+- Mac App Store edition: show `version (build)` and explain that updates are delivered by the Mac App Store; do not
+  expose Sparkle preferences or manual feed checks.
 
 Language overrides are stored only in AgentMicro defaults and never modify global `AppleLanguages`. Arabic and Persian use right-to-left layout. Every locale must contain the same key set as English.
 
@@ -193,11 +228,15 @@ Language overrides are stored only in AgentMicro defaults and never modify globa
 - Produce a universal arm64/x86_64 app.
 - Place `CodexBar_AgentMicro.bundle` in `Contents/Resources` and resolve it without `Bundle.module` fatal traps.
 - Include the compiled Icon Composer `Assets.car`, `AgentMicro.icns` fallback, and `CFBundleIconName`.
-- Embed Sparkle only in packaged builds.
-- Use an AgentMicro-specific bundle ID, feed, Ed25519 key, Developer ID signature, and notarization.
-- Publish both a ZIP for Sparkle and a styled DMG for first installation. The DMG places `AgentMicro.app`
+- Direct-download edition: embed Sparkle only in packaged builds and use an AgentMicro-specific bundle ID, feed,
+  Ed25519 key, Developer ID signature, and notarization.
+- Publish both a ZIP for Sparkle and a styled DMG for direct installation. The DMG places `AgentMicro.app`
   opposite an Applications link, is signed with the same Developer ID identity, and receives its own
   notarization ticket.
+- Mac App Store edition: compile without Sparkle, enable App Sandbox and user-selected read-only file access, include
+  a privacy manifest, embed the matching distribution provisioning profile, sign with Mac App Distribution, and
+  package with Mac Installer Distribution before App Store Connect validation/upload. The sandboxed binary must not
+  include or claim the CLI-backed weekly quota surface.
 - Development builds remain ad-hoc signed and cannot perform online updates.
 
 ## Acceptance Criteria
@@ -214,10 +253,22 @@ Language overrides are stored only in AgentMicro defaults and never modify globa
 - Base mode remains fully usable without Accessibility permission, and the app never requests it before explicit opt-in.
 - Final answers stop blue state without waiting for process exit.
 - Working duration advances every second; stopped duration does not.
+- While the direct-download menu is open, correlated CLI rows refresh smoothed root-plus-descendant CPU levels every
+  two seconds; Desktop rows say `CPU shared`, and the App Store edition performs no process sampling.
+- The direct-download menu renders the Codex weekly consumed percentage, reset countdown, pace variance, projected
+  exhaustion, and quota/pace markers below task rows, clamps only displayed percentages to 0–100%, and keeps
+  loading/fetch failures separate from task state.
+- The usage title reports consumed percentage while the fill, matching CodexBar's default quota presentation, reports
+  the exact remaining percentage. Pace and quota markers use the same remaining-percentage axis.
+- Search matches project names, task titles, and bounded recent user/assistant conversation text before the row limit,
+  returns the corresponding task/project row, remains stable through background refreshes, accepts macOS input-method
+  composition, ranks metadata relevance above conversation-only matches, and resets when the menu closes.
 - The first launch opens the localized Guide with all five colors and the default checked suppression option.
 - Every selectable language has a complete catalog.
 - Opening the release DMG presents `AgentMicro.app` and an Applications drop target; dragging the app installs
   it in `/Applications`.
 - The packaged app launches without a resource crash, shows the adaptive icon, and reports the correct version.
 - Signed releases pass code-signing, Gatekeeper, notarization, Sparkle signature, and cross-version update checks.
-- Offline operation remains functional except for update retrieval.
+- The Mac App Store package contains no Sparkle linkage or feed keys, has the expected sandbox entitlements and root
+  privacy manifest, and passes App Store Connect processing before review.
+- Offline task observation remains functional; weekly quota and update retrieval may be unavailable independently.

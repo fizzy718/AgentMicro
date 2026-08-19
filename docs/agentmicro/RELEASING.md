@@ -2,6 +2,10 @@
 
 AgentMicro has an independent release chain. Never reuse CodexBar’s appcast, Ed25519 key, or release identity.
 
+AgentMicro has two mutually exclusive distribution variants. The direct-download variant uses Developer ID,
+notarization, DMG/ZIP artifacts, and Sparkle. The Mac App Store variant uses App Sandbox, store distribution
+certificates and provisioning, a signed installer package, and store-delivered updates; it must not contain Sparkle.
+
 ## One-Time Setup
 
 1. Use [`fizzy718/AgentMicro`](https://github.com/fizzy718/AgentMicro) as `origin` and [`steipete/CodexBar`](https://github.com/steipete/CodexBar) as `upstream`.
@@ -29,8 +33,8 @@ No separate update server is required.
 `agentmicro-version.env` is authoritative:
 
 ```bash
-: "${AGENTMICRO_VERSION:=0.1.3}"
-: "${AGENTMICRO_BUILD_NUMBER:=4}"
+: "${AGENTMICRO_VERSION:=0.1.5}"
+: "${AGENTMICRO_BUILD_NUMBER:=6}"
 ```
 
 Increase the user version or build number for every release. Sparkle compares `CFBundleVersion`.
@@ -121,3 +125,51 @@ The first complete update test needs two signed builds:
 - Development builds remain ad-hoc signed and must clearly report that updates are unavailable.
 - Run `make check` and `make test` before release.
 - CI validation does not replace notarization or cross-version update testing.
+
+## Mac App Store Release
+
+### One-Time Setup
+
+1. Register the production bundle ID in the Apple Developer portal and create the matching Mac App Store
+   distribution provisioning profile.
+2. Install the current `Mac App Distribution` and `Mac Installer Distribution` certificates for the same team.
+3. Create the app record in App Store Connect using exactly the same bundle ID and complete agreements, tax/banking,
+   DSA trader status, updated age-rating questions, privacy answers, support URL, and privacy-policy URL.
+4. If command-line validation/upload is used, install the App Store Connect API P8 in an `altool`-supported private
+   key directory and retain its key and issuer IDs outside the repository.
+5. Use Xcode 26 or later for uploads made after April 28, 2026.
+
+### Build and Package
+
+```bash
+export AGENTMICRO_BUNDLE_ID="com.example.AgentMicro"
+export AGENTMICRO_APP_STORE_APP_IDENTITY="Mac App Distribution: Example (TEAMID)"
+export AGENTMICRO_APP_STORE_INSTALLER_IDENTITY="Mac Installer Distribution: Example (TEAMID)"
+export AGENTMICRO_APP_STORE_PROVISIONING_PROFILE="/absolute/path/AgentMicro.provisionprofile"
+./Scripts/archive_agentmicro_app_store.sh --package
+```
+
+The script builds universal arm64/x86_64 code with `ENABLE_AGENTMICRO_APP_STORE`, omits Sparkle, embeds the privacy
+manifest and matching provisioning profile, derives signed application/team identifiers from that profile, applies
+read-only user-selected file and sandbox entitlements, signs the app, and produces
+`.build/agentmicro-app-store/<version>/AgentMicro-<version>-<build>.pkg`.
+
+For local structure testing without distribution credentials:
+
+```bash
+AGENTMICRO_APP_STORE=1 AGENTMICRO_SIGNING=adhoc ARCHES=arm64 \
+  ./Scripts/package_agentmicro.sh debug
+```
+
+### Validate or Upload
+
+```bash
+export APP_STORE_CONNECT_KEY_ID="..."
+export APP_STORE_CONNECT_ISSUER_ID="..."
+./Scripts/archive_agentmicro_app_store.sh --validate
+./Scripts/archive_agentmicro_app_store.sh --upload
+```
+
+After processing completes, select the build in App Store Connect, attach the prepared metadata/screenshots, provide
+review notes explaining the first-launch `.codex` folder authorization and read-only behavior, then submit for review.
+Do not notarize, staple, publish to the Sparkle appcast, or wrap the store build in the direct-download DMG.

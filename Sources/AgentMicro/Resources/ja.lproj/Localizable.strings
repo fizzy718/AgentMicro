@@ -19,6 +19,18 @@
 "menu.footer.settings" = "設定…";
 "menu.headline.active" = "AgentMicro — %d 件実行中";
 "menu.scanning" = "Codex タスクを検索中…";
+"menu.usage.loading" = "週間使用量を読み込み中…";
+"menu.usage.unavailable" = "週間使用量を取得できません";
+"menu.usage.weeklyFormat" = "週間使用量 %.0f%%";
+"menu.usage.resetsInFormat" = "%@ 後にリセット";
+"menu.usage.lastsUntilReset" = "リセットまで持続";
+"menu.usage.runsOutInFormat" = "%@ 後に使い切る見込み";
+"menu.usage.deficitFormat" = "%d%% 不足";
+"menu.usage.reserveFormat" = "%d%% 余裕";
+"menu.usage.onPace" = "想定ペース";
+"menu.search.projects" = "プロジェクト・タスク・チャットを検索";
+"menu.search.close" = "検索を閉じる";
+"menu.search.noResults" = "一致する結果はありません";
 
 "settings.error.launchAtLogin" = "ログイン項目を更新できませんでした：%@";
 "settings.general" = "一般";
@@ -51,6 +63,8 @@
 "status.tooltip.recent.other" = "AgentMicro — 最近の Codex タスク %d 件";
 "task.fallbackTitle" = "Codex タスク";
 "task.fastMode" = "高速モード";
+"task.cpu.shared" = "CPU 共有";
+"settings.showTaskCPU" = "タスクのCPU使用率を表示";
 
 "updates.automatic" = "アップデートを自動的に確認";
 "updates.check" = "アップデートを確認…";
@@ -59,3 +73,13 @@
 "updates.unavailable.feed" = "アップデート配信元がまだ設定されていません。";
 "updates.unavailable.signature" = "アップデートには Developer ID で署名されたリリースビルドが必要です。";
 "updates.version" = "バージョン %@";
+"settings.codexData.title" = "Codexデータへのアクセス";
+"settings.codexData.choose" = "Codexデータフォルダを選択…";
+"settings.codexData.notAuthorized" = "未承認";
+"settings.codexData.description" = "Codexデータフォルダ（通常は ~/.codex）を選択してください。AgentMicroは読み取り専用でアクセスし、権限をローカルに保存します。";
+"settings.codexData.invalidFolder" = "選択したフォルダにCodexセッションデータが見つかりません。";
+"settings.codexData.accessFailed" = "このフォルダへの読み取り専用アクセスを取得できませんでした。";
+"settings.codexData.panelMessage" = "ホームフォルダ内の非表示の .codex フォルダを選択してください。";
+"settings.codexData.authorize" = "許可";
+"updates.appStore" = "このエディションのアップデートはMac App Storeから提供されます。";
+"settings.privacyPolicy" = "プライバシーポリシー";

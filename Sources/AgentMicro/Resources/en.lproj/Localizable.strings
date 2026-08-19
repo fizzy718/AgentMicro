@@ -19,6 +19,18 @@
 "menu.footer.settings" = "Settings…";
 "menu.headline.active" = "AgentMicro — %d active";
 "menu.scanning" = "Scanning for Codex tasks…";
+"menu.usage.loading" = "Loading weekly usage…";
+"menu.usage.unavailable" = "Weekly usage unavailable";
+"menu.usage.weeklyFormat" = "Weekly %.0f%% used";
+"menu.usage.resetsInFormat" = "Resets in %@";
+"menu.usage.lastsUntilReset" = "Lasts until reset";
+"menu.usage.runsOutInFormat" = "Runs out in %@";
+"menu.usage.deficitFormat" = "%d%% in deficit";
+"menu.usage.reserveFormat" = "%d%% in reserve";
+"menu.usage.onPace" = "On pace";
+"menu.search.projects" = "Search projects, tasks, or chats";
+"menu.search.close" = "Close search";
+"menu.search.noResults" = "No matching results";
 
 "settings.error.launchAtLogin" = "Could not update login item: %@";
 "settings.general" = "General";
@@ -51,6 +63,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d recent Codex tasks";
 "task.fallbackTitle" = "Codex task";
 "task.fastMode" = "Fast mode";
+"task.cpu.shared" = "CPU shared";
+"settings.showTaskCPU" = "Show task CPU usage";
 
 "updates.automatic" = "Automatically check for updates";
 "updates.check" = "Check for Updates…";
@@ -59,3 +73,13 @@
 "updates.unavailable.feed" = "The update feed has not been configured yet.";
 "updates.unavailable.signature" = "Updates require a Developer ID signed release build.";
 "updates.version" = "Version %@";
+"settings.codexData.title" = "Codex data access";
+"settings.codexData.choose" = "Choose Codex Data Folder…";
+"settings.codexData.notAuthorized" = "Not authorized";
+"settings.codexData.description" = "Select your Codex data folder (normally ~/.codex). AgentMicro receives read-only access and stores the permission locally.";
+"settings.codexData.invalidFolder" = "The selected folder does not appear to contain Codex session data.";
+"settings.codexData.accessFailed" = "AgentMicro could not obtain read-only access to this folder.";
+"settings.codexData.panelMessage" = "Select the hidden .codex folder in your home directory.";
+"settings.codexData.authorize" = "Authorize";
+"updates.appStore" = "Updates for this edition are delivered by the Mac App Store.";
+"settings.privacyPolicy" = "Privacy Policy";
