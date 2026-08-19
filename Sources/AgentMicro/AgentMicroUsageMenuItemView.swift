@@ -64,12 +64,12 @@ final class AgentMicroUsageMenuItemView: NSView {
             }
             return UsageMetricPresentation(
                 title: title,
-                percent: usage.clampedUsedPercent,
+                percent: usage.clampedRemainingPercent,
                 percentLabel: title,
                 resetText: resetText,
                 detailLeftText: self.paceDescription(usage),
                 detailRightText: self.etaDescription(usage),
-                pacePercent: usage.expectedUsedPercent,
+                pacePercent: usage.expectedUsedPercent.map { 100 - $0 },
                 paceOnTop: usage.expectedUsedPercent.map { usage.usedPercent <= $0 } ?? true,
                 warningMarkerPercents: usage.warningMarkerPercents,
                 accessibilityLabel: title,

@@ -4,7 +4,7 @@ Roadmap stages are gated by explicit entry conditions. A later-stage idea is not
 
 ## V1 — Codex Task Pulse
 
-Status: complete, with release hardening in `0.1.1`.
+Status: complete, with the latest task-surface improvements prepared for `0.1.5`.
 
 Delivered:
 
@@ -15,10 +15,12 @@ Delivered:
 - Incremental rollout reduction with structured/user-handoff and terminal-failure classification.
 - Five visible states: idle, unread, thinking, needs input, and error.
 - Working-first, recent-state-change ordering.
-- Configurable 1–20 task menu and fixed six-slot menu bar icon with attention-aware, task-ordered animation.
+- Configurable 1–20 task menu and fixed six-slot menu bar icon with smooth, attention-aware, task-ordered animation.
+- Header search over project names, task titles, and bounded recent local conversation text before the configured limit.
 - Direct-download weekly Codex quota card below the task list, backed by CodexBar's read-only CLI app-server fetcher,
   pace/threshold calculations, and shared usage-metric UI.
 - Project/title display modes, second-level current-turn duration, and fast-mode badge.
+- Direct-download CLI process-tree CPU levels while the menu is open, with explicit shared attribution for Desktop.
 - Desktop unread synchronization, explicit-view closure, optional Enhanced Status Detection, and one-click thread deep links.
 - CodexBar-style paged settings and first-launch five-color guide.
 - System language plus 23 selectable languages.
@@ -56,7 +58,8 @@ Entry condition: a bounded local index can be maintained without retaining sensi
 Candidates:
 
 - Recent task history grouped by project.
-- Search over title, project, state, and timestamps only.
+- Persisted-history search over title, project, state, and timestamps; live observed-task conversation search remains
+  transient and does not expand into retained transcript indexing.
 - Resume/open actions for known Desktop tasks.
 - Clear retention controls.
 

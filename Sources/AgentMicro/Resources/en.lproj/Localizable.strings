@@ -28,6 +28,9 @@
 "menu.usage.deficitFormat" = "%d%% in deficit";
 "menu.usage.reserveFormat" = "%d%% in reserve";
 "menu.usage.onPace" = "On pace";
+"menu.search.projects" = "Search projects, tasks, or chats";
+"menu.search.close" = "Close search";
+"menu.search.noResults" = "No matching results";
 
 "settings.error.launchAtLogin" = "Could not update login item: %@";
 "settings.general" = "General";
@@ -60,6 +63,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d recent Codex tasks";
 "task.fallbackTitle" = "Codex task";
 "task.fastMode" = "Fast mode";
+"task.cpu.shared" = "CPU shared";
+"settings.showTaskCPU" = "Show task CPU usage";
 
 "updates.automatic" = "Automatically check for updates";
 "updates.check" = "Check for Updates…";

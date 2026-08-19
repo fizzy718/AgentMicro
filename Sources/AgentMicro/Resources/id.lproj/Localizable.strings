@@ -26,6 +26,9 @@
 "menu.usage.deficitFormat" = "%d%% defisit";
 "menu.usage.reserveFormat" = "%d%% cadangan";
 "menu.usage.onPace" = "Sesuai pace";
+"menu.search.projects" = "Cari proyek, tugas, atau chat";
+"menu.search.close" = "Tutup pencarian";
+"menu.search.noResults" = "Tidak ada hasil yang cocok";
 "settings.error.launchAtLogin" = "Tidak dapat memperbarui item masuk: %@";
 "settings.general" = "Umum";
 "settings.launchAtLogin" = "Mulai AgentMicro saat masuk";
@@ -54,6 +57,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d tugas Codex terbaru";
 "task.fallbackTitle" = "Tugas Codex";
 "task.fastMode" = "Mode cepat";
+"task.cpu.shared" = "CPU bersama";
+"settings.showTaskCPU" = "Tampilkan penggunaan CPU tugas";
 "updates.automatic" = "Periksa pembaruan secara otomatis";
 "updates.check" = "Periksa Pembaruan…";
 "updates.section" = "Pembaruan";

@@ -28,6 +28,9 @@
 "menu.usage.deficitFormat" = "%d%% в дефиците";
 "menu.usage.reserveFormat" = "%d%% в резерве";
 "menu.usage.onPace" = "В темпе";
+"menu.search.projects" = "Поиск проектов, задач или чатов";
+"menu.search.close" = "Закрыть поиск";
+"menu.search.noResults" = "Нет подходящих результатов";
 
 "settings.error.launchAtLogin" = "Не удалось обновить объект входа: %@";
 "settings.general" = "Основные";
@@ -60,6 +63,8 @@
 "status.tooltip.recent.other" = "AgentMicro — недавних задач Codex: %d";
 "task.fallbackTitle" = "Задача Codex";
 "task.fastMode" = "Быстрый режим";
+"task.cpu.shared" = "CPU общий";
+"settings.showTaskCPU" = "Показывать загрузку CPU задач";
 
 "updates.automatic" = "Автоматически проверять обновления";
 "updates.check" = "Проверить наличие обновлений…";

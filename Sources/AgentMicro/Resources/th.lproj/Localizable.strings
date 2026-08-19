@@ -26,6 +26,9 @@
 "menu.usage.deficitFormat" = "%d%% ขาดดุล";
 "menu.usage.reserveFormat" = "%d%% สํารอง";
 "menu.usage.onPace" = "ก้าวไปข้างหน้า";
+"menu.search.projects" = "ค้นหาโปรเจกต์ งาน หรือแชท";
+"menu.search.close" = "ปิดการค้นหา";
+"menu.search.noResults" = "ไม่พบผลลัพธ์ที่ตรงกัน";
 "settings.error.launchAtLogin" = "ไม่สามารถอัปเดตรายการเข้าสู่ระบบได้: %@";
 "settings.general" = "ทั่วไป";
 "settings.launchAtLogin" = "เริ่ม AgentMicro เมื่อเข้าสู่ระบบ";
@@ -54,6 +57,8 @@
 "status.tooltip.recent.other" = "AgentMicro — งาน Codex ล่าสุด %d งาน";
 "task.fallbackTitle" = "งาน Codex";
 "task.fastMode" = "โหมดเร็ว";
+"task.cpu.shared" = "CPU ใช้ร่วมกัน";
+"settings.showTaskCPU" = "แสดงการใช้ CPU ของงาน";
 "updates.automatic" = "ตรวจหาการอัปเดตโดยอัตโนมัติ";
 "updates.check" = "ตรวจหาการอัปเดต…";
 "updates.section" = "การอัปเดต";

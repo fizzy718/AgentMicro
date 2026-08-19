@@ -26,6 +26,9 @@
 "menu.usage.deficitFormat" = "%d%% tekort";
 "menu.usage.reserveFormat" = "%d%% in reserve";
 "menu.usage.onPace" = "Op tempo";
+"menu.search.projects" = "Projecten, taken of chats zoeken";
+"menu.search.close" = "Zoeken sluiten";
+"menu.search.noResults" = "Geen overeenkomende resultaten";
 "settings.error.launchAtLogin" = "Inlogonderdeel kon niet worden bijgewerkt: %@";
 "settings.general" = "Algemeen";
 "settings.launchAtLogin" = "Start AgentMicro bij inloggen";
@@ -54,6 +57,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d recente Codex-taken";
 "task.fallbackTitle" = "Codex-taak";
 "task.fastMode" = "Snelle modus";
+"task.cpu.shared" = "CPU gedeeld";
+"settings.showTaskCPU" = "CPU-gebruik per taak tonen";
 "updates.automatic" = "Automatisch controleren op updates";
 "updates.check" = "Zoek naar updates…";
 "updates.section" = "Updates";

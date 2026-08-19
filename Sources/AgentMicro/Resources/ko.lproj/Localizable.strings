@@ -28,6 +28,9 @@
 "menu.usage.deficitFormat" = "%d%% 부족";
 "menu.usage.reserveFormat" = "%d%% 여유";
 "menu.usage.onPace" = "정상 속도";
+"menu.search.projects" = "프로젝트, 작업 또는 채팅 검색";
+"menu.search.close" = "검색 닫기";
+"menu.search.noResults" = "일치하는 결과 없음";
 
 "settings.error.launchAtLogin" = "로그인 항목을 업데이트할 수 없습니다: %@";
 "settings.general" = "일반";
@@ -60,6 +63,8 @@
 "status.tooltip.recent.other" = "AgentMicro — 최근 Codex 작업 %d개";
 "task.fallbackTitle" = "Codex 작업";
 "task.fastMode" = "빠른 모드";
+"task.cpu.shared" = "CPU 공유";
+"settings.showTaskCPU" = "작업 CPU 사용량 표시";
 
 "updates.automatic" = "자동으로 업데이트 확인";
 "updates.check" = "업데이트 확인…";

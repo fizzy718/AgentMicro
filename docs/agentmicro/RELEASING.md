@@ -33,8 +33,8 @@ No separate update server is required.
 `agentmicro-version.env` is authoritative:
 
 ```bash
-: "${AGENTMICRO_VERSION:=0.1.3}"
-: "${AGENTMICRO_BUILD_NUMBER:=4}"
+: "${AGENTMICRO_VERSION:=0.1.5}"
+: "${AGENTMICRO_BUILD_NUMBER:=6}"
 ```
 
 Increase the user version or build number for every release. Sparkle compares `CFBundleVersion`.

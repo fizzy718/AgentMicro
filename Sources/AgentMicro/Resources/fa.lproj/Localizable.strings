@@ -26,6 +26,9 @@
 "menu.usage.deficitFormat" = "%d%% در کسری بودجه";
 "menu.usage.reserveFormat" = "%d%% در ذخیره";
 "menu.usage.onPace" = "روی سرعت";
+"menu.search.projects" = "جستجوی پروژه، وظیفه یا گفتگو";
+"menu.search.close" = "بستن جستجو";
+"menu.search.noResults" = "نتیجه‌ای پیدا نشد";
 "settings.error.launchAtLogin" = "به‌روزرسانی مورد ورود ممکن نشد: %@";
 "settings.general" = "عمومی";
 "settings.launchAtLogin" = "اجرای AgentMicro هنگام ورود";
@@ -54,6 +57,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d وظیفه اخیر Codex";
 "task.fallbackTitle" = "وظیفه Codex";
 "task.fastMode" = "حالت سریع";
+"task.cpu.shared" = "CPU مشترک";
+"settings.showTaskCPU" = "نمایش مصرف CPU وظایف";
 "updates.automatic" = "بررسی خودکار به‌روزرسانی‌ها";
 "updates.check" = "بررسی به‌روزرسانی‌ها…";
 "updates.section" = "به‌روزرسانی‌ها";

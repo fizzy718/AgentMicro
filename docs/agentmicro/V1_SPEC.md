@@ -103,9 +103,23 @@ Current action is an internal diagnostic aid derived from bounded rollout events
   - Project on the second line when the selected naming mode requires it.
   - Current-turn duration on the right.
   - A lightning badge after the duration when Codex fast mode is enabled.
+  - Direct-download edition only: a 10-point secondary CPU label at the right of the second line. CLI tasks aggregate
+    the root process and descendants; Desktop tasks display localized `CPU shared` because one app process hosts
+    multiple conversations. IDE/unknown sessions and CLI sessions without a correlated PID omit the label.
 - There is no separate unread dot on the right.
 - Hover highlighting belongs to only one row and text must not become accidentally selected.
 - Clicking a Desktop row opens `codex://threads/<session-id>`, with window focus and app activation as fallback.
+- The header shows a trailing search button. Activating it replaces the header title with a focused input. Project and
+  task-title matches appear immediately; an asynchronous, transient in-memory index also matches user/assistant text
+  from up to the most recent 8 MiB of each observed rollout. System, developer, tool, and reasoning content is never
+  indexed, and matched snippets are not displayed. Conversation matching requires at least three non-whitespace Latin
+  characters or two Chinese characters; shorter queries continue to match project and task metadata.
+  Matching is case/diacritic-insensitive and occurs before the configured row limit. Escape, the close button, or
+  closing the menu ends the search and discards its visible result set. Background task/usage refreshes replace only
+  the result region, preserving the field editor and current results. Marked text from macOS input methods is not
+  submitted until composition commits; Escape first belongs to an active composition rather than closing search.
+  Results rank exact task title, exact project, title/project prefix, title/project substring, then conversation-only
+  matches; normal working/recent ordering breaks ties within the same relevance level.
 - Direct-download edition only: a noninteractive weekly Codex usage card appears below the task rows. It uses the
   shared CodexBar usage-metric component and shows consumed percentage, a filled usage bar, localized relative reset
   timing, elapsed-time pace (deficit/reserve/on pace), projected exhaustion or reset survival, and warning/pace
@@ -158,11 +172,14 @@ Desktop deep links are preferred because they identify the exact thread. If the 
   poll that overlaps an existing scan is dropped instead of queuing continuous work.
 - AgentMicro filters the process snapshot to Codex candidates before parsing process dates, excludes Claude before
   session correlation, and caches immutable rollout-header metadata across append-only updates.
-- The menu bar animation advances through five cached pre-rendered frames per attention slot every 250 milliseconds,
-  with timer tolerance for wakeup coalescing. It does not rebuild menu rows, reread local state, or recreate an image
-  on every tick.
+- The menu bar animation advances through 21 cached pre-rendered frames per attention slot every 50 milliseconds,
+  with a narrow timer tolerance. It does not rebuild menu rows, reread local state, or recreate an image on every tick.
 - The native menu rebuilds only when visible task content changes, when the initial scan completes, or when an explicit
   presentation/settings event requires a rebuild. Duration text remains live while the menu is open.
+- Direct-download task CPU sampling runs every two seconds only while the menu is open and the setting is enabled. It
+  reads one `/bin/ps` snapshot, recursively totals each CLI task process tree, smooths readings with a 0.35 exponential
+  weight, updates existing row labels without rebuilding the menu, and discards readings when the menu closes. Values
+  may exceed 100% on multicore systems. The Mac App Store edition never launches the sampler.
 - Enhanced Status Detection reuses Accessibility evidence for one second and reads labels only from selected,
   button, or alert elements while retaining the existing bounded tree traversal.
 
@@ -194,6 +211,7 @@ The Guide explains the complete white, green, blue, orange, and red state semant
 - Naming mode.
 - Task count from 1 to 20, with direct numeric entry and stepper.
 - Show recently completed tasks; enabled by default with a fixed 24-hour retention.
+- Direct-download edition only: show task CPU usage; enabled by default.
 
 ### Updates
 
@@ -235,9 +253,16 @@ Language overrides are stored only in AgentMicro defaults and never modify globa
 - Base mode remains fully usable without Accessibility permission, and the app never requests it before explicit opt-in.
 - Final answers stop blue state without waiting for process exit.
 - Working duration advances every second; stopped duration does not.
+- While the direct-download menu is open, correlated CLI rows refresh smoothed root-plus-descendant CPU levels every
+  two seconds; Desktop rows say `CPU shared`, and the App Store edition performs no process sampling.
 - The direct-download menu renders the Codex weekly consumed percentage, reset countdown, pace variance, projected
   exhaustion, and quota/pace markers below task rows, clamps only displayed percentages to 0–100%, and keeps
   loading/fetch failures separate from task state.
+- The usage title reports consumed percentage while the fill, matching CodexBar's default quota presentation, reports
+  the exact remaining percentage. Pace and quota markers use the same remaining-percentage axis.
+- Search matches project names, task titles, and bounded recent user/assistant conversation text before the row limit,
+  returns the corresponding task/project row, remains stable through background refreshes, accepts macOS input-method
+  composition, ranks metadata relevance above conversation-only matches, and resets when the menu closes.
 - The first launch opens the localized Guide with all five colors and the default checked suppression option.
 - Every selectable language has a complete catalog.
 - Opening the release DMG presents `AgentMicro.app` and an Applications drop target; dragging the app installs

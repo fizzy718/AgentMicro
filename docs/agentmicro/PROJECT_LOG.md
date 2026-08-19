@@ -2,6 +2,129 @@
 
 This log records the durable product and engineering decisions needed by international contributors.
 
+## 2026-08-19
+
+### `release`: prepared AgentMicro 0.1.5
+
+Changes:
+
+- Advanced the direct-download version to `0.1.5` and build number to `6` with versioned GitHub Release notes.
+- Finalized the weekly quota card, stable and relevance-ranked project/task/conversation search, smooth status
+  animation, and honest per-task CLI CPU surface for the release.
+- Restricted conversation indexing to user/assistant roles, excluded system/developer/tool/reasoning content, and
+  required three Latin characters or two Chinese characters before transcript matching. Shorter queries still search
+  project and task metadata immediately.
+
+Impact:
+
+- The release includes the latest local task surface without publishing the broad false-positive matches observed for
+  short queries such as `vo`.
+
+Verification:
+
+- Focused AgentMicro tests, `make check`, and `make test` pass before the release branch is promoted through dev and
+  main. GitHub Actions performs final universal signing, notarization, ZIP/DMG publication, and appcast update.
+
+Known limitations:
+
+- Codex Desktop CPU remains shared because Codex does not expose per-conversation process ownership.
+- Conversation search remains bounded to observed tasks and does not show matched snippets.
+
+## 2026-08-15
+
+### `fix`: stabilized search results and input-method composition
+
+Changes:
+
+- Preserved the existing menu header and AppKit field editor whenever task, CPU, or quota data refreshes during an
+  active search instead of recreating the search control.
+- Stopped task-state reconciliation from cancelling and restarting an unchanged conversation search.
+- Deferred query publication while the field editor contains marked text, deduplicated committed queries, and let
+  Escape cancel an active input-method composition before it closes search.
+- Prevented AgentMicro's supplemental outside-click and resign-active monitors from cancelling menu tracking during
+  active search, including interaction with an input-method candidate window.
+- Ranked exact task-title/project matches first, followed by prefix, substring, and conversation-only matches; normal
+  working/recent priority now breaks ties instead of overriding search relevance.
+
+Impact:
+
+- Search results remain visible instead of briefly appearing and disappearing, while Pinyin and other macOS input
+  methods can complete composition without losing the field or its result set.
+- The result the user most likely intended appears at the top even when a newer or actively running task also matches.
+
+Verification:
+
+- Focused AgentMicro tests and repository checks pass; the freshly packaged app remains running.
+
+Known limitations:
+
+- Conversation search remains bounded to already observed rollouts and does not display the matched message text.
+
+## 2026-08-13
+
+### `feature`: added honest per-task CPU levels
+
+Changes:
+
+- Added a direct-download process sampler that totals each correlated CLI task's root process and descendants, smooths
+  the result, and updates the existing menu row every two seconds only while the menu is open.
+- Added a compact 10-point CPU label on the task row's second line and a default-on Task Display setting.
+- Labeled Desktop tasks `CPU shared` instead of falsely assigning the shared Codex app process to one conversation;
+  IDE/unknown tasks and uncorrelated CLI sessions omit the value. App Store builds do not sample processes.
+- Localized the setting and shared-attribution label across all 23 interface languages.
+
+Impact:
+
+- Users can see which CLI tasks are consuming CPU without opening Activity Monitor, including child tool processes,
+  while the UI remains explicit where reliable per-conversation attribution is unavailable.
+
+Verification:
+
+- Focused parser/model/settings/UI tests cover descendant aggregation, attribution labels, persistence, and live row
+  updates. The focused AgentMicro suite and repository checks pass.
+
+Known limitations:
+
+- Codex Desktop does not expose per-conversation CPU ownership, so its rows intentionally show only `CPU shared`.
+- Process-reported CPU may exceed 100% on multicore systems and is a smoothed activity level, not a billing metric.
+
+## 2026-08-12
+
+### `feature`: corrected quota semantics, expanded search, and smoothed icon animation
+
+Changes:
+
+- Changed the shared usage fill to clip against the full rounded track, then corrected AgentMicro's projection so the
+  title reports used quota while the bar and all markers use CodexBar's remaining-quota axis (30% used = 70% filled).
+- Added a menu-header search button that swaps the title row for a focused input, matches project and task names
+  immediately, and asynchronously matches bounded recent user/assistant conversation text before the row limit.
+- Kept conversation matching local and transient, excluded tool output, and returned only the corresponding existing
+  task/project row so selecting it reuses the existing Codex thread focus path.
+- Increased each attention slot's breathing sequence from five frames at 250 ms to 21 frames at 50 ms.
+- Fixed the native search interaction so result updates replace only the task/usage/footer region instead of
+  destroying and recreating the active search field on every keystroke; focus and the field editor now remain stable.
+- Stopped live task reconciliation from clearing and restoring conversation matches on every rollout write. Search
+  now retains the last result set, debounces typing by 120 ms, and redraws only when the visible rows actually change.
+- Localized search, close, and empty-result copy across all 23 interface languages.
+
+Impact:
+
+- A reported 30% used value now renders 70% remaining, matching CodexBar and the user's visual expectation.
+- Users can find an observed task from its project, title, or recent conversation wording without exposing snippets.
+- Search remains editable while synchronous metadata and asynchronous conversation matches update underneath it.
+- Thinking and attention states breathe at 20 frames per second instead of stepping at four frames per second.
+
+Verification:
+
+- All 95 focused AgentMicro tests pass, including remaining-quota projection, metadata/content search, tool-output
+  exclusion, animation cadence, and complete localization catalogs.
+- `make check` passes with SwiftFormat, strict SwiftLint, localization, scripts, documentation, and release checks.
+
+Known limitations:
+
+- Search applies only to tasks already observed locally and indexes at most the latest 8 MiB of each rollout; it does
+  not query archived history outside that task set or show the matching message.
+
 ## 2026-08-11
 
 ### `feature`: added the complete weekly Codex usage block to the direct-download menu

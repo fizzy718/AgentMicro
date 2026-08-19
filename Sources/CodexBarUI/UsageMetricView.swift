@@ -231,15 +231,14 @@ private struct SharedUsageProgressBar: View {
         Canvas { context, size in
             let rect = CGRect(origin: .zero, size: size)
             let radius = size.height / 2
-            context.clip(to: Path(rect))
-            context.fill(
-                Path(roundedRect: rect, cornerRadius: radius),
-                with: .color(self.trackColor))
+            let trackPath = Path(roundedRect: rect, cornerRadius: radius)
+            context.clip(to: trackPath)
+            context.fill(trackPath, with: .color(self.trackColor))
 
             let fillWidth = size.width * self.clamped(self.percent) / 100
             if fillWidth > 0 {
                 context.fill(
-                    Path(roundedRect: CGRect(x: 0, y: 0, width: fillWidth, height: size.height), cornerRadius: radius),
+                    Path(CGRect(x: 0, y: 0, width: fillWidth, height: size.height)),
                     with: .color(self.isHighlighted ? .white : self.tint))
             }
 

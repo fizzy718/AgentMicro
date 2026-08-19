@@ -39,6 +39,13 @@ AgentMicro-specific work:
 - Desktop unread-thread synchronization and optional read-only Accessibility evidence for exact visible selection, approval controls, and blocking error dialogs.
 - Tri-state Codex archive metadata that excludes archived threads before guardian recovery while bounding unknown state.
 - A 310-point task menu and six-slot status icon whose snake-ordered animation covers running and attention states.
+- A native header search interaction that immediately matches project/task metadata and asynchronously searches a
+  bounded, transient cache of user/assistant text from already observed Codex rollouts. The AppKit field editor is
+  retained during result/usage refreshes, defers queries while an input method has marked text, and applies an
+  AgentMicro-specific relevance rank before normal task priority. Its transcript parser admits only user/assistant
+  message roles and gates short conversation queries while leaving metadata search immediate.
+- A direct-download-only `/bin/ps` sampler that totals correlated CLI root processes and descendants while the menu is
+  open. Desktop CPU remains explicitly shared because neither CodexBar nor Codex exposes per-thread attribution.
 - Event-driven refresh with non-overlapping safety polls, content-fingerprinted menu rebuilds, cached animation state,
   and throttled selective Accessibility label reads.
 - A first-launch five-color guide.

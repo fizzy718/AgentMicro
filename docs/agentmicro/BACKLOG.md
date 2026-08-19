@@ -17,6 +17,7 @@ Backlog items are not commitments. Each item includes an entry condition so spec
 | AM-103 | deferred | Show subagents as independent rows | Ownership and user value are defined without duplication. |
 | AM-104 | candidate | Add task-state diagnostic export | Export can redact titles, paths, prompts, and payloads by default. |
 | AM-105 | candidate | Reduce the remaining brief UI synchronization gap | Reproducible fixtures identify a safe local source of truth. |
+| AM-106 | blocked | Attribute Codex Desktop CPU to individual conversations | Codex exposes supported per-thread process or workload ownership. |
 
 ## Attention and Notifications
 
@@ -31,7 +32,7 @@ Backlog items are not commitments. Each item includes an entry condition so spec
 | ID | Status | Idea | Entry condition |
 | --- | --- | --- | --- |
 | AM-301 | candidate | Local task metadata history | A bounded schema avoids transcript retention. |
-| AM-302 | candidate | Search recent task metadata | AM-301 ships with retention controls. |
+| AM-302 | candidate | Search persisted task history | AM-301 ships with retention controls; do not persist the shipped transient conversation index. |
 | AM-303 | blocked | Reliable cross-version resume | Codex provides stable resume/deep-link behavior. |
 
 ## Task Management

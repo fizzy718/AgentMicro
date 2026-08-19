@@ -37,6 +37,11 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     private var discoveryRefreshTask: Task<Void, Never>?
     private var pollingTask: Task<Void, Never>?
     private var usageRefreshTask: Task<Void, Never>?
+    private let taskCPUSampler = AgentMicroTaskCPUSampler()
+    private var taskCPURefreshTask: Task<Void, Never>?
+    private var cpuPercentBySessionKey: [String: Double] = [:]
+    private let conversationSearchIndex = AgentMicroConversationSearchIndex()
+    private var conversationSearchTask: Task<Void, Never>?
     private var usageSnapshot: UsageSnapshot?
     private var usageLastAttemptAt: Date?
     private var statusAnimationTimer: Timer?
@@ -50,6 +55,9 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
     private var renderedMenuFingerprint: [MenuContentFingerprint]?
     private var renderedMenuWasInitialScanComplete: Bool?
     private var isMenuOpen = false
+    private var isSearchActive = false
+    private var searchQuery = ""
+    private var contentMatchingSessionKeys: Set<String> = []
     private lazy var sessionChangeMonitor = CodexSessionChangeMonitor { [weak self] requiresDiscovery in
         self?.sessionFilesDidChange(requiresDiscovery: requiresDiscovery)
     }
@@ -63,6 +71,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
             self.reconcileKnownSessions()
             self.updateStatusItem()
             self.rebuildMenu(force: true)
+            self.reconcileTaskCPUObservation()
         }
         self.configureStatusItem()
         self.rebuildMenu()
@@ -89,6 +98,8 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         self.discoveryRefreshTask?.cancel()
         self.pollingTask?.cancel()
         self.usageRefreshTask?.cancel()
+        self.taskCPURefreshTask?.cancel()
+        self.conversationSearchTask?.cancel()
         self.statusAnimationTimer?.invalidate()
         self.menuDurationTimer?.invalidate()
         self.stopMenuDismissalMonitoring()
@@ -100,6 +111,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         self.rebuildMenu(force: true)
         self.startMenuDismissalMonitoring()
         self.startMenuDurationTimerIfNeeded()
+        self.reconcileTaskCPUObservation()
         self.reconcileKnownSessions()
         self.refresh()
         self.refreshUsageIfNeeded()
@@ -108,8 +120,10 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
 
     func menuDidClose(_: NSMenu) {
         self.isMenuOpen = false
+        self.endSearch()
         self.stopMenuDismissalMonitoring()
         self.stopMenuDurationTimer()
+        self.stopTaskCPUObservation()
     }
 
     private func configureStatusItem() {
@@ -131,7 +145,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
             matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown])
         { [weak self] _ in
             Task { @MainActor [weak self] in
-                guard let self, self.isMenuOpen else { return }
+                guard let self, self.isMenuOpen, !self.isSearchActive else { return }
                 self.menu.cancelTracking()
             }
         }
@@ -141,7 +155,7 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
             queue: .main)
         { [weak self] _ in
             Task { @MainActor [weak self] in
-                guard let self, self.isMenuOpen else { return }
+                guard let self, self.isMenuOpen, !self.isSearchActive else { return }
                 self.menu.cancelTracking()
             }
         }
@@ -252,11 +266,18 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         self.statusItem?.button?.toolTip = tooltip
     }
 
-    private func rebuildMenu(now: Date = Date(), force: Bool = false) {
+    private func rebuildMenu(
+        now: Date = Date(),
+        force: Bool = false,
+        preservingSearchHeader: Bool = false)
+    {
         let rows = AgentMicroMenuModel.rows(
             from: self.tasks,
             preferences: self.settings.preferences,
             readSessionKeys: self.effectiveReadSessionKeys(for: self.tasks, now: now),
+            searchQuery: self.isSearchActive ? self.searchQuery : nil,
+            contentMatchingSessionKeys: self.contentMatchingSessionKeys,
+            cpuPercentBySessionKey: self.cpuPercentBySessionKey,
             now: now)
         let fingerprint = rows.map {
             MenuContentFingerprint(
@@ -272,6 +293,19 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         else { return }
         self.renderedMenuFingerprint = fingerprint
         self.renderedMenuWasInitialScanComplete = self.hasCompletedInitialScan
+        if preservingSearchHeader || self.isSearchActive,
+           self.isSearchActive,
+           self.menu.items.count >= 2,
+           self.menu.items[0].view is AgentMicroMenuHeaderView
+        {
+            while self.menu.items.count > 2 {
+                self.menu.removeItem(at: self.menu.items.count - 1)
+            }
+            self.addTaskRows(rows)
+            self.addUsageSection()
+            self.addMenuFooter()
+            return
+        }
         self.menu.removeAllItems()
 
         let activeCount = rows.count(where: \.isActive)
@@ -279,8 +313,25 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
             ? AgentMicroLocalization.text("menu.headline.active", arguments: activeCount)
             : "AgentMicro"
         let headlineItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
-        headlineItem.isEnabled = false
-        headlineItem.view = AgentMicroMenuHeaderView(title: headline)
+        headlineItem.isEnabled = true
+        headlineItem.view = AgentMicroMenuHeaderView(
+            title: headline,
+            isSearching: self.isSearchActive,
+            searchQuery: self.searchQuery,
+            onBeginSearch: { [weak self] in
+                guard let self else { return }
+                self.isSearchActive = true
+                self.updateSearchResults(resetContentMatches: true, debounce: false)
+            },
+            onSearchQueryChange: { [weak self] query in
+                guard let self else { return }
+                guard query != self.searchQuery else { return }
+                self.searchQuery = query
+                self.updateSearchResults()
+            },
+            onEndSearch: { [weak self] in
+                self?.endSearch(rebuildMenu: true)
+            })
         self.menu.addItem(headlineItem)
         self.menu.addItem(.separator())
         self.addTaskRows(rows)
@@ -290,9 +341,13 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
 
     private func addTaskRows(_ rows: [AgentMicroMenuRow]) {
         if rows.isEmpty {
-            let title = self.hasCompletedInitialScan
-                ? AgentMicroLocalization.text("menu.empty")
-                : AgentMicroLocalization.text("menu.scanning")
+            let title = if self.isSearchActive, !self.searchQuery.isEmpty {
+                AgentMicroLocalization.text("menu.search.noResults")
+            } else if self.hasCompletedInitialScan {
+                AgentMicroLocalization.text("menu.empty")
+            } else {
+                AgentMicroLocalization.text("menu.scanning")
+            }
             let emptyItem = NSMenuItem(title: title, action: nil, keyEquivalent: "")
             emptyItem.isEnabled = false
             self.menu.addItem(emptyItem)
@@ -388,6 +443,95 @@ final class AgentMicroAppDelegate: NSObject, NSApplicationDelegate, NSMenuDelega
         }
         self.reconcileKnownSessions()
         self.scheduleReconciliationBurst()
+    }
+
+    private func updateSearchResults(
+        resetContentMatches: Bool = true,
+        debounce: Bool = true)
+    {
+        self.conversationSearchTask?.cancel()
+        if resetContentMatches {
+            self.contentMatchingSessionKeys = []
+        }
+        self.rebuildMenu(preservingSearchHeader: true)
+        let query = self.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard self.isSearchActive, !query.isEmpty else { return }
+        let tasks = self.tasks
+        let index = self.conversationSearchIndex
+        self.conversationSearchTask = Task { @MainActor [weak self] in
+            if debounce {
+                try? await Task.sleep(for: .milliseconds(120))
+                guard !Task.isCancelled else { return }
+            }
+            let matches = await index.matchingSessionKeys(in: tasks, query: query)
+            guard !Task.isCancelled,
+                  let self,
+                  self.isSearchActive,
+                  self.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines) == query
+            else { return }
+            guard matches != self.contentMatchingSessionKeys else {
+                self.conversationSearchTask = nil
+                return
+            }
+            self.contentMatchingSessionKeys = matches
+            self.conversationSearchTask = nil
+            self.rebuildMenu(preservingSearchHeader: true)
+        }
+    }
+
+    private func endSearch(rebuildMenu: Bool = false) {
+        self.conversationSearchTask?.cancel()
+        self.conversationSearchTask = nil
+        self.isSearchActive = false
+        self.searchQuery = ""
+        self.contentMatchingSessionKeys = []
+        if rebuildMenu {
+            self.rebuildMenu(force: true)
+        }
+    }
+
+    private func reconcileTaskCPUObservation() {
+        guard self.isMenuOpen,
+              self.settings.showTaskCPU,
+              !AgentMicroDistribution.isAppStore
+        else {
+            self.stopTaskCPUObservation()
+            return
+        }
+        guard self.taskCPURefreshTask == nil else { return }
+        let sampler = self.taskCPUSampler
+        self.taskCPURefreshTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self, self.isMenuOpen, self.settings.showTaskCPU else { break }
+                let readings = await sampler.sample(tasks: self.tasks)
+                guard !Task.isCancelled else { break }
+                self.cpuPercentBySessionKey = readings
+                self.updateVisibleTaskCPU()
+                try? await Task.sleep(for: AgentMicroTaskCPUSampler.refreshInterval)
+            }
+        }
+    }
+
+    private func stopTaskCPUObservation() {
+        self.taskCPURefreshTask?.cancel()
+        self.taskCPURefreshTask = nil
+        self.cpuPercentBySessionKey = [:]
+        let sampler = self.taskCPUSampler
+        Task { await sampler.reset() }
+    }
+
+    private func updateVisibleTaskCPU() {
+        let rows = AgentMicroMenuModel.rows(
+            from: self.tasks,
+            preferences: self.settings.preferences,
+            readSessionKeys: self.effectiveReadSessionKeys(for: self.tasks),
+            searchQuery: self.isSearchActive ? self.searchQuery : nil,
+            contentMatchingSessionKeys: self.contentMatchingSessionKeys,
+            cpuPercentBySessionKey: self.cpuPercentBySessionKey)
+        let rowsBySessionKey = Dictionary(uniqueKeysWithValues: rows.map { ($0.sessionKey, $0) })
+        for case let view as AgentMicroTaskMenuItemView in self.menu.items.compactMap(\.view) {
+            view.updateCPU(rowsBySessionKey[view.sessionKey]?.cpuLabel)
+        }
     }
 
     @objc
@@ -566,7 +710,11 @@ extension AgentMicroAppDelegate {
         }
         self.tasks = effectiveTasks
         self.updateStatusItem()
-        self.rebuildMenu(now: now)
+        if self.isSearchActive {
+            self.rebuildMenu(now: now, preservingSearchHeader: true)
+        } else {
+            self.rebuildMenu(now: now)
+        }
         if self.isMenuOpen, effectiveTasks.contains(where: \.state.isWorking) {
             self.startMenuDurationTimerIfNeeded()
         } else {
