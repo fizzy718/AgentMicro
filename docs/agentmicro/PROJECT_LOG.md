@@ -4,7 +4,7 @@ This log records the durable product and engineering decisions needed by interna
 
 ## 2026-08-19
 
-### `release`: prepared AgentMicro 0.1.5
+### `release`: published AgentMicro 0.1.5
 
 Changes:
 
@@ -22,8 +22,13 @@ Impact:
 
 Verification:
 
-- Focused AgentMicro tests, `make check`, and `make test` pass before the release branch is promoted through dev and
-  main. GitHub Actions performs final universal signing, notarization, ZIP/DMG publication, and appcast update.
+- Promoted `feat/agentmicro-0.1.5` through `dev` and `main`; focused AgentMicro tests, `make check`, and the isolated
+  retry of the one flaky upstream AppKit group pass.
+- GitHub Actions run `32237052176` completed successfully, publishing signed and notarized universal ZIP/DMG assets,
+  tag `v0.1.5`, and the Sparkle appcast entry for build `6`.
+- Downloaded release checksums match GitHub's published SHA-256 digests. The extracted app reports version `0.1.5`
+  build `6`, contains both `arm64` and `x86_64`, passes strict code-signature and Gatekeeper assessment, and has a
+  valid notarization ticket.
 
 Known limitations:
 
