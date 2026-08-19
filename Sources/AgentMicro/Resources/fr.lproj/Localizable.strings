@@ -28,6 +28,9 @@
 "menu.usage.deficitFormat" = "%d%% en déficit";
 "menu.usage.reserveFormat" = "%d%% en réserve";
 "menu.usage.onPace" = "Au rythme";
+"menu.search.projects" = "Rechercher projets, tâches ou discussions";
+"menu.search.close" = "Fermer la recherche";
+"menu.search.noResults" = "Aucun résultat correspondant";
 
 "settings.error.launchAtLogin" = "Impossible de mettre à jour l’ouverture de session : %@";
 "settings.general" = "Général";
@@ -60,6 +63,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d tâches Codex récentes";
 "task.fallbackTitle" = "Tâche Codex";
 "task.fastMode" = "Mode rapide";
+"task.cpu.shared" = "CPU partagé";
+"settings.showTaskCPU" = "Afficher l’utilisation CPU des tâches";
 
 "updates.automatic" = "Rechercher automatiquement les mises à jour";
 "updates.check" = "Rechercher les mises à jour…";

@@ -28,6 +28,9 @@
 "menu.usage.deficitFormat" = "%d%% 不足";
 "menu.usage.reserveFormat" = "%d%% 余裕";
 "menu.usage.onPace" = "想定ペース";
+"menu.search.projects" = "プロジェクト・タスク・チャットを検索";
+"menu.search.close" = "検索を閉じる";
+"menu.search.noResults" = "一致する結果はありません";
 
 "settings.error.launchAtLogin" = "ログイン項目を更新できませんでした：%@";
 "settings.general" = "一般";
@@ -60,6 +63,8 @@
 "status.tooltip.recent.other" = "AgentMicro — 最近の Codex タスク %d 件";
 "task.fallbackTitle" = "Codex タスク";
 "task.fastMode" = "高速モード";
+"task.cpu.shared" = "CPU 共有";
+"settings.showTaskCPU" = "タスクのCPU使用率を表示";
 
 "updates.automatic" = "アップデートを自動的に確認";
 "updates.check" = "アップデートを確認…";

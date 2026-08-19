@@ -71,6 +71,7 @@ struct AgentMicroUsageModelTests {
     func `weekly usage clamps provider values only for display`() {
         #expect(AgentMicroWeeklyUsage(usedPercent: -5, resetsAt: nil).clampedUsedPercent == 0)
         #expect(AgentMicroWeeklyUsage(usedPercent: 140, resetsAt: nil).clampedUsedPercent == 100)
+        #expect(AgentMicroWeeklyUsage(usedPercent: 30, resetsAt: nil).clampedRemainingPercent == 70)
     }
 
     @Test

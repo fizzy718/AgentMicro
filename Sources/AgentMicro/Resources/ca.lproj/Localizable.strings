@@ -26,6 +26,9 @@
 "menu.usage.deficitFormat" = "%d%% en dèficit";
 "menu.usage.reserveFormat" = "%d%% en reserva";
 "menu.usage.onPace" = "Al ritme";
+"menu.search.projects" = "Cerca projectes, tasques o xats";
+"menu.search.close" = "Tanca la cerca";
+"menu.search.noResults" = "No hi ha resultats coincidents";
 "settings.error.launchAtLogin" = "No s’ha pogut actualitzar l’element d’inici de sessió: %@";
 "settings.general" = "General";
 "settings.launchAtLogin" = "Inicia AgentMicro en iniciar sessió";
@@ -54,6 +57,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d tasques recents de Codex";
 "task.fallbackTitle" = "Tasca de Codex";
 "task.fastMode" = "Mode ràpid";
+"task.cpu.shared" = "CPU compartida";
+"settings.showTaskCPU" = "Mostra l’ús de CPU de les tasques";
 "updates.automatic" = "Comprova automàticament si hi ha actualitzacions";
 "updates.check" = "Comprova si hi ha actualitzacions…";
 "updates.section" = "Actualitzacions";

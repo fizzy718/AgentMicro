@@ -31,6 +31,10 @@ struct AgentMicroWeeklyUsage: Equatable, Sendable {
     var clampedUsedPercent: Double {
         min(100, max(0, self.usedPercent))
     }
+
+    var clampedRemainingPercent: Double {
+        100 - self.clampedUsedPercent
+    }
 }
 
 enum AgentMicroUsageState: Equatable, Sendable {

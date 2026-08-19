@@ -26,6 +26,9 @@
 "menu.usage.deficitFormat" = "%d%% en déficit";
 "menu.usage.reserveFormat" = "%d%% en reserva";
 "menu.usage.onPace" = "Ao ritmo previsto";
+"menu.search.projects" = "Buscar proxectos, tarefas ou chats";
+"menu.search.close" = "Pechar a busca";
+"menu.search.noResults" = "Non hai resultados coincidentes";
 "settings.error.launchAtLogin" = "Non se puido actualizar o elemento de inicio: %@";
 "settings.general" = "Xeral";
 "settings.launchAtLogin" = "Iniciar AgentMicro ao acceder";
@@ -54,6 +57,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d tarefas recentes de Codex";
 "task.fallbackTitle" = "Tarefa de Codex";
 "task.fastMode" = "Modo rápido";
+"task.cpu.shared" = "CPU compartida";
+"settings.showTaskCPU" = "Mostrar o uso de CPU das tarefas";
 "updates.automatic" = "Buscar actualizacións automaticamente";
 "updates.check" = "Buscar actualizacións…";
 "updates.section" = "Actualizacións";

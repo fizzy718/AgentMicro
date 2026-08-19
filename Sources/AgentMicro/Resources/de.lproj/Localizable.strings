@@ -28,6 +28,9 @@
 "menu.usage.deficitFormat" = "%d%% im Defizit";
 "menu.usage.reserveFormat" = "%d%% in Reserve";
 "menu.usage.onPace" = "Auf Tempo";
+"menu.search.projects" = "Projekte, Aufgaben oder Chats suchen";
+"menu.search.close" = "Suche schließen";
+"menu.search.noResults" = "Keine passenden Ergebnisse";
 
 "settings.error.launchAtLogin" = "Anmeldeobjekt konnte nicht aktualisiert werden: %@";
 "settings.general" = "Allgemein";
@@ -60,6 +63,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d aktuelle Codex-Aufgaben";
 "task.fallbackTitle" = "Codex-Aufgabe";
 "task.fastMode" = "Schneller Modus";
+"task.cpu.shared" = "CPU geteilt";
+"settings.showTaskCPU" = "CPU-Nutzung der Aufgaben anzeigen";
 
 "updates.automatic" = "Automatisch nach Updates suchen";
 "updates.check" = "Nach Updates suchen…";

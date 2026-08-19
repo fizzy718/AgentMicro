@@ -26,6 +26,9 @@
 "menu.usage.deficitFormat" = "%d %% underskott";
 "menu.usage.reserveFormat" = "%d %% reserv";
 "menu.usage.onPace" = "I takt";
+"menu.search.projects" = "Sök projekt, uppgifter eller chattar";
+"menu.search.close" = "Stäng sökning";
+"menu.search.noResults" = "Inga matchande resultat";
 "settings.error.launchAtLogin" = "Det gick inte att uppdatera inloggningsobjektet: %@";
 "settings.general" = "Allmänt";
 "settings.launchAtLogin" = "Starta AgentMicro vid inloggning";
@@ -54,6 +57,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d senaste Codex-uppgifter";
 "task.fallbackTitle" = "Codex-uppgift";
 "task.fastMode" = "Snabbläge";
+"task.cpu.shared" = "CPU delad";
+"settings.showTaskCPU" = "Visa CPU-användning per uppgift";
 "updates.automatic" = "Sök automatiskt efter uppdateringar";
 "updates.check" = "Sök efter uppdateringar…";
 "updates.section" = "Uppdateringar";

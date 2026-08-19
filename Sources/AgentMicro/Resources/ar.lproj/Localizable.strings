@@ -28,6 +28,9 @@
 "menu.usage.deficitFormat" = "%d%% في العجز";
 "menu.usage.reserveFormat" = "%d%% في الاحتياط";
 "menu.usage.onPace" = "على الوتيرة";
+"menu.search.projects" = "بحث المشاريع أو المهام أو الدردشات";
+"menu.search.close" = "إغلاق البحث";
+"menu.search.noResults" = "لا توجد نتائج مطابقة";
 
 "settings.error.launchAtLogin" = "تعذر تحديث عنصر تسجيل الدخول: %@";
 "settings.general" = "عام";
@@ -60,6 +63,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d من مهام Codex الحديثة";
 "task.fallbackTitle" = "مهمة Codex";
 "task.fastMode" = "الوضع السريع";
+"task.cpu.shared" = "CPU مشترك";
+"settings.showTaskCPU" = "إظهار استخدام CPU للمهام";
 
 "updates.automatic" = "التحقق تلقائيًا من التحديثات";
 "updates.check" = "التحقق من التحديثات…";

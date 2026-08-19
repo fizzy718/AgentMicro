@@ -19,6 +19,7 @@ final class AgentMicroTaskMenuItemView: NSView {
     private let titleLabel = NSTextField(labelWithString: "")
     private let subtitleLabel = NSTextField(labelWithString: "")
     private let durationLabel = NSTextField(labelWithString: "")
+    private let cpuLabel = NSTextField(labelWithString: "")
     private let speedIndicator = NSImageView()
     private let usesFastModel: Bool
     private var trackingAreaReference: NSTrackingArea?
@@ -48,6 +49,13 @@ final class AgentMicroTaskMenuItemView: NSView {
         self.durationLabel.alignment = .right
         self.durationLabel.lineBreakMode = .byClipping
 
+        self.cpuLabel.stringValue = row.cpuLabel ?? ""
+        self.cpuLabel.font = .monospacedDigitSystemFont(ofSize: 10, weight: .regular)
+        self.cpuLabel.textColor = .tertiaryLabelColor
+        self.cpuLabel.alignment = .right
+        self.cpuLabel.lineBreakMode = .byClipping
+        self.cpuLabel.isHidden = row.cpuLabel == nil
+
         self.speedIndicator.image = NSImage(
             systemSymbolName: "bolt.fill",
             accessibilityDescription: AgentMicroLocalization.text("task.fastMode"))
@@ -62,6 +70,7 @@ final class AgentMicroTaskMenuItemView: NSView {
         self.addSubview(self.titleLabel)
         self.addSubview(self.subtitleLabel)
         self.addSubview(self.durationLabel)
+        self.addSubview(self.cpuLabel)
         self.addSubview(self.speedIndicator)
 
         self.setAccessibilityRole(.button)
@@ -70,6 +79,7 @@ final class AgentMicroTaskMenuItemView: NSView {
                 row.title,
                 row.subtitle,
                 row.duration,
+                row.cpuLabel,
                 row.usesFastModel ? AgentMicroLocalization.text("task.fastMode") : nil,
                 row.state == .unread ? AgentMicroLocalization.text("accessibility.task.unread") : nil,
             ] as [String?])
@@ -89,6 +99,7 @@ final class AgentMicroTaskMenuItemView: NSView {
         let speedWidth: CGFloat = self.usesFastModel ? 12 : 0
         let speedGap: CGFloat = self.usesFastModel ? 3 : 0
         let metadataWidth = durationWidth + speedGap + speedWidth
+        let cpuWidth: CGFloat = 72
         let textX: CGFloat
         let textWidth: CGFloat
         if AgentMicroLocalization.isRightToLeft {
@@ -107,6 +118,11 @@ final class AgentMicroTaskMenuItemView: NSView {
                 y: 20,
                 width: speedWidth,
                 height: 12)
+            self.cpuLabel.frame = NSRect(
+                x: AgentMicroMenuLayout.horizontalPadding,
+                y: 7,
+                width: cpuWidth,
+                height: 14)
             textX = AgentMicroMenuLayout.horizontalPadding + metadataWidth
             let textRight = self.bounds.width - AgentMicroMenuLayout.horizontalPadding - 26
             textWidth = max(0, textRight - textX)
@@ -128,6 +144,11 @@ final class AgentMicroTaskMenuItemView: NSView {
                 y: 20,
                 width: speedWidth,
                 height: 12)
+            self.cpuLabel.frame = NSRect(
+                x: self.bounds.width - cpuWidth - AgentMicroMenuLayout.horizontalPadding,
+                y: 7,
+                width: cpuWidth,
+                height: 14)
             textX = AgentMicroMenuLayout.horizontalPadding + 26
             textWidth = max(
                 0,
@@ -135,9 +156,10 @@ final class AgentMicroTaskMenuItemView: NSView {
             self.titleLabel.alignment = .left
             self.subtitleLabel.alignment = .left
         }
-        let hasSubtitle = !self.subtitleLabel.stringValue.isEmpty
-        self.titleLabel.frame = NSRect(x: textX, y: hasSubtitle ? 26 : 17, width: textWidth, height: 18)
-        self.subtitleLabel.frame = NSRect(x: textX, y: 8, width: textWidth, height: 16)
+        let hasSecondaryLine = !self.subtitleLabel.stringValue.isEmpty || !self.cpuLabel.stringValue.isEmpty
+        self.titleLabel.frame = NSRect(x: textX, y: hasSecondaryLine ? 26 : 17, width: textWidth, height: 18)
+        let subtitleWidth = max(0, textWidth - (!self.cpuLabel.isHidden ? cpuWidth + 6 : 0))
+        self.subtitleLabel.frame = NSRect(x: textX, y: 8, width: subtitleWidth, height: 16)
     }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -190,12 +212,22 @@ final class AgentMicroTaskMenuItemView: NSView {
         self.durationLabel.stringValue
     }
 
+    var cpuForTesting: String? {
+        self.cpuLabel.isHidden ? nil : self.cpuLabel.stringValue
+    }
+
     var showsFastModelIndicatorForTesting: Bool {
         !self.speedIndicator.isHidden
     }
 
     func updateDuration(_ duration: String) {
         self.durationLabel.stringValue = duration
+    }
+
+    func updateCPU(_ cpu: String?) {
+        self.cpuLabel.stringValue = cpu ?? ""
+        self.cpuLabel.isHidden = cpu == nil
+        self.needsLayout = true
     }
 
     override func mouseExited(with _: NSEvent) {
@@ -219,19 +251,76 @@ final class AgentMicroTaskMenuItemView: NSView {
 }
 
 @MainActor
-final class AgentMicroMenuHeaderView: NSView {
+final class AgentMicroMenuHeaderView: NSView, NSSearchFieldDelegate {
     static let titleFont = NSFont.systemFont(ofSize: 13, weight: .semibold)
     static let titleColor = NSColor.labelColor
 
     private let titleLabel = NSTextField(labelWithString: "")
+    private let searchButton = NSButton()
+    private let searchField = NSSearchField()
+    private let endSearchButton = NSButton()
+    private var isSearching: Bool
+    private var lastPublishedQuery: String
+    private let onBeginSearch: () -> Void
+    private let onSearchQueryChange: (String) -> Void
+    private let onEndSearch: () -> Void
 
-    init(title: String) {
+    init(
+        title: String,
+        isSearching: Bool = false,
+        searchQuery: String = "",
+        onBeginSearch: @escaping () -> Void = {},
+        onSearchQueryChange: @escaping (String) -> Void = { _ in },
+        onEndSearch: @escaping () -> Void = {})
+    {
+        self.isSearching = isSearching
+        self.lastPublishedQuery = searchQuery
+        self.onBeginSearch = onBeginSearch
+        self.onSearchQueryChange = onSearchQueryChange
+        self.onEndSearch = onEndSearch
         super.init(frame: NSRect(x: 0, y: 0, width: AgentMicroMenuLayout.width, height: 34))
+
         self.titleLabel.stringValue = title
         self.titleLabel.font = Self.titleFont
         self.titleLabel.textColor = Self.titleColor
         self.titleLabel.lineBreakMode = .byTruncatingTail
+
+        self.searchButton.image = NSImage(
+            systemSymbolName: "magnifyingglass",
+            accessibilityDescription: AgentMicroLocalization.text("menu.search.projects"))
+        self.searchButton.imagePosition = .imageOnly
+        self.searchButton.isBordered = false
+        self.searchButton.bezelStyle = .inline
+        self.searchButton.contentTintColor = .secondaryLabelColor
+        self.searchButton.target = self
+        self.searchButton.action = #selector(self.beginSearch)
+        self.searchButton.toolTip = AgentMicroLocalization.text("menu.search.projects")
+
+        self.searchField.stringValue = searchQuery
+        self.searchField.placeholderString = AgentMicroLocalization.text("menu.search.projects")
+        self.searchField.font = .menuFont(ofSize: 12)
+        self.searchField.focusRingType = .none
+        self.searchField.delegate = self
+
+        self.endSearchButton.image = NSImage(
+            systemSymbolName: "xmark",
+            accessibilityDescription: AgentMicroLocalization.text("menu.search.close"))
+        self.endSearchButton.imagePosition = .imageOnly
+        self.endSearchButton.isBordered = false
+        self.endSearchButton.bezelStyle = .inline
+        self.endSearchButton.contentTintColor = .secondaryLabelColor
+        self.endSearchButton.target = self
+        self.endSearchButton.action = #selector(self.endSearch)
+        self.endSearchButton.toolTip = AgentMicroLocalization.text("menu.search.close")
+
         self.addSubview(self.titleLabel)
+        self.addSubview(self.searchButton)
+        self.addSubview(self.searchField)
+        self.addSubview(self.endSearchButton)
+        self.titleLabel.isHidden = isSearching
+        self.searchButton.isHidden = isSearching
+        self.searchField.isHidden = !isSearching
+        self.endSearchButton.isHidden = !isSearching
     }
 
     @available(*, unavailable)
@@ -241,12 +330,89 @@ final class AgentMicroMenuHeaderView: NSView {
 
     override func layout() {
         super.layout()
+        let buttonSize: CGFloat = 22
+        let buttonX = self.bounds.width - AgentMicroMenuLayout.horizontalPadding - buttonSize
         self.titleLabel.frame = NSRect(
             x: AgentMicroMenuLayout.horizontalPadding,
             y: 8,
-            width: self.bounds.width - AgentMicroMenuLayout.horizontalPadding * 2,
+            width: buttonX - AgentMicroMenuLayout.horizontalPadding - 6,
             height: 18)
         self.titleLabel.alignment = AgentMicroLocalization.isRightToLeft ? .right : .left
+        self.searchButton.frame = NSRect(x: buttonX, y: 6, width: buttonSize, height: buttonSize)
+        self.endSearchButton.frame = NSRect(x: buttonX, y: 6, width: buttonSize, height: buttonSize)
+        self.searchField.frame = NSRect(
+            x: AgentMicroMenuLayout.horizontalPadding,
+            y: 5,
+            width: buttonX - AgentMicroMenuLayout.horizontalPadding - 6,
+            height: 24)
+    }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        guard self.isSearching, let window = self.window else { return }
+        DispatchQueue.main.async { [weak self, weak window] in
+            guard let self, let window else { return }
+            window.makeFirstResponder(self.searchField)
+            if let editor = self.searchField.currentEditor() {
+                editor.selectedRange = NSRange(location: self.searchField.stringValue.utf16.count, length: 0)
+            }
+        }
+    }
+
+    func controlTextDidChange(_ notification: Notification) {
+        guard let field = notification.object as? NSSearchField else { return }
+        if let editor = field.currentEditor() as? NSTextView, editor.hasMarkedText() {
+            return
+        }
+        self.publishSearchQuery(field.stringValue)
+    }
+
+    func controlTextDidEndEditing(_ notification: Notification) {
+        guard let field = notification.object as? NSSearchField else { return }
+        self.publishSearchQuery(field.stringValue)
+    }
+
+    func control(
+        _: NSControl,
+        textView: NSTextView,
+        doCommandBy commandSelector: Selector) -> Bool
+    {
+        guard commandSelector == #selector(NSResponder.cancelOperation(_:)) else { return false }
+        guard !textView.hasMarkedText() else { return false }
+        self.onEndSearch()
+        return true
+    }
+
+    @objc
+    private func beginSearch() {
+        self.setSearching(true)
+        self.onBeginSearch()
+    }
+
+    @objc
+    private func endSearch() {
+        self.setSearching(false)
+        self.onEndSearch()
+    }
+
+    private func publishSearchQuery(_ query: String) {
+        guard query != self.lastPublishedQuery else { return }
+        self.lastPublishedQuery = query
+        self.onSearchQueryChange(query)
+    }
+
+    private func setSearching(_ searching: Bool) {
+        self.isSearching = searching
+        self.titleLabel.isHidden = searching
+        self.searchButton.isHidden = searching
+        self.searchField.isHidden = !searching
+        self.endSearchButton.isHidden = !searching
+        self.needsLayout = true
+        guard searching else { return }
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let window = self.window else { return }
+            window.makeFirstResponder(self.searchField)
+        }
     }
 }
 

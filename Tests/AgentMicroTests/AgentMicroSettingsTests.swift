@@ -37,6 +37,7 @@ struct AgentMicroSettingsTests {
         #expect(settings.autoUpdateEnabled)
         #expect(settings.taskDisplayLimit == 6)
         #expect(settings.showRecentlyCompleted)
+        #expect(settings.showTaskCPU)
         #expect(!settings.enhancedStatusDetection)
         #expect(!settings.launchAtLogin)
         #expect(settings.shouldPresentGuideOnLaunch)
@@ -104,6 +105,7 @@ struct AgentMicroSettingsTests {
         first.taskNameMode = .taskTitleAndProject
         first.showRecentlyCompleted = false
         first.taskDisplayLimit = 14
+        first.showTaskCPU = false
 
         let reloaded = AgentMicroSettings(
             defaults: defaults,
@@ -112,6 +114,7 @@ struct AgentMicroSettingsTests {
         #expect(reloaded.taskNameMode == .taskTitleAndProject)
         #expect(!reloaded.showRecentlyCompleted)
         #expect(reloaded.taskDisplayLimit == 14)
+        #expect(!reloaded.showTaskCPU)
     }
 
     @Test

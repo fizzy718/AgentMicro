@@ -26,6 +26,9 @@
 "menu.usage.deficitFormat" = "比目前進度多用 %d%%";
 "menu.usage.reserveFormat" = "比目前進度少用 %d%%";
 "menu.usage.onPace" = "用量正常";
+"menu.search.projects" = "搜尋專案、任務或聊天內容";
+"menu.search.close" = "關閉搜尋";
+"menu.search.noResults" = "沒有符合的結果";
 "settings.error.launchAtLogin" = "無法更新登入項目：%@";
 "settings.general" = "一般";
 "settings.launchAtLogin" = "登入時啟動 AgentMicro";
@@ -54,6 +57,8 @@
 "status.tooltip.recent.other" = "AgentMicro — 最近 %d 個 Codex 任務";
 "task.fallbackTitle" = "Codex 任務";
 "task.fastMode" = "快速模式";
+"task.cpu.shared" = "CPU 共用";
+"settings.showTaskCPU" = "顯示任務 CPU 使用量";
 "updates.automatic" = "自動檢查更新";
 "updates.check" = "檢查更新…";
 "updates.section" = "軟體更新";

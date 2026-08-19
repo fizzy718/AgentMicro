@@ -16,9 +16,9 @@ enum AgentMicroStatusIcon {
         AgentMicroIconSlot(column: 1, row: 1),
         AgentMicroIconSlot(column: 0, row: 1),
     ]
-    static let animationFramesPerSlot = 5
-    static let animationFrameInterval: TimeInterval = 0.25
-    static let animationTimerTolerance: TimeInterval = 0.05
+    static let animationFramesPerSlot = 21
+    static let animationFrameInterval: TimeInterval = 0.05
+    static let animationTimerTolerance: TimeInterval = 0.005
     static let blockSize = NSSize(width: 5.5, height: 4)
     static let horizontalStep: CGFloat = 6.5
     static let verticalStep: CGFloat = 5.5

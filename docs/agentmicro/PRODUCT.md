@@ -71,11 +71,13 @@ V1 includes:
 - Dynamic rediscovery of recently active Codex threads when an old conversation is resumed.
 - Five visible task states.
 - Current-turn duration and fast-mode indication.
+- Direct-download per-task CPU level for CLI process trees, with honest shared-CPU labeling for Desktop tasks.
 - Project and task naming controls.
 - One-click return to Codex Desktop conversations.
 - Optional Enhanced Status Detection for a selected Codex task and visible approval/error controls.
 - A compact weekly Codex quota card in the direct-download menu, including consumed percentage, reset countdown,
   pace variance, projected exhaustion, and quota markers.
+- Header search across project names, task titles, and recent local conversation text for observed tasks.
 - Configurable recent task count.
 - First-launch color guide and paged settings.
 - Launch at login and localization.
@@ -100,10 +102,16 @@ AgentMicro:
 
 - Reads only known Codex process and local session locations. The Mac App Store edition requires explicit read-only
   folder authorization and does not scan the process table.
+- Samples the direct-download process table only while the menu is open and task CPU display is enabled; samples stay
+  in memory and are discarded when the menu closes.
 - Does not require Full Disk Access.
 - Does not require Accessibility permission; Enhanced Status Detection requests it only after the user enables that option.
 - Does not read Keychain credentials.
 - Does not upload prompts, responses, source code, command output, or session files.
+- Searches project names, task titles, and bounded recent prompt/response text only after the user opens search. The
+  conversation index is transient in memory, includes only user/assistant messages, excludes system, developer, tool,
+  and reasoning content, and never shows matched message text. Conversation matching starts at three Latin characters
+  or two Chinese characters; shorter queries still search project and task metadata.
 - The direct-download edition may launch Codex CLI's read-only app-server to request the signed-in account's weekly
   quota. Codex may contact OpenAI using its own existing login; AgentMicro does not read or store the credential.
 - Otherwise uses network access only for the optional AgentMicro update feed. The Mac App Store edition contains
@@ -121,8 +129,14 @@ AgentMicro:
 - Thinking, unread, needs-input, and error blocks animate in the menu bar icon, following its two-row task order; idle blocks remain static.
 - A Desktop task opens the correct Codex conversation with one click.
 - Current-turn durations update once per second while the menu is open.
+- Direct-download CLI rows show a smoothed CPU level for the task process and its descendants; Desktop rows never
+  claim per-conversation attribution and instead say that CPU is shared.
 - The direct-download menu shows weekly Codex quota consumption, reset timing, pace against elapsed time, projected
   exhaustion, and warning markers below the task rows without displacing the task-focused surface.
+- A user can turn the menu header into a search field, match a project name, task title, or recent conversation text,
+  and open the corresponding Codex conversation without AgentMicro displaying the matched message text. Search stays
+  focused through background refreshes, accepts composed text from macOS input methods, and places the strongest
+  title/project matches before conversation-only matches.
 - The first launch explains every color and does not reopen the guide by default.
 - Task observation and navigation work offline; weekly quota and software updates degrade independently when their
   upstream services are unavailable.

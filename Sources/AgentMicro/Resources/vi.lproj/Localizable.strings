@@ -26,6 +26,9 @@
 "menu.usage.deficitFormat" = "%d %% thâm hụt";
 "menu.usage.reserveFormat" = "%d %% dự trữ";
 "menu.usage.onPace" = "Đang tiến hành";
+"menu.search.projects" = "Tìm dự án, tác vụ hoặc trò chuyện";
+"menu.search.close" = "Đóng tìm kiếm";
+"menu.search.noResults" = "Không có kết quả phù hợp";
 "settings.error.launchAtLogin" = "Không thể cập nhật mục đăng nhập: %@";
 "settings.general" = "Chung";
 "settings.launchAtLogin" = "Khởi chạy AgentMicro khi đăng nhập";
@@ -54,6 +57,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d tác vụ Codex gần đây";
 "task.fallbackTitle" = "Tác vụ Codex";
 "task.fastMode" = "Chế độ nhanh";
+"task.cpu.shared" = "CPU dùng chung";
+"settings.showTaskCPU" = "Hiển thị mức dùng CPU của tác vụ";
 "updates.automatic" = "Tự động kiểm tra bản cập nhật";
 "updates.check" = "Kiểm tra bản cập nhật…";
 "updates.section" = "Bản cập nhật";

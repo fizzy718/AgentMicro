@@ -7,6 +7,7 @@ struct AgentMicroMenuRow: Equatable, Sendable {
     let title: String
     let subtitle: String
     let duration: String
+    let cpuLabel: String?
     let state: CodexTaskState
     let usesFastModel: Bool
 
@@ -22,14 +23,28 @@ enum AgentMicroMenuModel {
         from tasks: [CodexTaskObservation],
         preferences: AgentMicroPreferences = AgentMicroPreferences(),
         readSessionKeys: Set<String> = [],
+        searchQuery: String? = nil,
+        contentMatchingSessionKeys: Set<String> = [],
+        cpuPercentBySessionKey: [String: Double] = [:],
         now: Date = Date()) -> [AgentMicroMenuRow]
     {
-        tasks
+        let normalizedSearchQuery = self.nonEmpty(searchQuery)
+        return tasks
             .filter { task in
                 task.session.provider == .codex &&
-                    (preferences.showRecentlyCompleted || task.state != .unread)
+                    (preferences.showRecentlyCompleted || task.state != .unread) &&
+                    self.searchMatches(
+                        task,
+                        query: normalizedSearchQuery,
+                        contentMatchingSessionKeys: contentMatchingSessionKeys)
             }
-            .sorted(by: self.taskHasHigherMenuPriority)
+            .sorted { lhs, rhs in
+                self.searchResultHasHigherPriority(
+                    lhs,
+                    than: rhs,
+                    query: normalizedSearchQuery,
+                    contentMatchingSessionKeys: contentMatchingSessionKeys)
+            }
             .prefix(preferences.taskDisplayLimit)
             .enumerated()
             .map { slotIndex, task in
@@ -56,6 +71,10 @@ enum AgentMicroMenuModel {
                     title: title,
                     subtitle: subtitle,
                     duration: self.durationLabel(for: task, now: now),
+                    cpuLabel: self.cpuLabel(
+                        for: task,
+                        showTaskCPU: preferences.showTaskCPU,
+                        cpuPercent: cpuPercentBySessionKey[task.sessionKey]),
                     state: state,
                     usesFastModel: task.usesFastModel)
             }
@@ -110,6 +129,24 @@ enum AgentMicroMenuModel {
         return "\(seconds)s"
     }
 
+    static func cpuLabel(
+        for task: CodexTaskObservation,
+        showTaskCPU: Bool,
+        cpuPercent: Double?) -> String?
+    {
+        guard showTaskCPU else { return nil }
+        switch task.session.source {
+        case .cli:
+            guard task.session.pid != nil else { return nil }
+            guard let cpuPercent else { return "CPU …" }
+            return String(format: "CPU %.0f%%", max(0, cpuPercent))
+        case .desktopApp:
+            return AgentMicroLocalization.text("task.cpu.shared")
+        case .ide, .unknown:
+            return nil
+        }
+    }
+
     private static func taskHasHigherMenuPriority(
         _ lhs: CodexTaskObservation,
         _ rhs: CodexTaskObservation) -> Bool
@@ -133,10 +170,66 @@ enum AgentMicroMenuModel {
         return lhs.sessionKey < rhs.sessionKey
     }
 
+    private static func searchResultHasHigherPriority(
+        _ lhs: CodexTaskObservation,
+        than rhs: CodexTaskObservation,
+        query: String?,
+        contentMatchingSessionKeys: Set<String>) -> Bool
+    {
+        guard let query else { return self.taskHasHigherMenuPriority(lhs, rhs) }
+        let lhsRank = self.searchRank(
+            for: lhs,
+            query: query,
+            contentMatchingSessionKeys: contentMatchingSessionKeys)
+        let rhsRank = self.searchRank(
+            for: rhs,
+            query: query,
+            contentMatchingSessionKeys: contentMatchingSessionKeys)
+        if lhsRank != rhsRank {
+            return lhsRank < rhsRank
+        }
+        return self.taskHasHigherMenuPriority(lhs, rhs)
+    }
+
+    private static func searchRank(
+        for task: CodexTaskObservation,
+        query: String,
+        contentMatchingSessionKeys: Set<String>) -> Int
+    {
+        let options: String.CompareOptions = [.caseInsensitive, .diacriticInsensitive]
+        let title = self.nonEmpty(task.session.sessionName)
+        let project = self.nonEmpty(task.session.projectName)
+        if title?.compare(query, options: options) == .orderedSame { return 0 }
+        if project?.compare(query, options: options) == .orderedSame { return 1 }
+        if title?.range(of: query, options: options.union(.anchored)) != nil { return 2 }
+        if project?.range(of: query, options: options.union(.anchored)) != nil { return 3 }
+        if title?.range(of: query, options: options) != nil { return 4 }
+        if project?.range(of: query, options: options) != nil { return 5 }
+        return contentMatchingSessionKeys.contains(task.sessionKey) ? 6 : 7
+    }
+
     private static func nonEmpty(_ value: String?) -> String? {
         guard let value = value?.trimmingCharacters(in: .whitespacesAndNewlines), !value.isEmpty else {
             return nil
         }
         return value
+    }
+
+    private static func searchMatches(
+        _ task: CodexTaskObservation,
+        query: String?,
+        contentMatchingSessionKeys: Set<String>) -> Bool
+    {
+        guard let query else { return true }
+        if contentMatchingSessionKeys.contains(task.sessionKey) {
+            return true
+        }
+        return [task.session.projectName, task.session.sessionName]
+            .compactMap(self.nonEmpty)
+            .contains {
+                $0.range(
+                    of: query,
+                    options: [.caseInsensitive, .diacriticInsensitive]) != nil
+            }
     }
 }

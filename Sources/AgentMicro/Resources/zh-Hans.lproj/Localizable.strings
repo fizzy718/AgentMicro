@@ -28,6 +28,9 @@
 "menu.usage.deficitFormat" = "超额 %d%%";
 "menu.usage.reserveFormat" = "余量 %d%%";
 "menu.usage.onPace" = "节奏正常";
+"menu.search.projects" = "搜索项目、任务或聊天内容";
+"menu.search.close" = "关闭搜索";
+"menu.search.noResults" = "没有匹配结果";
 
 "settings.error.launchAtLogin" = "无法更新登录项：%@";
 "settings.general" = "通用";
@@ -60,6 +63,8 @@
 "status.tooltip.recent.other" = "AgentMicro — 最近 %d 个 Codex 任务";
 "task.fallbackTitle" = "Codex 任务";
 "task.fastMode" = "快速模式";
+"task.cpu.shared" = "CPU 共享";
+"settings.showTaskCPU" = "显示任务 CPU 占用";
 
 "updates.automatic" = "自动检查更新";
 "updates.check" = "检查更新…";

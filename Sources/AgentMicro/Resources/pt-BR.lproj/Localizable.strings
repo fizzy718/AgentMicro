@@ -28,6 +28,9 @@
 "menu.usage.deficitFormat" = "%d%% em déficit";
 "menu.usage.reserveFormat" = "%d%% em reserva";
 "menu.usage.onPace" = "No ritmo";
+"menu.search.projects" = "Buscar projetos, tarefas ou chats";
+"menu.search.close" = "Fechar busca";
+"menu.search.noResults" = "Nenhum resultado correspondente";
 
 "settings.error.launchAtLogin" = "Não foi possível atualizar o item de início de sessão: %@";
 "settings.general" = "Geral";
@@ -60,6 +63,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d tarefas recentes do Codex";
 "task.fallbackTitle" = "Tarefa do Codex";
 "task.fastMode" = "Modo rápido";
+"task.cpu.shared" = "CPU compartilhada";
+"settings.showTaskCPU" = "Mostrar uso de CPU das tarefas";
 
 "updates.automatic" = "Buscar atualizações automaticamente";
 "updates.check" = "Buscar atualizações…";

@@ -108,6 +108,132 @@ struct AgentMicroMenuModelTests {
     }
 
     @Test
+    func `search matches project task and conversation results before applying the menu limit`() {
+        let now = Date(timeIntervalSince1970: 10000)
+        let tasks = [
+            Self.observation(
+                session: Self.session(
+                    id: "title-only-match",
+                    projectName: "Other",
+                    sessionName: "Fix AgentMicro search",
+                    activity: now),
+                state: .idle),
+            Self.observation(
+                session: Self.session(
+                    id: "project-match",
+                    projectName: "AgentMicro",
+                    sessionName: "Unrelated title",
+                    activity: now.addingTimeInterval(-1)),
+                state: .idle),
+        ]
+
+        let rows = AgentMicroMenuModel.rows(
+            from: tasks,
+            preferences: AgentMicroPreferences(
+                taskNameMode: .taskTitleAndProject,
+                taskDisplayLimit: 1),
+            searchQuery: "agentmicro",
+            now: now)
+
+        #expect(rows.map(\.sessionKey) == [tasks[1].sessionKey])
+
+        let contentRows = AgentMicroMenuModel.rows(
+            from: tasks,
+            preferences: AgentMicroPreferences(
+                taskNameMode: .taskTitleAndProject,
+                taskDisplayLimit: 1),
+            searchQuery: "transcript-only",
+            contentMatchingSessionKeys: [tasks[1].sessionKey],
+            now: now)
+
+        #expect(contentRows.map(\.sessionKey) == [tasks[1].sessionKey])
+        #expect(contentRows.first?.subtitle == "AgentMicro")
+    }
+
+    @Test
+    func `search ranks metadata relevance before recent conversation matches`() {
+        let now = Date(timeIntervalSince1970: 10000)
+        let exactTitle = Self.observation(
+            session: Self.session(
+                id: "exact-title",
+                projectName: "Other",
+                sessionName: "AgentMicro",
+                activity: now.addingTimeInterval(-30)),
+            state: .idle)
+        let projectPrefix = Self.observation(
+            session: Self.session(
+                id: "project-prefix",
+                projectName: "AgentMicro Tools",
+                sessionName: "Recent task",
+                activity: now.addingTimeInterval(-10)),
+            state: .idle)
+        let conversationOnly = Self.observation(
+            session: Self.session(
+                id: "conversation",
+                projectName: "Other",
+                sessionName: "Newest task",
+                activity: now),
+            state: .thinking)
+
+        let rows = AgentMicroMenuModel.rows(
+            from: [conversationOnly, projectPrefix, exactTitle],
+            preferences: AgentMicroPreferences(
+                taskNameMode: .taskTitleAndProject,
+                taskDisplayLimit: 3),
+            searchQuery: "agentmicro",
+            contentMatchingSessionKeys: [conversationOnly.sessionKey],
+            now: now)
+
+        #expect(rows.map(\.sessionKey) == [
+            exactTitle.sessionKey,
+            projectPrefix.sessionKey,
+            conversationOnly.sessionKey,
+        ])
+    }
+
+    @Test
+    func `conversation search matches messages without indexing tool output`() async throws {
+        let transcriptURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("agentmicro-search-\(UUID().uuidString).jsonl")
+        defer { try? FileManager.default.removeItem(at: transcriptURL) }
+        func message(role: String, text: String) -> String {
+            #"{"type":"response_item","payload":{"type":"message","role":"\#(role)","# +
+                #""content":[{"type":"input_text","text":"\#(text)"}]}}"#
+        }
+        let transcript = """
+        {"type":"event_msg","payload":{"type":"user_message","message":"Find the nebula project"}}
+        \(message(role: "assistant", text: "星云项目已找到"))
+        \(message(role: "developer", text: "private-developer-context"))
+        \(message(role: "system", text: "private-system-context"))
+        {"type":"response_item","payload":{"type":"function_call_output","output":"private-tool-output"}}
+        """
+        try Data(transcript.utf8).write(to: transcriptURL)
+        let session = AgentSession(
+            id: "conversation-search",
+            provider: .codex,
+            source: .desktopApp,
+            state: .idle,
+            pid: nil,
+            cwd: nil,
+            projectName: "Other",
+            sessionName: "Unrelated",
+            startedAt: nil,
+            lastActivityAt: nil,
+            transcriptPath: transcriptURL.path,
+            host: "local")
+        let task = Self.observation(session: session, state: .idle)
+        let index = AgentMicroConversationSearchIndex()
+
+        #expect(await index.matchingSessionKeys(in: [task], query: "nebula") == [task.sessionKey])
+        #expect(await index.matchingSessionKeys(in: [task], query: "星云") == [task.sessionKey])
+        #expect(await index.matchingSessionKeys(in: [task], query: "ne").isEmpty)
+        #expect(await index.matchingSessionKeys(in: [task], query: "星").isEmpty)
+        #expect(await index.matchingSessionKeys(in: [task], query: "private-developer-context").isEmpty)
+        #expect(await index.matchingSessionKeys(in: [task], query: "private-system-context").isEmpty)
+        #expect(await index.matchingSessionKeys(in: [task], query: "private-tool-output").isEmpty)
+    }
+
+    @Test
     func `duration label uses exact elapsed seconds without activity age`() {
         let now = Date(timeIntervalSince1970: 10000)
         let minute = Self.observation(
@@ -367,8 +493,8 @@ struct AgentMicroMenuModelTests {
             forSlotAt: 0,
             animatedSlotIndices: [],
             animationPhase: middleOfFirstPulse) == 1)
-        #expect(AgentMicroStatusIcon.animationFrameInterval == 0.25)
-        #expect(AgentMicroStatusIcon.animationTimerTolerance == 0.05)
+        #expect(AgentMicroStatusIcon.animationFrameInterval == 0.05)
+        #expect(AgentMicroStatusIcon.animationTimerTolerance == 0.005)
         #expect(AgentMicroStatusIcon.statusItemImages(states: states, animated: false).count == 1)
         #expect(AgentMicroStatusIcon.statusItemImages(states: states, animated: true).count ==
             4 * AgentMicroStatusIcon.animationFramesPerSlot)
@@ -395,14 +521,17 @@ struct AgentMicroMenuModelTests {
             title: "Running task",
             subtitle: "Project",
             duration: "4s",
+            cpuLabel: "CPU 18%",
             state: .thinking,
             usesFastModel: true)
         let view = AgentMicroTaskMenuItemView(row: row, onSelect: {})
 
         view.updateDuration("5s")
+        view.updateCPU("CPU 20%")
 
         #expect(view.sessionKey == "running")
         #expect(view.durationForTesting == "5s")
+        #expect(view.cpuForTesting == "CPU 20%")
         #expect(view.showsFastModelIndicatorForTesting)
 
         let standardRow = AgentMicroMenuRow(
@@ -411,10 +540,42 @@ struct AgentMicroMenuModelTests {
             title: "Standard task",
             subtitle: "Project",
             duration: "5s",
+            cpuLabel: nil,
             state: .thinking,
             usesFastModel: false)
         let standardView = AgentMicroTaskMenuItemView(row: standardRow, onSelect: {})
         #expect(!standardView.showsFastModelIndicatorForTesting)
+    }
+
+    @Test
+    func `CPU parser aggregates descendants and menu distinguishes shared Desktop CPU`() {
+        let records = AgentMicroProcessCPUParser.parse("""
+          100   1  10.5
+          101 100   4.0
+          102 101   2.5
+          200   1  20.0
+        malformed
+        """)
+        let totals = AgentMicroProcessCPUParser.totals(records: records, rootPIDs: [100, 200])
+
+        #expect(totals[100] == 17)
+        #expect(totals[200] == 20)
+
+        let now = Date(timeIntervalSince1970: 10000)
+        let cli = Self.observation(
+            session: Self.session(source: .cli, pid: 100, activity: now),
+            state: .thinking)
+        let desktop = Self.observation(
+            session: Self.session(id: "desktop", source: .desktopApp, pid: 200, activity: now),
+            state: .thinking)
+        let rows = AgentMicroMenuModel.rows(
+            from: [cli, desktop],
+            cpuPercentBySessionKey: [cli.sessionKey: 17],
+            now: now)
+
+        #expect(rows.first(where: { $0.sessionKey == cli.sessionKey })?.cpuLabel == "CPU 17%")
+        #expect(rows.first(where: { $0.sessionKey == desktop.sessionKey })?.cpuLabel ==
+            AgentMicroLocalization.text("task.cpu.shared"))
     }
 
     @Test
@@ -427,6 +588,7 @@ struct AgentMicroMenuModelTests {
             title: "First",
             subtitle: "Project",
             duration: "1m 0s",
+            cpuLabel: nil,
             state: .thinking,
             usesFastModel: false)
         let secondRow = AgentMicroMenuRow(
@@ -435,6 +597,7 @@ struct AgentMicroMenuModelTests {
             title: "Second",
             subtitle: "Project",
             duration: "1m 0s",
+            cpuLabel: nil,
             state: .unread,
             usesFastModel: false)
         let firstView = AgentMicroTaskMenuItemView(row: firstRow, onSelect: {})
@@ -478,6 +641,7 @@ struct AgentMicroMenuModelTests {
         state: AgentSession.State = .active,
         projectName: String? = "project",
         sessionName: String? = nil,
+        pid: Int32? = nil,
         startedAt: Date? = nil,
         activity: Date?) -> AgentSession
     {
@@ -486,7 +650,7 @@ struct AgentMicroMenuModelTests {
             provider: provider,
             source: source,
             state: state,
-            pid: nil,
+            pid: pid,
             cwd: projectName.map { "/tmp/\($0)" },
             projectName: projectName,
             sessionName: sessionName,

@@ -26,6 +26,9 @@
 "menu.usage.deficitFormat" = "%d%% в дефіциті";
 "menu.usage.reserveFormat" = "%d%% в резерві";
 "menu.usage.onPace" = "В темпі";
+"menu.search.projects" = "Пошук проєктів, завдань або чатів";
+"menu.search.close" = "Закрити пошук";
+"menu.search.noResults" = "Немає відповідних результатів";
 "settings.error.launchAtLogin" = "Не вдалося оновити елемент входу: %@";
 "settings.general" = "Загальні";
 "settings.launchAtLogin" = "Запускати AgentMicro під час входу";
@@ -54,6 +57,8 @@
 "status.tooltip.recent.other" = "AgentMicro — нещодавніх завдань Codex: %d";
 "task.fallbackTitle" = "Завдання Codex";
 "task.fastMode" = "Швидкий режим";
+"task.cpu.shared" = "CPU спільний";
+"settings.showTaskCPU" = "Показувати використання CPU завдань";
 "updates.automatic" = "Автоматично перевіряти оновлення";
 "updates.check" = "Перевірити оновлення…";
 "updates.section" = "Оновлення";

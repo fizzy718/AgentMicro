@@ -26,6 +26,9 @@
 "menu.usage.deficitFormat" = "%%%d açıkta";
 "menu.usage.reserveFormat" = "%%%d rezervde";
 "menu.usage.onPace" = "Hızda";
+"menu.search.projects" = "Proje, görev veya sohbet ara";
+"menu.search.close" = "Aramayı kapat";
+"menu.search.noResults" = "Eşleşen sonuç yok";
 "settings.error.launchAtLogin" = "Oturum açma öğesi güncellenemedi: %@";
 "settings.general" = "Genel";
 "settings.launchAtLogin" = "Oturum açıldığında AgentMicro’yu başlat";
@@ -54,6 +57,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d yeni Codex görevi";
 "task.fallbackTitle" = "Codex görevi";
 "task.fastMode" = "Hızlı mod";
+"task.cpu.shared" = "CPU paylaşımlı";
+"settings.showTaskCPU" = "Görev CPU kullanımını göster";
 "updates.automatic" = "Güncellemeleri otomatik olarak denetle";
 "updates.check" = "Güncellemeleri Denetle…";
 "updates.section" = "Güncellemeler";

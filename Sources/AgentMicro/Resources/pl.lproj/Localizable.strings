@@ -26,6 +26,9 @@
 "menu.usage.deficitFormat" = "%d%% deficytu";
 "menu.usage.reserveFormat" = "%d%% rezerwy";
 "menu.usage.onPace" = "Zgodnie z tempem";
+"menu.search.projects" = "Szukaj projektów, zadań lub czatów";
+"menu.search.close" = "Zamknij wyszukiwanie";
+"menu.search.noResults" = "Brak pasujących wyników";
 "settings.error.launchAtLogin" = "Nie udało się zaktualizować elementu logowania: %@";
 "settings.general" = "Ogólne";
 "settings.launchAtLogin" = "Uruchamiaj AgentMicro po zalogowaniu";
@@ -54,6 +57,8 @@
 "status.tooltip.recent.other" = "AgentMicro — %d ostatnich zadań Codex";
 "task.fallbackTitle" = "Zadanie Codex";
 "task.fastMode" = "Tryb szybki";
+"task.cpu.shared" = "CPU współdzielone";
+"settings.showTaskCPU" = "Pokaż użycie CPU zadań";
 "updates.automatic" = "Automatycznie sprawdzaj aktualizacje";
 "updates.check" = "Sprawdź aktualizacje…";
 "updates.section" = "Aktualizacje";

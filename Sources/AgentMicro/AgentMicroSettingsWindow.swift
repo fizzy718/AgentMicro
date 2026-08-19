@@ -312,6 +312,11 @@ private struct AgentMicroSettingsView: View {
                 Toggle(
                     AgentMicroLocalization.text("settings.showRecentlyCompleted"),
                     isOn: self.$settings.showRecentlyCompleted)
+                #if !ENABLE_AGENTMICRO_APP_STORE
+                Toggle(
+                    AgentMicroLocalization.text("settings.showTaskCPU"),
+                    isOn: self.$settings.showTaskCPU)
+                #endif
             }
         }
         .formStyle(.grouped)
